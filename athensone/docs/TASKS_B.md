@@ -232,6 +232,16 @@ reports only), `web/js/ui/report.js`, `THIRD_PARTY.md`, `tests/test_B6_reports.p
 | `test_js_build_form` (node) | category, lngLat, note, no photo, `work_id` | FormData fields `category, lon, lat, note, work_id`, no `photo` |
 | `test_js_offline_queue_flush` (node) | fake api throws, then works; fake `localStorage` | report queued, then sent once on flush, queue empty |
 
+#### B6 fix round (Evgenii, after review)
+- **Privacy (sandbox coordinates):** `_city_request` in `app/routers/map_reports.py` receives `saved["lon"], saved["lat"]` (rounded to 4 decimals, ~10 m) instead of the raw 7-decimal coordinates, and `address` is formatted to 4 decimals.
+- **No duplicate City requests:** `map_reports.create()` returns `"duplicate": bool`; when `saved["duplicate"]` is true, no duplicate City request is sent to the sandbox.
+- Tests in `tests/test_B6_reports_fix.py`; existing B6 tests stay unchanged.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_city_request_receives_rounded_coords` | `obstacle` report at `lon=23.7275123, lat=37.9838123` | `sb.create_request` receives `lng=23.7275, lat=37.9838` and 4-decimal `address` |
+| `test_duplicate_obstacle_no_second_city_request` | two `obstacle` reports 20 m apart within 10 min | `sb.create_request` called once |
+
 ### B7: Points pill + panel, redeem (phase 2)
 SPEC F7, HUD «Πάνω δεξιά», contracts `GET /points`, `POST /points/redeem`.
 **Files:** `app/rewards.py`, `app/routers/points_map.py`, `data/rewards.json`, `web/js/ui/points.js`,
@@ -258,6 +268,16 @@ SPEC F7, HUD «Πάνω δεξιά», contracts `GET /points`, `POST /points/red
 | `test_existing_points_routes_unchanged` | `/api/points/me`, `/api/points/districts` | same keys as before |
 | `test_js_format_delta` (node) | 5, −30 | «+5», «−30» |
 | `test_js_pulse_on_event` (node) | fake bus emits `points:earned` `{delta: 5}`, fake pill | pill gets the pulse class and «+5», balance +5 |
+
+#### B7 fix round (Evgenii, after review)
+- **Reset clears redemptions:** `app/rewards.py` adds `clear()` (`DELETE FROM redemptions`), and `app/store.py` `clear()` deletes from `redemptions` if the table exists (inside a `# --- B7 ---` block), so `/api/admin/reset` never leaves a negative balance.
+- **UI error handling:** `redeem()` in `web/js/ui/points.js` wraps `await api.redeem(reward.id)` in `try / catch` so a thrown error sets `status.textContent` instead of an unhandled rejection.
+- Tests in `tests/test_B7_points_fix.py` and `web/tests/B7_points_fix.test.js`; existing B7 tests stay unchanged.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_reset_clears_redemptions` | earn 50, redeem 30, then `POST /api/admin/reset` | `GET /api/map/points` with the same cookie has `balance == 0` |
+| `test_js_redeem_throw_handled` (node) | `api.redeem` rejects with an Error, user clicks redeem button | no unhandled rejection; `.points-status` shows an error message |
 
 ### B8: Stoa AI with citations + flyTo (phase 2)
 SPEC F6, HUD «Κάτω δεξιά», contract `POST /stoa_ask`.
@@ -286,6 +306,14 @@ SPEC F6, HUD «Κάτω δεξιά», contract `POST /stoa_ask`.
 | `test_js_link_citations` (node) | `answer_md` + 2 citations | HTML with 2 links carrying `data-lon`/`data-lat`, text otherwise escaped |
 | `test_js_markdown_escapes_html` (node) | `answer_md` with `<script>` | no element created, shown as text |
 | `test_js_click_emits_flyto` (node) | fake bus, click handler on a citation link | `map:flyto` with that lon/lat/label |
+
+#### B8 fix round (Evgenii, after review)
+- **Sandbox outage degrades to refusal:** `city_ask` / `answer_city` in `app/stoa_map.py` catches `SandboxError` (and any upstream error) and returns `_refusal()` (HTTP 200 with `REFUSAL_MD` and `citations: []`) instead of HTTP 502.
+- Tests in `tests/test_B8_stoa_fix.py`; existing B8 tests stay unchanged.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_sandbox_error_returns_refusal_200` | `city_ask` / `sb.search` raises `SandboxError` | HTTP 200, refusal text in `answer_md`, `citations: []` |
 
 ### B9: Route cost per profile (phase 2)
 SPEC F5, «Routing», contract `POST /routing`.
