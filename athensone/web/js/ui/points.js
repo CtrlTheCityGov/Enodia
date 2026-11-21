@@ -93,7 +93,12 @@ export async function mount({ api, root, bus }) {
   }
 
   async function redeem(reward, status) {
-    const res = await api.redeem(reward.id);
+    let res;
+    try {
+      res = await api.redeem(reward.id);
+    } catch {
+      res = { ok: false, error: "offline" };
+    }
     if (res && res.ok) {
       await refresh();
       // Shown after refresh, because renderPanel() rebuilds the status line.

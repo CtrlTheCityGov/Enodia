@@ -99,3 +99,10 @@ def redeem(account: str, reward: dict) -> dict:
         )
         _conn.commit()
         return {"ok": True, "balance": current - reward["cost"], "voucher_code": code}
+
+
+def clear() -> None:
+    """Delete all redemptions (used by /api/admin/reset)."""
+    with _lock:
+        _conn.execute("DELETE FROM redemptions")
+        _conn.commit()

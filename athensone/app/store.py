@@ -57,6 +57,10 @@ def clear():
         _conn.execute("DELETE FROM points_ledger")
         _conn.execute("DELETE FROM report_accounts")
         # --- /T2 ---
+        # --- B7: Points pill + panel, redeem ---
+        _conn.execute("CREATE TABLE IF NOT EXISTS redemptions (id INTEGER PRIMARY KEY, account TEXT NOT NULL, reward_id TEXT NOT NULL, cost INTEGER NOT NULL, voucher_code TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL)")
+        _conn.execute("DELETE FROM redemptions")
+        # --- /B7 ---
         _conn.commit()
 
 
