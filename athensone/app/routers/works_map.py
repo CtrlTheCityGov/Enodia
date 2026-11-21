@@ -6,9 +6,12 @@ at request time. Existing /api/works/* routes are untouched.
 """
 from __future__ import annotations
 
+import re
+
+import httpx
 from fastapi import APIRouter, HTTPException, Query
 
-from .. import map_reports, works, works_src
+from .. import config, map_reports, works, works_src
 
 router = APIRouter()
 
@@ -65,3 +68,33 @@ def map_works(bbox: str | None = Query(None, description="minLon,minLat,maxLon,m
     # `data_source` keeps the file's own label ("SEED" or the pipeline's) so the UI can show «SEED».
     return {"type": "FeatureCollection", "features": feats, "source": "snapshot", "data_source": m["source"],
             "updated_at": m["snapshot"], "note": m["note"]}
+
+
+_ADA_RE = re.compile(r"^[A-Za-zΑ-Ωα-ω0-9-]{4,32}$")
+
+
+@router.get("/api/map/works/lookup")
+def map_works_lookup(ada: str = Query(..., description="Diavgeia ADA code")) -> dict:
+    """Fetch live metadata for a single Diavgeia decision by ΑΔΑ."""
+    code = ada.strip()
+    if not _ADA_RE.match(code):
+        raise HTTPException(400, "Invalid ΑΔΑ format")
+    url = f"{config.DIAVGEIA_URL}/decisions/{code}"
+    try:
+        resp = httpx.get(url, headers={"Accept": "application/json"}, timeout=5.0)
+    except httpx.HTTPError as exc:
+        raise HTTPException(503, "Diavgeia upstream unavailable") from exc
+    if resp.status_code == 404:
+        raise HTTPException(404, f"ΑΔΑ {code} not found on Diavgeia")
+    if resp.status_code >= 400:
+        raise HTTPException(502, f"Diavgeia returned HTTP {resp.status_code}")
+    data = resp.json()
+    return {
+        "ada": data.get("ada") or code,
+        "subject": data.get("subject"),
+        "decision_type_id": data.get("decisionTypeId"),
+        "issue_date": data.get("issueDate"),
+        "organization_id": data.get("organizationId"),
+        "document_url": data.get("documentUrl") or f"https://diavgeia.gov.gr/decision/view/{code}",
+        "source": "live",
+    }

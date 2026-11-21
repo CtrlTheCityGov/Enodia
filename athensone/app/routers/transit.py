@@ -18,3 +18,14 @@ def map_transit(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return transit_src.get_transit(parsed_bbox)
+
+
+@router.get("/api/map/transit/arrivals")
+def map_transit_arrivals(
+    stop_code: str = Query(..., description="OASA stop code"),
+) -> dict:
+    """Return live or cached OASA bus arrival wait times (minutes) for a stop."""
+    code = stop_code.strip()
+    if not code or not code.isalnum():
+        raise HTTPException(status_code=400, detail="stop_code must be non-empty alphanumeric")
+    return transit_src.get_stop_arrivals(code)

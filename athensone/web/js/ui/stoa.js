@@ -121,8 +121,30 @@ export function mount({ map, api, root, container, bus }) {
   const form = el("form", { className: "stoa-form" });
   const input = el("input", { type: "text", name: "q", maxLength: 500, placeholder: "Ρωτήστε τη Stoa…" });
   input.setAttribute("aria-label", "Ερώτηση προς τη Stoa AI");
+  const SpeechRec = globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition;
+  let micBtn = null;
+  if (SpeechRec) {
+    micBtn = el("button", { type: "button", className: "stoa-mic-btn", textContent: "Φωνή" });
+    micBtn.setAttribute("aria-label", "Φωνητική ερώτηση στα ελληνικά");
+    micBtn.addEventListener("click", () => {
+      const rec = new SpeechRec();
+      rec.lang = "el-GR";
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      micBtn.disabled = true;
+      rec.onresult = (ev) => {
+        const txt = ev?.results?.[0]?.[0]?.transcript || "";
+        if (txt) input.value = txt;
+        input.focus();
+      };
+      rec.onerror = () => { micBtn.disabled = false; };
+      rec.onend = () => { micBtn.disabled = false; };
+      rec.start();
+    });
+  }
   const send = el("button", { type: "submit", textContent: "Αποστολή" });
-  form.append(input, send);
+  if (micBtn) form.append(input, micBtn, send);
+  else form.append(input, send);
   panel.append(log, form);
   root.append(panel, bubble);
 
@@ -139,9 +161,20 @@ export function mount({ map, api, root, container, bus }) {
   bubble.addEventListener("click", () => setOpen(!open));
   panel.addEventListener("keydown", (e) => { if (e.key === "Escape") { setOpen(false); bubble.focus(); } });
 
-  function addMessage(who, html) {
+  function addMessage(who, html, speakText = "") {
     const msg = el("div", { className: `stoa-msg stoa-${who}` });
     msg.innerHTML = html; // always built by escapeHtml / renderAnswerHtml
+    if (who === "bot" && speakText && globalThis.speechSynthesis && typeof globalThis.SpeechSynthesisUtterance === "function") {
+      const speakBtn = el("button", { type: "button", className: "stoa-speak-btn", textContent: "Ανάγνωση" });
+      speakBtn.setAttribute("aria-label", "Ανάγνωση απάντησης");
+      speakBtn.addEventListener("click", () => {
+        globalThis.speechSynthesis.cancel();
+        const u = new globalThis.SpeechSynthesisUtterance(speakText);
+        u.lang = "el-GR";
+        globalThis.speechSynthesis.speak(u);
+      });
+      msg.append(speakBtn);
+    }
     log.append(msg);
     log.scrollTop = log.scrollHeight;
   }
@@ -164,7 +197,7 @@ export function mount({ map, api, root, container, bus }) {
     }
     send.disabled = false;
     const answerMd = res?.answer_md || REFUSAL;
-    addMessage("bot", renderAnswerHtml(answerMd, res?.citations || []));
+    addMessage("bot", renderAnswerHtml(answerMd, res?.citations || []), answerMd.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
     history.push({ question, answer_md: answerMd });
   });
 
