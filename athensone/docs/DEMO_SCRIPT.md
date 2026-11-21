@@ -30,3 +30,8 @@ the app shows a straight-line fallback and says so · Wi-Fi → hotspot · every
 
 **Optional duplicate moment:** seed with `--with-duplicate`, then the live photo returns
 "already reported nearby, we added your vote" instead of a new report.
+
+**Optional "Is it fixed?" loop moment (T1):** after the operator clicks **Επιλύθηκε**, Maria's status card asks
+«Διορθώθηκε το πρόβλημα;» (**Ναι, διορθώθηκε** / **Όχι ακόμη** / **Όχι, με φωτογραφία**). Tapping **Όχι** (with or
+without a photo — faces blurred and EXIF stripped before storage) reopens the report to `in_progress`, puts the
+blocked ramp back onto routing, and raises that district's `reopen_rate` in `/api/equity`.

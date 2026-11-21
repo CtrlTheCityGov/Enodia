@@ -39,7 +39,7 @@ before a crew goes out, the operator sees whether the street may still be under 
 | **Teammates A–E** | humans | Own a feature each (split below); answer questions on their feature | |
 | **Advisor** | One Claude Code session working with Evgenii | Writes cards, proposes decisions with trade-offs, creates worktrees, writes prompts, starts and watches the other agents, walks Evgenii through each change, merges on his word, keeps `docs/` current | Merges without his word, decides architecture alone |
 | **Test writer** | Gemini (Antigravity, `agy`) | Writes exactly the approved tests for one task, before any code | Writes the implementation |
-| **Implementer** | Claude Opus 5.5 inside Antigravity (`agy`; Claude CLI only as fallback), **not** that task's test writer | Makes that task's tests pass | Edits that task's tests, decides open questions |
+| **Implementer** | Gemini 4 Neon in Antigravity while the Antigravity Opus quota is out (until ~27 Nov), else Claude Opus 5.5 inside Antigravity; Claude CLI only as fallback. **Not** that task's test writer | Makes that task's tests pass | Edits that task's tests, decides open questions |
 | **Reviewer** | A **different model** from the implementer (Gemini 4 Argon in Antigravity) | Checks the diff against the card and this file, runs its own experiments | Changes any file except its review |
 
 The test writer and the implementer are different agents, so the tests check the card, not the code.

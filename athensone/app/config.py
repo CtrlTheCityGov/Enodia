@@ -47,3 +47,9 @@ HEAT_C = float(os.getenv("HEAT_C", "33"))  # at or above this, shade weight goes
 # snapshot = only use saved snapshots (offline demo), off = never (tests).
 CKAN_URL = os.getenv("CKAN_URL", "https://opendata.cityofathens.gr/api/3/action").rstrip("/")
 CKAN_MODE = os.getenv("CKAN_MODE", "live").lower()
+
+# --- T3: Heat alert banner ---
+# Winter demo switch: forces hot=True on /api/heat with forced=True so the UI labels it "δοκιμαστικό".
+# Source: TASKS.md T3 card (approved A-1); parsing matches MOCK above (line 22). Certainty: sure.
+HEAT_FORCE = os.getenv("HEAT_FORCE", "").lower() in ("1", "true", "yes")
+# --- /T3 ---

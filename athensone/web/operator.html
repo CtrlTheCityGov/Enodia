@@ -15,6 +15,16 @@
 </header>
 <div class="ops">
   <div class="list">
+    <!-- --- T4: Ask Stoa, cited answers --- -->
+    <section class="radar" aria-labelledby="stoaAskH" style="background:#f3f7fc">
+      <h2 id="stoaAskH">🔎 Ρωτήστε τη Stoa (με ΑΔΑ)</h2>
+      <form id="stoaAskForm" class="row" style="margin-top:6px">
+        <input id="stoaAskQ" type="text" placeholder="π.χ. Δείγμα Οδός Α ή ασφαλτόστρωση" aria-label="Ερώτηση για έργα ή οδό">
+        <button id="stoaAskBtn" type="submit">Ρώτα</button>
+      </form>
+      <div id="stoaAskOut" class="hidden" aria-live="polite" style="margin-top:8px;font-size:.9em"></div>
+    </section>
+    <!-- --- /T4 --- -->
     <section class="radar" aria-labelledby="radarH">
       <h2 id="radarH">🏗 Stoa · Εγγυήσεις που λήγουν <select id="radarDays" aria-label="Παράθυρο"><option>30</option><option selected>90</option><option>180</option></select> ημ.</h2>
       <div id="radarHead" class="muted"></div>
@@ -24,7 +34,7 @@
       <h2 id="eqH">Ισότητα εξυπηρέτησης ανά Δημοτική Κοινότητα</h2>
       <div id="equity" class="muted">…</div>
     </section>
-    <div id="list" aria-label="Λίστα αναφορών"></div>
+    <div id="list" role="region" aria-label="Λίστα αναφορών"></div>
   </div>
   <div class="detail">
     <div id="opmap"></div>
@@ -188,16 +198,59 @@ async function loadRadar() {
 }
 $("#radarDays").onchange = loadRadar;
 
+// --- T4: Ask Stoa, cited answers ---
+async function askStoa(e) {
+  e.preventDefault();
+  const q = $("#stoaAskQ").value.trim(), out = $("#stoaAskOut");
+  if (!q) return;
+  out.classList.remove("hidden"); out.textContent = "Αναζήτηση…";
+  try {
+    const r = await api("/api/stoa/ask", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q })
+    });
+    out.innerHTML = "";
+    if (r.data_source === "SEED") {
+      const sb = document.createElement("div"); sb.style.marginBottom = "4px";
+      sb.appendChild(badge("SEED · δοκιμαστικά δεδομένα", "warn"));
+      out.appendChild(sb);
+    }
+    const p = document.createElement("p"); p.style.margin = "4px 0"; p.style.whiteSpace = "pre-line";
+    p.textContent = r.answer; out.appendChild(p);
+    if (r.cards && r.cards.length) {
+      const row = document.createElement("div"); row.style.marginTop = "4px";
+      for (const w of r.cards) {
+        const b = document.createElement("button"); b.type = "button"; b.className = "ghost";
+        b.style.marginRight = "6px"; b.style.marginTop = "4px"; b.style.fontSize = ".82em"; b.style.padding = "4px 8px";
+        b.textContent = `📍 ${w.street?.value || w.id}`;
+        const coords = w.geometry?.coordinates;
+        if (coords && coords.length) {
+          const [lng, lat] = coords[Math.floor(coords.length / 2)];
+          b.onclick = () => map.flyTo({ center: [lng, lat], zoom: 17 });
+        }
+        row.appendChild(b);
+      }
+      out.appendChild(row);
+    }
+  } catch (err) {
+    out.textContent = "Σφάλμα: " + err.message;
+  }
+}
+$("#stoaAskForm").onsubmit = askStoa;
+// --- /T4 ---
+
 async function loadEquity() {
   const r = await api("/api/equity"), box = $("#equity");
   if (!r.items.length) { box.textContent = "Καμία αναφορά ακόμη."; return; }
   const t = document.createElement("table");
-  t.innerHTML = "<thead><tr><th scope='col'>Κοινότητα</th><th scope='col'>Αναφορές</th><th scope='col'>Επιλύθηκαν</th><th scope='col'>Ώρες έως 1η ενέργεια</th></tr></thead>";
+  // --- T6: Confirmation points and reopen history ---
+  t.innerHTML = "<thead><tr><th scope='col'>Κοινότητα</th><th scope='col'>Αναφορές</th><th scope='col'>Επιλύθηκαν</th><th scope='col'>Επανανοίγματα</th><th scope='col'>Ώρες έως 1η ενέργεια</th></tr></thead>";
   const tb = document.createElement("tbody");
   for (const g of r.items) { const tr = document.createElement("tr");
     for (const v of [g.district, g.reports, g.resolved_share == null ? "—" : Math.round(g.resolved_share * 100) + "%",
+                     g.reopen_rate == null ? "—" : Math.round(g.reopen_rate * 100) + "%",
                      g.median_hours_to_first_action ?? "—"]) { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }
     tb.appendChild(tr); }
+  // --- /T6 ---
   t.appendChild(tb); box.innerHTML = ""; box.appendChild(t);
   const n = document.createElement("p"); n.className = "muted"; n.textContent = `Όρια περιοχών: ${r.district_source}. Μεγάλες διαφορές = άνιση εξυπηρέτηση.`; box.appendChild(n);
 }

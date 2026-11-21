@@ -18,6 +18,10 @@ import httpx
 from . import ckan, config, env, interop, privacy, routing, store, vision, works
 from .geo import cluster, haversine_km
 from .sandbox import Sandbox, SandboxError
+# --- T2: Points wallet, earn side ---
+from fastapi import Response
+from . import points
+# --- /T2 ---
 
 app = FastAPI(title="AthensOne AI", version="0.1")
 sb = Sandbox()
@@ -218,6 +222,92 @@ def env_geojson(min_lng: float = 23.69, min_lat: float = 37.955, max_lng: float 
     return env.geojson((min_lng, min_lat, max_lng, max_lat))
 
 
+# --- T3: Heat alert banner ---
+import math
+
+# Source for UNKNOWN fallback: CLAUDE.md hard rules & TASKS.md T3 test_heat_no_data (certainty: sure).
+HEAT_UNKNOWN_SOURCE = "UNKNOWN"
+# Fallback station source label when name and station_id are absent: TASKS.md T8 card (certainty: sure).
+HEAT_STATION_FALLBACK_SOURCE = "AthensGov σταθμός"
+
+
+def _heat_reading(lat: float, lng: float) -> tuple[float | None, str]:
+    """Current temperature (°C) and source: City's nearest CKAN sensor first, then Open-Meteo, else UNKNOWN."""
+    air_q = ckan.nearest_air(lat, lng)
+    if air_q and air_q.get("temp_c") is not None:
+        # T8: tolerate station dicts missing both name and station_id (TASKS.md T8; certainty: sure).
+        raw_name = air_q.get("name")
+        label = raw_name.strip() if isinstance(raw_name, str) else raw_name
+        if not label:
+            sid = air_q.get("station_id")
+            label = sid.strip() if isinstance(sid, str) else sid
+        if label is not None and label != "":
+            return air_q["temp_c"], f"{HEAT_STATION_FALLBACK_SOURCE} {label}"
+        return air_q["temp_c"], HEAT_STATION_FALLBACK_SOURCE
+    w = weather(lat, lng)
+    if w and w.get("temp_c") is not None:
+        return w["temp_c"], w.get("source") or "Open-Meteo"
+    return None, HEAT_UNKNOWN_SOURCE
+
+
+def _shaded_minutes(lat: float, lng: float, to_lat: float, to_lng: float) -> float | None:
+    """Duration in minutes of the best shaded step-free route to a cool place (mirrors navigate() heat mode)."""
+    frm, to = {"lat": lat, "lng": lng}, {"lat": to_lat, "lng": to_lng}
+    try:
+        hz = active_hazards()
+    except SandboxError:
+        hz = []
+    # Padding 0.004 deg (~400 m), heat shade weight 1.2, hazard penalty 100, max detour 1.4x:
+    # all copied from navigate() (app/main.py:141,146,168,178; certainty: sure).
+    pad = 0.004
+    bbox = (min(lng, to_lng) - pad, min(lat, to_lat) - pad, max(lng, to_lng) + pad, max(lat, to_lat) + pad)
+    cands = routing.candidates(frm, to, hz, "wheelchair", env.busy_polygons(bbox))
+    if not cands:
+        return None
+    fastest = min(c["duration_min"] for c in cands)
+    scored = []
+    for c in cands:
+        m = env.score_line(c["geojson"]["coordinates"], [], hz)
+        score = c["duration_min"] * (1 + 1.2 * (1 - m["shade_pct"] / 100)) + 100 * m["hazards_on_route"]
+        scored.append((c["duration_min"] > fastest * 1.4, score, c["duration_min"]))
+    ok = [s for s in scored if not s[0]] or scored
+    return min(ok, key=lambda s: s[1])[2]
+
+
+@app.get("/api/heat")
+def heat(lat: float, lng: float) -> dict:
+    """Heat alert check: temperature, source, nearest cool place, and shaded walking minutes to it."""
+    # T8: reject non-finite coordinates (inf, -inf, nan) before geo/routing math (TASKS.md T8; certainty: sure).
+    if not (math.isfinite(lat) and math.isfinite(lng)):
+        raise HTTPException(status_code=422, detail="lat and lng must be finite numbers")
+
+    temp_c, source = _heat_reading(lat, lng)
+    forced = bool(config.HEAT_FORCE)
+    # Threshold config.HEAT_C = 33 °C (source: app/config.py:44 and TASKS.md T3 card; certainty: sure).
+    hot = forced or (temp_c is not None and temp_c >= config.HEAT_C)
+
+    try:
+        items = cool_places(lat, lng)["items"]
+    except SandboxError:
+        items = []
+    place = items[0] if items else None
+
+    minutes: float | None = None
+    # T8 / A-12: skip routing and leave minutes null when not hot (DECISIONS.md A-12; certainty: sure).
+    if hot and place is not None and place.get("lat") is not None and place.get("lng") is not None:
+        minutes = _shaded_minutes(lat, lng, place["lat"], place["lng"])
+
+    return {
+        "hot": hot,
+        "temp_c": temp_c,
+        "source": source,
+        "forced": forced,
+        "cool_place": place,
+        "minutes": minutes,
+    }
+# --- /T3 ---
+
+
 # ------------------------------------------------------------------ AthensGov open data (CKAN)
 def _ckan(fn):
     try:
@@ -272,6 +362,9 @@ def equity():
         g = groups.setdefault(d, {"district": d, "reports": 0, "resolved": 0, "first_action_h": []})
         g["reports"] += 1
         g["resolved"] += r.get("status") == "resolved"
+        # --- T1: "Is it fixed?" loop ---
+        _equity_track_reopen(g, r)
+        # --- end T1 ---
         hist = r.get("history") or []
         if len(hist) > 1:
             h = _hours(hist[0]["at"], hist[1]["at"])
@@ -282,6 +375,9 @@ def equity():
         hs = sorted(g.pop("first_action_h"))
         g["median_hours_to_first_action"] = round(hs[len(hs) // 2], 2) if hs else None
         g["resolved_share"] = round(g["resolved"] / g["reports"], 2) if g["reports"] else None
+        # --- T1: "Is it fixed?" loop ---
+        _equity_finalize_reopen(g)
+        # --- end T1 ---
         rows.append(g)
     rows.sort(key=lambda g: -g["reports"])
     return {"items": rows, "district_source": "AthensGov municipal-districts-athens" if ckan.enabled() else "off"}
@@ -329,7 +425,7 @@ def dcat(request: Request):
 
 # ------------------------------------------------------------------ reports
 @app.post("/api/report")
-async def report(request: Request, photo: UploadFile = File(...), lat: float | None = Form(None),
+async def report(request: Request, response: Response, photo: UploadFile = File(...), lat: float | None = Form(None),
                  lng: float | None = Form(None), address: str = Form(""), note: str = Form("")):
     raw = await photo.read()
     if len(raw) > 15 * 1024 * 1024:
@@ -363,6 +459,10 @@ async def report(request: Request, photo: UploadFile = File(...), lat: float | N
     req = sb.create_request(category=ai["category"], title=ai["title_el"],
                             address=address or f"{lat:.5f}, {lng:.5f}", description=desc, lat=lat, lng=lng)
     store.save(req["id"], name, lat, lng, ai, p["faces"])
+    # --- T2: Points wallet, earn side ---
+    token = points.ensure_token(request, response)
+    points.link_report(req["id"], token)
+    # --- /T2 ---
     return {"duplicate_of": None, "request": req, "ai": ai, "photo_url": photo_url,
             "faces_blurred": p["faces"], "gps_from_photo": bool(p["gps"])}
 
@@ -395,17 +495,134 @@ class Decision(BaseModel):
 @app.post("/api/reports/{rid}/approve")
 def approve(rid: str, d: Decision | None = None):
     note = (d.note if d and d.note else "Εγκρίθηκε από υπάλληλο του Δήμου · το συνεργείο ειδοποιήθηκε")
-    return _merge(sb.update_request(rid, status="in_progress", note=note))
+    out = _merge(sb.update_request(rid, status="in_progress", note=note))
+    # --- T2: Points wallet, earn side ---
+    points.grant_for_report(rid, action="report_approved", verified_by="operator", district=out.get("district_name"))
+    # --- /T2 ---
+    return out
 
 
 @app.post("/api/reports/{rid}/resolve")
 def resolve(rid: str):
-    return _merge(sb.update_request(rid, status="resolved", note="Το πρόβλημα αποκαταστάθηκε"))
+    updated = sb.update_request(rid, status="resolved", note="Το πρόβλημα αποκαταστάθηκε")
+    # --- T1: "Is it fixed?" loop ---
+    store.ask_confirmation(rid)
+    # --- end T1 ---
+    return _merge(updated)
 
 
 @app.post("/api/reports/{rid}/reject")
 def reject(rid: str, d: Decision | None = None):
     return _merge(sb.update_request(rid, status="rejected", note=(d.note if d and d.note else "Απορρίφθηκε από υπάλληλο")))
+
+
+# --- T1: "Is it fixed?" loop ---
+# Reopen note text (source: docs/TASKS.md T1 card; certainty: exact spec).
+REOPEN_NOTE = "Ο πολίτης αναφέρει ότι δεν διορθώθηκε"
+# Maximum confirmation photo size in bytes: 15 MB (source: matches /api/report upload cap in app/main.py; certainty: high).
+CONFIRM_MAX_PHOTO_BYTES = 15 * 1024 * 1024
+
+
+def _confirmation_view(request_id: str) -> dict | None:
+    conf = store.get_confirmation(request_id)
+    if conf and conf.get("photo"):
+        conf["photo_url"] = f"/photos/{conf['photo']}"
+    return conf
+
+
+def _equity_track_reopen(group: dict, report: dict) -> None:
+    conf = report.get("confirmation")
+    # --- T6: Confirmation points and reopen history ---
+    # Keep reopens recorded in sandbox history even after a later re-resolve resets confirmations.fixed
+    # (source: docs/TASKS.md T6 card & docs/DECISIONS.md A-6; certainty: verified).
+    reopened_in_history = any(
+        isinstance(h, dict) and h.get("note") == REOPEN_NOTE
+        for h in (report.get("history") or [])
+    )
+    reopened = bool(conf and conf.get("fixed") is False) or reopened_in_history
+    asked = conf is not None or report.get("status") == "resolved" or reopened
+    # --- /T6 ---
+    group["_t1_asked"] = group.get("_t1_asked", 0) + int(asked)
+    group["_t1_reopened"] = group.get("_t1_reopened", 0) + int(reopened)
+
+
+def _equity_finalize_reopen(group: dict) -> None:
+    asked = group.pop("_t1_asked", 0)
+    reopened = group.pop("_t1_reopened", 0)
+    group["reopen_rate"] = round(reopened / asked, 2) if asked else None
+
+
+# --- T6: Confirmation points and reopen history ---
+# Action & verifier for the +5 fix-confirmation points grant
+# (source: docs/TASKS.md T6 card, docs/DECISIONS.md A-4 & A-17, app/points.py ACTION_POINTS["fix_confirmed"]=5; certainty: verified).
+CONFIRM_POINTS_ACTION = "fix_confirmed"
+CONFIRM_POINTS_VERIFIED_BY = "system"
+
+
+def _grant_confirm_points(request: Request, request_id: str, district: str | None) -> bool:
+    """Grant +5 fix_confirmed points only when the caller's ao_token matches the reporter's stored token (A-17)."""
+    caller = request.cookies.get(points.COOKIE_NAME)
+    reporter = store.get_report_account(request_id)
+    if not caller or not reporter or caller != reporter:
+        return False
+    return points.grant(
+        account=reporter,
+        action=CONFIRM_POINTS_ACTION,
+        ref_id=request_id,
+        verified_by=CONFIRM_POINTS_VERIFIED_BY,
+        district=district,
+    )
+# --- /T6 ---
+
+
+@app.post("/api/reports/{rid}/confirm")
+async def confirm_report(
+    rid: str,
+    request: Request,
+    fixed: bool = Form(...),
+    photo: UploadFile | None = File(None),
+):
+    """Citizen confirms whether a resolved report was actually fixed (FixMyStreet-style state loop)."""
+    try:
+        req = sb.get_request(rid)
+    except SandboxError as exc:
+        if str(exc).startswith("404"):
+            raise HTTPException(404, "report not found")
+        raise
+
+    photo_name: str | None = None
+    faces_blurred = 0
+    if photo is not None:
+        raw = await photo.read()
+        if raw:
+            if len(raw) > CONFIRM_MAX_PHOTO_BYTES:
+                raise HTTPException(413, "photo too large")
+            try:
+                processed = privacy.process_photo(raw)
+            except Exception:
+                raise HTTPException(400, "not a readable image")
+            photo_name = f"{uuid.uuid4().hex}.jpg"
+            # Only the blurred, EXIF-free JPEG is ever written to disk.
+            (config.PHOTO_DIR / photo_name).write_bytes(processed["jpeg"])
+            faces_blurred = processed["faces"]
+
+    if not fixed:
+        req = sb.update_request(rid, status="in_progress", note=REOPEN_NOTE)
+
+    store.record_confirmation(rid, fixed=fixed, photo=photo_name)
+    merged = _merge(req)
+    # --- T6: Confirmation points and reopen history ---
+    if fixed:
+        _grant_confirm_points(request, rid, merged.get("district_name"))
+    # --- /T6 ---
+    photo_url = f"{str(request.base_url).rstrip('/')}/photos/{photo_name}" if photo_name else None
+    return {
+        "request": merged,
+        "confirmation": merged["confirmation"],
+        "photo_url": photo_url,
+        "faces_blurred": faces_blurred,
+    }
+# --- end T1 ---
 
 
 def _merge(r: dict) -> dict:
@@ -414,6 +631,9 @@ def _merge(r: dict) -> dict:
         local["photo_url"] = f"/photos/{local['photo']}"
         local["needs_check"] = local["confidence"] < config.CONFIDENCE_THRESHOLD
     r["local"] = local
+    # --- T1: "Is it fixed?" loop ---
+    r["confirmation"] = _confirmation_view(r["id"])
+    # --- end T1 ---
     # Stoa: is there a public works record here that could still be under the contractor's guarantee?
     cat = (local or {}).get("category") or r.get("category") or r.get("category_name")
     try:
@@ -454,7 +674,27 @@ def dossier(rid: str):
     r = _merge(sb.get_request(rid))
     if not r.get("guarantee"):
         raise HTTPException(404, "no works record linked to this report")
+    # --- T2: Points wallet, earn side ---
+    # --- T7: Points fixes ---
+    if r.get("status") != "rejected":
+        points.grant_for_report(rid, action="guarantee_claim", verified_by="engineer", district=r.get("district_name"))
+    # --- /T7 ---
+    # --- /T2 ---
     return {"text": works.dossier(r, r["guarantee"]), "sent": False}
+
+
+# --- T4: Ask Stoa, cited answers ---
+from . import stoa_ask  # noqa: E402
+
+
+class StoaAskIn(BaseModel):
+    q: str
+
+
+@app.post("/api/stoa/ask")
+def api_stoa_ask(body: StoaAskIn):
+    return stoa_ask.ask(body.q)
+# --- /T4 ---
 
 
 # ------------------------------------------------------------------ smart map layers
@@ -473,6 +713,19 @@ def layers():
         {"id": "clean", "name_el": "Αποκομιδή", "status": "roadmap", "needs": "δρομολόγια και GPS απορριμματοφόρων"},
         {"id": "events", "name_el": "Εκδηλώσεις", "status": "roadmap", "needs": "βάση εκδηλώσεων του Δήμου"},
     ]}
+
+
+# --- T2: Points wallet, earn side ---
+@app.get("/api/points/me")
+def points_me(request: Request, response: Response):
+    token = points.ensure_token(request, response)
+    return points.wallet(token)
+
+
+@app.get("/api/points/districts")
+def points_districts():
+    return points.districts()
+# --- /T2 ---
 
 
 # ------------------------------------------------------------------ admin

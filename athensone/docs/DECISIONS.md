@@ -17,3 +17,19 @@
 
 - **Q-1** T5: add `deface` (MIT) as a dependency? It pulls onnxruntime (~large). Recommendation: yes, with the
   OpenCV Haar fallback kept, only if T1–T4 are merged before ~02:00.
+
+## Sat 21 Nov, after the T1–T4 code ("continue" = advisor's recommendations accepted)
+
+- **A-6** T1 `reopen_rate` = reopened ÷ reports resolved in that district; `None` when none resolved.
+- **A-7** T1 confirm is allowed on any existing report tonight (no 409). Leftover: restrict to resolved in the pilot.
+- **A-8** T1 follow-up: show `reopen_rate` in the operator equity table.
+- **A-9** T2 district target from env `DISTRICT_TARGET`, default 5000; lower it on stage so the bar moves.
+- **A-10** T2 12-month window applies to the tier only; balance is all-time until redemption exists.
+- **A-11** T2 cookie without `Secure` for the local HTTP demo; `Secure` before the pilot.
+- **A-12** T3 `minutes` is `null` when not hot (no Valhalla call on cool page loads).
+- **A-13** T3 banner styles stay inline in `citizen.html` tonight.
+- **A-14** T4 `sources` = `[{ada}]`, Diavgeia link only when `data_source != "SEED"`.
+- **A-15** T4 Krikri settings move to `config.py` after the merge.
+- **A-16** T4 keeps partial street matching ("Ερμού" matches "Οδός Ερμού (τμήμα)").
+- **A-17** (advisor default, Evgenii may change) The +5 for confirming a fix goes only to the reporter's own token,
+  once per report. Stops anyone farming +5 by confirming other people's reports.
