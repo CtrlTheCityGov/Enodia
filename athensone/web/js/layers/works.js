@@ -13,3 +13,9 @@ export const layerIds = [];
 export function register(_map, _api) {
   // Implemented in A2.
 }
+
+// --- A3 ---
+// Coordination constant for the clickable works line layer shared with A3 workpopup
+// (source: A3 task coordination with A2, certainty: verified).
+export const WORKS_LINE_LAYER_ID = "works-line";
+// --- /A3 ---

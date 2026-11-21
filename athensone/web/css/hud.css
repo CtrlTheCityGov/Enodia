@@ -196,3 +196,270 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* --- A3 --- */
+/* Municipal work popup styles (SPEC.md F4 "Φούσκα έργου (map popup)", TASKS_A.md A3). */
+
+/* Keep outer MapLibre wrapper transparent so glass surface sits cleanly on popup content. */
+.maplibregl-popup.work-popup.glass {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  max-width: min(320px, calc(100vw - 24px)) !important;
+}
+
+.maplibregl-popup.work-popup .maplibregl-popup-content {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-panel);
+  box-shadow: var(--glass-shadow);
+  color: var(--hud-text);
+  padding: 14px 16px;
+}
+
+.maplibregl-popup.work-popup .maplibregl-popup-close-button {
+  color: var(--hud-text);
+  font-size: 1.125rem;
+  line-height: 1;
+  min-width: 32px;
+  min-height: 32px;
+  top: 6px;
+  right: 6px;
+  border-radius: var(--glass-radius-pill);
+}
+
+.maplibregl-popup.work-popup .maplibregl-popup-close-button:hover {
+  background: var(--hud-hover-bg);
+}
+
+.maplibregl-popup.work-popup .maplibregl-popup-close-button:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.maplibregl-popup-anchor-bottom.work-popup .maplibregl-popup-tip {
+  border-top-color: var(--glass-bg);
+}
+
+.maplibregl-popup-anchor-top.work-popup .maplibregl-popup-tip {
+  border-bottom-color: var(--glass-bg);
+}
+
+.maplibregl-popup-anchor-left.work-popup .maplibregl-popup-tip {
+  border-right-color: var(--glass-bg);
+}
+
+.maplibregl-popup-anchor-right.work-popup .maplibregl-popup-tip {
+  border-left-color: var(--glass-bg);
+}
+
+.work-popup__card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 240px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.work-popup__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-right: 24px;
+}
+
+.work-popup__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--hud-text);
+}
+
+.work-popup__status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--glass-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Status badge colors aligned with works layer palette and WCAG AA contrast (certainty: design default). */
+.work-popup__status--planned {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.work-popup__status--in_progress {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.work-popup__status--completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.work-popup__status--unknown {
+  background: rgba(17, 24, 39, 0.1);
+  color: #374151;
+}
+
+.work-popup__details {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.work-popup__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.work-popup__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.work-popup__value {
+  margin: 0;
+  font-weight: 500;
+}
+
+.work-popup__bar {
+  margin-top: 4px;
+  width: 100%;
+  height: 7px;
+  border-radius: var(--glass-radius-pill);
+  background: rgba(17, 24, 39, 0.14);
+  overflow: hidden;
+}
+
+.work-popup__bar-fill {
+  height: 100%;
+  border-radius: var(--glass-radius-pill);
+  transition: width 200ms ease;
+}
+
+.work-popup__bar-fill--paid {
+  background: #2563eb;
+}
+
+.work-popup__bar-fill--guarantee {
+  background: #059669;
+}
+
+/* Highlighted quote block for Diavgeia ADA citation (SPEC.md "Φούσκα έργου (map popup)"). */
+.work-popup__ada {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid #1d4ed8;
+  border-radius: 6px;
+  background: rgba(29, 78, 216, 0.1);
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.work-popup__ada-label {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.work-popup__ada-link {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.work-popup__ada-link:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.work-popup__unknown {
+  font-style: italic;
+}
+
+.work-popup__actions {
+  margin-top: 2px;
+}
+
+.work-popup__report-btn {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+
+.work-popup__report-btn:hover {
+  opacity: 0.92;
+}
+
+.work-popup__report-btn:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .work-popup__status--planned {
+  background: rgba(59, 130, 246, 0.25);
+  color: #bfdbfe;
+}
+
+[data-theme="dark"] .work-popup__status--in_progress {
+  background: rgba(249, 115, 22, 0.25);
+  color: #fed7aa;
+}
+
+[data-theme="dark"] .work-popup__status--completed {
+  background: rgba(34, 197, 94, 0.25);
+  color: #bbf7d0;
+}
+
+[data-theme="dark"] .work-popup__status--unknown {
+  background: rgba(243, 244, 246, 0.14);
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .work-popup__bar {
+  background: rgba(243, 244, 246, 0.2);
+}
+
+[data-theme="dark"] .work-popup__bar-fill--paid {
+  background: #60a5fa;
+}
+
+[data-theme="dark"] .work-popup__bar-fill--guarantee {
+  background: #34d399;
+}
+
+[data-theme="dark"] .work-popup__ada {
+  border-left-color: #93c5fd;
+  background: rgba(147, 197, 253, 0.14);
+}
+
+[data-theme="dark"] .work-popup__ada-link {
+  color: #93c5fd;
+}
+/* --- /A3 --- */
