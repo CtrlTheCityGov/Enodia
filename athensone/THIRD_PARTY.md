@@ -36,3 +36,11 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `maplibre-gl` | `4.7.1` | BSD-3-Clause | Interactive map rendering (`web/citizen.html`, `web/operator.html`) | https://github.com/maplibre/maplibre-gl-js |
 | OpenStreetMap tiles | — | ODbL 1.0 | Basemap tiles (`© OpenStreetMap` attribution shown) | https://www.openstreetmap.org/copyright |
 | `axe-core` | `^4.10.0` | MPL-2.0 | Accessibility check dev dependency (`scripts/a11y_check.py`) | https://github.com/dequelabs/axe-core |
+
+### B2: Works data sources (`app/works_src.py`, `scripts/fetch_works.py`)
+
+| Source | Licence / terms | Role | Source URL |
+|---|---|---|---|
+| Διαύγεια OpenData API | Public-sector open data (ν. 3861/2010, ν. 4727/2020 open-data reuse); licence text not re-checked tonight | Δήμος Αθηναίων decisions (αναθέσεις, αναλήψεις, πληρωμές): ΑΔΑ, subject, date, amount. Saved search in `tests/fixtures/B2/diavgeia.json` | https://diavgeia.gov.gr/opendata |
+| ΚΗΜΔΗΣ OpenData API | Public-sector open data (ν. 4412/2016 art. 38, ν. 4727/2020); licence text not re-checked tonight | Contracts: ΑΔΑΜ, contractor, amounts, dates, linked ΑΔΑ. Saved page in `tests/fixtures/B2/khmdhs.json` (civil servants' e-mail and signer names removed) | https://cerpp.eprocurement.gov.gr/khmdhs-opendata |
+| OpenStreetMap (via Overpass, once, by hand) | ODbL 1.0 | Street segments in the curated `STREETS` table of `scripts/fetch_works.py` | https://www.openstreetmap.org/copyright |

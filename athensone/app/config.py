@@ -53,3 +53,16 @@ CKAN_MODE = os.getenv("CKAN_MODE", "live").lower()
 # Source: TASKS.md T3 card (approved A-1); parsing matches MOCK above (line 22). Certainty: sure.
 HEAT_FORCE = os.getenv("HEAT_FORCE", "").lower() in ("1", "true", "yes")
 # --- /T3 ---
+
+# --- B2 ---
+# Works from Διαύγεια + ΚΗΜΔΗΣ. URLs checked online on Sat 21 Nov 2026 (both answered 200 with JSON). Certainty: sure.
+DIAVGEIA_URL = os.getenv("DIAVGEIA_URL", "https://diavgeia.gov.gr/opendata").rstrip("/")
+KHMDHS_URL = os.getenv("KHMDHS_URL", "https://cerpp.eprocurement.gov.gr/khmdhs-opendata").rstrip("/")
+# Δήμος Αθηναίων: organisation uid 6013 in Διαύγεια (organizations.json) and key 6013 in ΚΗΜΔΗΣ (contract
+# 26SYMV019034442). Checked Sat 21 Nov 2026. Certainty: sure.
+WORKS_ORG = os.getenv("WORKS_ORG", "6013")
+# Upstream timeout, seconds (TASKS_B «Common to B2–B5»: 10 s). Certainty: sure.
+WORKS_HTTP_TIMEOUT_S = float(os.getenv("WORKS_HTTP_TIMEOUT_S", "10"))
+# reports_count counts open reports within this many metres of a works line (B2 card). Certainty: sure.
+WORKS_REPORT_RADIUS_M = float(os.getenv("WORKS_REPORT_RADIUS_M", "30"))
+# --- /B2 ---
