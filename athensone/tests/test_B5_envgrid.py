@@ -259,6 +259,9 @@ def test_station_overrides_model(monkeypatch):
 
     assert not far_feat["properties"].get("station")
     assert far_feat["properties"]["temp_c"] != 29.5
+    # A-37: which AQI scale each point is on (station class 1-6 vs Open-Meteo European AQI).
+    assert near_props["aqi_scale"] == "city_1_6"
+    assert far_feat["properties"]["aqi_scale"] == "eaqi"
 
 
 def test_open_meteo_down_snapshot(monkeypatch):

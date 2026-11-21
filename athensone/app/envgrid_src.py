@@ -162,6 +162,10 @@ def build_features(
         props: dict[str, Any] = {
             "temp_c": temp_c,
             "aqi": aqi,
+            # Which AQI scale `aqi` is on (A-37): Open-Meteo European AQI 0-100+ ("eaqi") or the AthensGov
+            # station class 1-6 ("city_1_6"). They don't compare; clients colour by pm25. Source: Open-Meteo
+            # air-quality API docs, AthensGov CKAN env-all-stations (app/ckan.py). Certainty: sure.
+            "aqi_scale": "eaqi" if aqi is not None else None,
             "pm25": pm25,
             "updated_at": point_updated,
         }
@@ -175,6 +179,8 @@ def build_features(
                     if val is not None:
                         props[key] = val
                         overridden = True
+                        if key == "aqi":
+                            props["aqi_scale"] = "city_1_6"  # A-37
                 if overridden:
                     st_time = _valid_iso(st.get("time"))
                     if st_time:
