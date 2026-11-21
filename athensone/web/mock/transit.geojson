@@ -1,0 +1,640 @@
+{
+  "snapshot": "2026-11-21",
+  "note": "Station coordinates & OSM IDs are real OpenStreetMap data (ODbL 1.0, verified 2026-11-21); Metro M1/M2/M3 and Proastiakos line colours follow STASY/OASA official branding; station lines are simplified station-to-station segments; OASA bus positions, bearings and ETAs are simulated snapshot fixtures for offline demo.",
+  "lines": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              23.709044,
+              37.968347
+            ],
+            [
+              23.720329,
+              37.976766
+            ],
+            [
+              23.72563,
+              37.976096
+            ],
+            [
+              23.72799,
+              37.984113
+            ],
+            [
+              23.730266,
+              37.993073
+            ],
+            [
+              23.722838,
+              37.999524
+            ]
+          ]
+        },
+        "properties": {
+          "id": "M1",
+          "name": "Μετρό Γραμμή 1 (Πειραιάς – Κηφισιά)",
+          "mode": "subway",
+          "color": "#007A3D"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              23.726818,
+              37.964626
+            ],
+            [
+              23.729531,
+              37.968859
+            ],
+            [
+              23.735668,
+              37.975495
+            ],
+            [
+              23.73302,
+              37.980355
+            ],
+            [
+              23.72799,
+              37.984113
+            ],
+            [
+              23.72138,
+              37.985853
+            ],
+            [
+              23.72072,
+              37.992282
+            ],
+            [
+              23.722838,
+              37.999524
+            ]
+          ]
+        },
+        "properties": {
+          "id": "M2",
+          "name": "Μετρό Γραμμή 2 (Ανθούπολη – Ελληνικό)",
+          "mode": "subway",
+          "color": "#E30613"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              23.710957,
+              37.978743
+            ],
+            [
+              23.72563,
+              37.976096
+            ],
+            [
+              23.735668,
+              37.975495
+            ],
+            [
+              23.747104,
+              37.976126
+            ],
+            [
+              23.753009,
+              37.979032
+            ],
+            [
+              23.75768,
+              37.987193
+            ],
+            [
+              23.763577,
+              37.993212
+            ]
+          ]
+        },
+        "properties": {
+          "id": "M3",
+          "name": "Μετρό Γραμμή 3 (Δημ. Θέατρο – Αεροδρόμιο)",
+          "mode": "subway",
+          "color": "#0052A5"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              23.703965,
+              37.973633
+            ],
+            [
+              23.72072,
+              37.992282
+            ]
+          ]
+        },
+        "properties": {
+          "id": "PROASTIAKOS",
+          "name": "Προαστιακός Αθηνών (Πειραιάς – Αθήνα – Αεροδρόμιο)",
+          "mode": "rail",
+          "color": "#F2A900"
+        }
+      }
+    ]
+  },
+  "stations": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.735668,
+            37.975495
+          ]
+        },
+        "properties": {
+          "id": "ST-SYN",
+          "name": "Σύνταγμα",
+          "lines": [
+            "M2",
+            "M3"
+          ],
+          "elevator": true,
+          "osm_id": "node/5374534510"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.72563,
+            37.976096
+          ]
+        },
+        "properties": {
+          "id": "ST-MON",
+          "name": "Μοναστηράκι",
+          "lines": [
+            "M1",
+            "M3"
+          ],
+          "elevator": true,
+          "osm_id": "node/9666216537"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.72799,
+            37.984113
+          ]
+        },
+        "properties": {
+          "id": "ST-OMO",
+          "name": "Ομόνοια",
+          "lines": [
+            "M1",
+            "M2"
+          ],
+          "elevator": true,
+          "osm_id": "node/5374594466"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.73302,
+            37.980355
+          ]
+        },
+        "properties": {
+          "id": "ST-PAN",
+          "name": "Πανεπιστήμιο",
+          "lines": [
+            "M2"
+          ],
+          "elevator": true,
+          "osm_id": "node/250920014"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.729531,
+            37.968859
+          ]
+        },
+        "properties": {
+          "id": "ST-AKR",
+          "name": "Ακρόπολη",
+          "lines": [
+            "M2"
+          ],
+          "elevator": true,
+          "osm_id": "node/1957144319"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.726818,
+            37.964626
+          ]
+        },
+        "properties": {
+          "id": "ST-FIX",
+          "name": "Συγγρού-Φιξ",
+          "lines": [
+            "M2"
+          ],
+          "elevator": true,
+          "osm_id": "node/1957144329"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.72138,
+            37.985853
+          ]
+        },
+        "properties": {
+          "id": "ST-MET",
+          "name": "Μεταξουργείο",
+          "lines": [
+            "M2"
+          ],
+          "elevator": true,
+          "osm_id": "node/251083112"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.72072,
+            37.992282
+          ]
+        },
+        "properties": {
+          "id": "ST-LAR",
+          "name": "Σταθμός Λαρίσης",
+          "lines": [
+            "M2",
+            "PROASTIAKOS"
+          ],
+          "elevator": true,
+          "osm_id": "node/251083102"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.722838,
+            37.999524
+          ]
+        },
+        "properties": {
+          "id": "ST-ATT",
+          "name": "Αττική",
+          "lines": [
+            "M1",
+            "M2"
+          ],
+          "elevator": true,
+          "osm_id": "node/1956875655"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.747104,
+            37.976126
+          ]
+        },
+        "properties": {
+          "id": "ST-EVA",
+          "name": "Ευαγγελισμός",
+          "lines": [
+            "M3"
+          ],
+          "elevator": true,
+          "osm_id": "node/250702355"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.753009,
+            37.979032
+          ]
+        },
+        "properties": {
+          "id": "ST-MEG",
+          "name": "Μέγαρο Μουσικής",
+          "lines": [
+            "M3"
+          ],
+          "elevator": true,
+          "osm_id": "node/250702349"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.75768,
+            37.987193
+          ]
+        },
+        "properties": {
+          "id": "ST-AMP",
+          "name": "Αμπελόκηποι",
+          "lines": [
+            "M3"
+          ],
+          "elevator": true,
+          "osm_id": "node/1958901557"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.763577,
+            37.993212
+          ]
+        },
+        "properties": {
+          "id": "ST-PNO",
+          "name": "Πανόρμου",
+          "lines": [
+            "M3"
+          ],
+          "elevator": true,
+          "osm_id": "node/1958901565"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.710957,
+            37.978743
+          ]
+        },
+        "properties": {
+          "id": "ST-KER",
+          "name": "Κεραμεικός",
+          "lines": [
+            "M3"
+          ],
+          "elevator": true,
+          "osm_id": "node/850935197"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.720329,
+            37.976766
+          ]
+        },
+        "properties": {
+          "id": "ST-THI",
+          "name": "Θησείο",
+          "lines": [
+            "M1"
+          ],
+          "elevator": true,
+          "osm_id": "node/2284727248"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.709044,
+            37.968347
+          ]
+        },
+        "properties": {
+          "id": "ST-PET",
+          "name": "Πετράλωνα",
+          "lines": [
+            "M1"
+          ],
+          "elevator": true,
+          "osm_id": "node/2278849833"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.730266,
+            37.993073
+          ]
+        },
+        "properties": {
+          "id": "ST-VIC",
+          "name": "Βικτώρια",
+          "lines": [
+            "M1"
+          ],
+          "elevator": true,
+          "osm_id": "node/251082983"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.703965,
+            37.973633
+          ]
+        },
+        "properties": {
+          "id": "ST-ROU",
+          "name": "Ρουφ",
+          "lines": [
+            "PROASTIAKOS"
+          ],
+          "elevator": null,
+          "osm_id": "node/987485685"
+        }
+      }
+    ]
+  },
+  "buses": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.7412,
+            37.9759
+          ]
+        },
+        "properties": {
+          "id": "BUS-X95-1",
+          "line": "X95",
+          "bearing": 70,
+          "route_name": "Σύνταγμα – Αεροδρόμιο (Express)",
+          "next_stop": "Ευαγγελισμός",
+          "eta_min": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.7342,
+            37.9736
+          ]
+        },
+        "properties": {
+          "id": "BUS-040-1",
+          "line": "040",
+          "bearing": 210,
+          "route_name": "Πειραιάς – Σύνταγμα",
+          "next_stop": "Φιλελλήνων",
+          "eta_min": 2
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.7308,
+            37.9753
+          ]
+        },
+        "properties": {
+          "id": "BUS-227-1",
+          "line": "227",
+          "bearing": 275,
+          "route_name": "Άνω Πετράλωνα – Άγ. Αρτέμιος",
+          "next_stop": "Μητρόπολη",
+          "eta_min": 4
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.7316,
+            37.9888
+          ]
+        },
+        "properties": {
+          "id": "BUS-A8-1",
+          "line": "Α8",
+          "bearing": 12,
+          "route_name": "Πολυτεχνείο – Ν. Ιωνία – Μαρούσι",
+          "next_stop": "Μουσείο",
+          "eta_min": 2
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.7305,
+            37.9808
+          ]
+        },
+        "properties": {
+          "id": "BUS-035-1",
+          "line": "035",
+          "bearing": 330,
+          "route_name": "Άνω Κυψέλη – Πετράλωνα – Ταύρος",
+          "next_stop": "Ομόνοια",
+          "eta_min": 5
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.7508,
+            37.9781
+          ]
+        },
+        "properties": {
+          "id": "BUS-608-1",
+          "line": "608",
+          "bearing": 55,
+          "route_name": "Γαλάτσι – Ακαδημία – Νεκρ. Ζωγράφου",
+          "next_stop": "Μέγαρο Μουσικής",
+          "eta_min": 3
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.7376,
+            37.976
+          ]
+        },
+        "properties": {
+          "id": "BUS-E14-1",
+          "line": "Ε14",
+          "bearing": 240,
+          "route_name": "Σύνταγμα – ΟΑΚΑ – Υπ. Παιδείας (Express)",
+          "next_stop": "Πλατεία Συντάγματος",
+          "eta_min": 1
+        }
+      }
+    ]
+  }
+}

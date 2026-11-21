@@ -36,3 +36,11 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `maplibre-gl` | `4.7.1` | BSD-3-Clause | Interactive map rendering (`web/citizen.html`, `web/operator.html`) | https://github.com/maplibre/maplibre-gl-js |
 | OpenStreetMap tiles | — | ODbL 1.0 | Basemap tiles (`© OpenStreetMap` attribution shown) | https://www.openstreetmap.org/copyright |
 | `axe-core` | `^4.10.0` | MPL-2.0 | Accessibility check dev dependency (`scripts/a11y_check.py`) | https://github.com/dequelabs/axe-core |
+
+## Open Data Sources (Offline Mocks & Snapshots)
+
+| Data Source | Snapshot / Access | Licence | Role | Source |
+|---|---|---|---|---|
+| Municipality of Athens Open Data Portal (CKAN) | Snapshot `2026-11-21` | CC BY 4.0 | Environmental sensor readings (`env-all-stations`), neighbourhood polygons & municipal districts (`neighbourhoods-athens`, `municipal-districts-athens`) used in `web/mock/env.json` and `web/mock/base.geojson` | https://opendata.cityofathens.gr |
+| OpenStreetMap (OSM API 0.6 / Nominatim) | Snapshot `2026-11-21` | ODbL 1.0 | Accessibility features (`web/mock/access.geojson`), Metro/Suburban station coordinates (`web/mock/transit.geojson`), central Athens hospital & pharmacy locations (`web/mock/health.geojson`), and arterial street corridors (`web/mock/base.geojson`) | https://www.openstreetmap.org/copyright |
+| Diavgeia OpenData API (Διαύγεια — Δήμος Αθηναίων, org `6013`) | Verified `2026-11-21` | Greek Public Sector Open Data (Law 4727/2020) | Real Municipality of Athens public-works decision metadata (ADA, contractor, payment amount, ADAM, contract date) in `web/mock/works.geojson` | https://diavgeia.gov.gr/opendata |
