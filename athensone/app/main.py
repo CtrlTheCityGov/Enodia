@@ -515,8 +515,16 @@ def _confirmation_view(request_id: str) -> dict | None:
 
 def _equity_track_reopen(group: dict, report: dict) -> None:
     conf = report.get("confirmation")
-    asked = conf is not None or report.get("status") == "resolved"
-    reopened = bool(conf and conf.get("fixed") is False)
+    # --- T6: Confirmation points and reopen history ---
+    # Keep reopens recorded in sandbox history even after a later re-resolve resets confirmations.fixed
+    # (source: docs/TASKS.md T6 card & docs/DECISIONS.md A-6; certainty: verified).
+    reopened_in_history = any(
+        isinstance(h, dict) and h.get("note") == REOPEN_NOTE
+        for h in (report.get("history") or [])
+    )
+    reopened = bool(conf and conf.get("fixed") is False) or reopened_in_history
+    asked = conf is not None or report.get("status") == "resolved" or reopened
+    # --- /T6 ---
     group["_t1_asked"] = group.get("_t1_asked", 0) + int(asked)
     group["_t1_reopened"] = group.get("_t1_reopened", 0) + int(reopened)
 
@@ -525,6 +533,29 @@ def _equity_finalize_reopen(group: dict) -> None:
     asked = group.pop("_t1_asked", 0)
     reopened = group.pop("_t1_reopened", 0)
     group["reopen_rate"] = round(reopened / asked, 2) if asked else None
+
+
+# --- T6: Confirmation points and reopen history ---
+# Action & verifier for the +5 fix-confirmation points grant
+# (source: docs/TASKS.md T6 card, docs/DECISIONS.md A-4 & A-17, app/points.py ACTION_POINTS["fix_confirmed"]=5; certainty: verified).
+CONFIRM_POINTS_ACTION = "fix_confirmed"
+CONFIRM_POINTS_VERIFIED_BY = "system"
+
+
+def _grant_confirm_points(request: Request, request_id: str, district: str | None) -> bool:
+    """Grant +5 fix_confirmed points only when the caller's ao_token matches the reporter's stored token (A-17)."""
+    caller = request.cookies.get(points.COOKIE_NAME)
+    reporter = store.get_report_account(request_id)
+    if not caller or not reporter or caller != reporter:
+        return False
+    return points.grant(
+        account=reporter,
+        action=CONFIRM_POINTS_ACTION,
+        ref_id=request_id,
+        verified_by=CONFIRM_POINTS_VERIFIED_BY,
+        district=district,
+    )
+# --- /T6 ---
 
 
 @app.post("/api/reports/{rid}/confirm")
@@ -563,6 +594,10 @@ async def confirm_report(
 
     store.record_confirmation(rid, fixed=fixed, photo=photo_name)
     merged = _merge(req)
+    # --- T6: Confirmation points and reopen history ---
+    if fixed:
+        _grant_confirm_points(request, rid, merged.get("district_name"))
+    # --- /T6 ---
     photo_url = f"{str(request.base_url).rstrip('/')}/photos/{photo_name}" if photo_name else None
     return {
         "request": merged,

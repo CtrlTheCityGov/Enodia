@@ -242,12 +242,15 @@ async function loadEquity() {
   const r = await api("/api/equity"), box = $("#equity");
   if (!r.items.length) { box.textContent = "Καμία αναφορά ακόμη."; return; }
   const t = document.createElement("table");
-  t.innerHTML = "<thead><tr><th scope='col'>Κοινότητα</th><th scope='col'>Αναφορές</th><th scope='col'>Επιλύθηκαν</th><th scope='col'>Ώρες έως 1η ενέργεια</th></tr></thead>";
+  // --- T6: Confirmation points and reopen history ---
+  t.innerHTML = "<thead><tr><th scope='col'>Κοινότητα</th><th scope='col'>Αναφορές</th><th scope='col'>Επιλύθηκαν</th><th scope='col'>Επανανοίγματα</th><th scope='col'>Ώρες έως 1η ενέργεια</th></tr></thead>";
   const tb = document.createElement("tbody");
   for (const g of r.items) { const tr = document.createElement("tr");
     for (const v of [g.district, g.reports, g.resolved_share == null ? "—" : Math.round(g.resolved_share * 100) + "%",
+                     g.reopen_rate == null ? "—" : Math.round(g.reopen_rate * 100) + "%",
                      g.median_hours_to_first_action ?? "—"]) { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }
     tb.appendChild(tr); }
+  // --- /T6 ---
   t.appendChild(tb); box.innerHTML = ""; box.appendChild(t);
   const n = document.createElement("p"); n.className = "muted"; n.textContent = `Όρια περιοχών: ${r.district_source}. Μεγάλες διαφορές = άνιση εξυπηρέτηση.`; box.appendChild(n);
 }
