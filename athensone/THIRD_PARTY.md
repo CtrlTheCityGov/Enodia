@@ -67,3 +67,11 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 |---|---|---|---|
 | OpenStreetMap via Overpass API | ODbL 1.0 (`© OpenStreetMap contributors`) | Static Athens Metro (M1/M2/M3) and Suburban Railway (Προαστιακός A1–A4) line geometries, official line colours, stations, and wheelchair/elevator tags (`scripts/fetch_transit.py` → `data/transit/static.json`) | https://overpass-api.de/api/interpreter |
 | OASA Telematics API | Public transit open telematics service by OASA S.A. (unverified formal licence file; accessed server-side only with 20 s cache, never redistributed as bulk dataset) | Live bus locations (`getBusLocation`) and stop arrival waits (`getStopArrivals`) in `app/transit_src.py` | https://telematics.oasa.gr/api/ |
+
+### B4: On-duty pharmacies and hospitals (`app/onduty_src.py`)
+
+| Source | Licence / Terms | Role | URL |
+|---|---|---|---|
+| Φαρμακευτικός Σύλλογος Αττικής (ΦΣΑ) | Public on-duty pharmacy directory (no formal open-data licence stated; cached daily, read-only attribution shown) | Daily on-duty pharmacies in Attica (`app/onduty_src.py`) | https://fsa-efimeries.gr/Home/FilteredHomeResults |
+| Υπουργείο Υγείας — Εφημερίες Νοσοκομείων Αττικής | Public government daily duty announcements (Greek public sector information; read-only attribution shown) | Daily on-duty hospital clinics/specialties (`app/onduty_src.py`) | https://www.moh.gov.gr/articles/citizen/efhmeries-nosokomeiwn/68-efhmeries-nosokomeiwn-attikhs |
+| OpenStreetMap / Nominatim | ODbL 1.0 (`© OpenStreetMap contributors`) | Curated hospital coordinates (`data/onduty/hospitals.json`) and cached address geocoding fallback (`app/onduty_src.py`) | https://nominatim.openstreetmap.org/search |
