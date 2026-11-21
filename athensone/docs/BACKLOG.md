@@ -14,3 +14,6 @@ Later improvements, not work to do now. Each with its reason.
   refuses, because unknown words count as a street name; needs a street gazetteer. Demo: ask by street name.
 - T9: `verify()` checks dates/amounts as a set per answer, so a rephraser could swap two real dates on the same card.
   Only matters with the optional rephrase on (off by default); fix by checking each sentence against its own field.
+- T5: when CenterFace runs and finds 0 faces, Haar isn't tried as a second check (by design: fewer false blurs).
+- T5: `test_original_never_on_disk` re-detects with threshold 0.5, not the app's 0.2 (blur still gives 0 at 0.2).
+- T5: CenterFace model licence (MIT, from memory): open the Star-Clouds/CenterFace LICENSE before the final push.

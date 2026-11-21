@@ -32,3 +32,6 @@
 - **A-16** T4 keeps partial street matching ("Ερμού" matches "Οδός Ερμού (τμήμα)").
 - **A-17** (advisor default, Evgenii may change) The +5 for confirming a fix goes only to the reporter's own token,
   once per report. Stops anyone farming +5 by confirming other people's reports.
+- **A-19** ("ok continue") T5 CenterFace threshold 0.2 (deface CLI default): more recall on small or turned faces.
+- **A-20** ("ok continue") `deface` is installed by a separate README line, `pip install --no-deps deface==1.5.0`,
+  so `requirements.txt` can never pull OpenCV 5.
