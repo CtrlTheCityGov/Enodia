@@ -36,3 +36,11 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `maplibre-gl` | `4.7.1` | BSD-3-Clause | Interactive map rendering (`web/citizen.html`, `web/operator.html`) | https://github.com/maplibre/maplibre-gl-js |
 | OpenStreetMap tiles | — | ODbL 1.0 | Basemap tiles (`© OpenStreetMap` attribution shown) | https://www.openstreetmap.org/copyright |
 | `axe-core` | `^4.10.0` | MPL-2.0 | Accessibility check dev dependency (`scripts/a11y_check.py`) | https://github.com/dequelabs/axe-core |
+
+## External data sources (B4: on-duty pharmacies and hospitals)
+
+| Source | Licence / Terms | Role | URL |
+|---|---|---|---|
+| Φαρμακευτικός Σύλλογος Αττικής (ΦΣΑ) | Public on-duty pharmacy directory (no formal open-data licence stated; cached daily, read-only attribution shown) | Daily on-duty pharmacies in Attica (`app/onduty_src.py`) | https://fsa-efimeries.gr/Home/FilteredHomeResults |
+| Υπουργείο Υγείας — Εφημερίες Νοσοκομείων Αττικής | Public government daily duty announcements (Greek public sector information; read-only attribution shown) | Daily on-duty hospital clinics/specialties (`app/onduty_src.py`) | https://www.moh.gov.gr/articles/citizen/efhmeries-nosokomeiwn/68-efhmeries-nosokomeiwn-attikhs |
+| OpenStreetMap / Nominatim | ODbL 1.0 (`© OpenStreetMap contributors`) | Curated hospital coordinates (`data/onduty/hospitals.json`) and cached address geocoding fallback (`app/onduty_src.py`) | https://nominatim.openstreetmap.org/search |

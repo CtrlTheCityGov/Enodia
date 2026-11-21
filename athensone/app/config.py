@@ -53,3 +53,37 @@ CKAN_MODE = os.getenv("CKAN_MODE", "live").lower()
 # Source: TASKS.md T3 card (approved A-1); parsing matches MOCK above (line 22). Certainty: sure.
 HEAT_FORCE = os.getenv("HEAT_FORCE", "").lower() in ("1", "true", "yes")
 # --- /T3 ---
+
+# --- B4: On-duty pharmacies and hospitals ---
+# Source: Verified live 2026-11-21 — POST Date=YYYY-MM-DD&IsOpen=false returns HTML cards for Attica.
+# Certainty: sure (HTTP 200 verified).
+ONDUTY_PHARMACIES_URL = os.getenv(
+    "ONDUTY_PHARMACIES_URL",
+    "https://fsa-efimeries.gr/Home/FilteredHomeResults",
+)
+# Source: Verified live 2026-11-21 — Ministry of Health Attica daily hospital duty index (?fdl=<id> .doc).
+# Certainty: sure (HTTP 200 verified).
+ONDUTY_HOSPITALS_URL = os.getenv(
+    "ONDUTY_HOSPITALS_URL",
+    "https://www.moh.gov.gr/articles/citizen/efhmeries-nosokomeiwn/68-efhmeries-nosokomeiwn-attikhs",
+)
+# Source: OpenStreetMap Nominatim search API (verified live HTTP 200 on 2026-11-21; ODbL 1.0).
+# Certainty: sure.
+ONDUTY_GEOCODE_URL = os.getenv(
+    "ONDUTY_GEOCODE_URL",
+    "https://nominatim.openstreetmap.org/search",
+)
+# Source: TASKS_B.md B4 card ("once a day, cached") -> 86400 s = 24 hours. Certainty: sure.
+ONDUTY_TTL_S = int(os.getenv("ONDUTY_TTL_S", "86400"))
+# Source: TASKS_B.md Common to B2-B5 ("httpx with a 10 s timeout"). Certainty: sure.
+ONDUTY_TIMEOUT_S = float(os.getenv("ONDUTY_TIMEOUT_S", "10"))
+# Source: OpenStreetMap Nominatim Usage Policy requires an identifying User-Agent header. Certainty: sure.
+ONDUTY_USER_AGENT = os.getenv(
+    "ONDUTY_USER_AGENT",
+    "AthensOne/0.1 (Apps4Athens 3.0 hackathon)",
+)
+# Greater Athens WGS84 bounding box (min_lon, min_lat, max_lon, max_lat) used to keep Attica-wide
+# FSA pharmacy results scoped to metropolitan Athens.
+# Source: TASKS_B.md B0/B4 bounds (lon 23.60-23.90, lat 37.85-38.15). Certainty: sure.
+ONDUTY_BBOX = (23.60, 37.85, 23.90, 38.15)
+# --- /B4 ---
