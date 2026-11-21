@@ -90,6 +90,18 @@
   <section class="card hidden" id="statusCard" aria-live="polite">
     <h2>Η αναφορά σας <span id="statusBadge" class="badge"></span></h2>
     <ul class="timeline" id="timeline"></ul>
+    <!-- --- T1: "Is it fixed?" loop --- -->
+    <div id="confirmBox" class="hidden" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+      <p id="confirmPrompt"><b>Διορθώθηκε το πρόβλημα;</b></p>
+      <div id="confirmActions" class="row wrap" style="margin-top:6px">
+        <button id="confirmYes" type="button" class="good">✔ Ναι, διορθώθηκε</button>
+        <button id="confirmNo" type="button" class="bad">✖ Όχι ακόμη</button>
+        <input id="confirmPhoto" type="file" accept="image/*" capture="environment" class="hidden" aria-label="Φωτογραφία επιβεβαίωσης (προαιρετική)">
+        <button id="confirmNoPhoto" type="button" class="ghost">📷 Όχι, με φωτογραφία</button>
+      </div>
+      <p id="confirmMsg" class="muted" aria-live="polite"></p>
+    </div>
+    <!-- --- end T1 --- -->
   </section>
 </main>
 <footer><a href="ai-register.html">Πώς χρησιμοποιούμε την AI</a> · <a href="operator.html">Οθόνη Δήμου</a></footer>
@@ -379,8 +391,53 @@ async function pollStatus() {
     $("#timeline").appendChild(li); }
   if (lastStatus && lastStatus !== r.status) { toast("Ενημέρωση: " + (STATUS_EL[r.status] || r.status)); speak(STATUS_EL[r.status] || ""); }
   if (r.status !== lastStatus && ["resolved", "rejected"].includes(r.status)) { await loadHazards(); if (dest) drawRoute(); }
+  // --- T1: "Is it fixed?" loop ---
+  renderConfirm(r);
+  // --- end T1 ---
   lastStatus = r.status;
 }
+
+// --- T1: "Is it fixed?" loop ---
+let confirmBusy = false;
+function renderConfirm(r) {
+  const box = $("#confirmBox"), actions = $("#confirmActions"), prompt = $("#confirmPrompt"), msg = $("#confirmMsg");
+  if (r.status === "resolved") {
+    box.classList.remove("hidden");
+    const answeredYes = r.confirmation && r.confirmation.answered_at && r.confirmation.fixed === true;
+    actions.classList.toggle("hidden", !!answeredYes);
+    prompt.classList.toggle("hidden", !!answeredYes);
+    msg.textContent = answeredYes ? "Ευχαριστούμε! Επιβεβαιώσατε ότι το πρόβλημα διορθώθηκε." : "";
+  } else {
+    box.classList.add("hidden");
+    msg.textContent = "";
+  }
+}
+async function sendConfirm(fixed, file) {
+  if (!myReport || confirmBusy) return;
+  confirmBusy = true;
+  for (const id of ["#confirmYes", "#confirmNo", "#confirmNoPhoto"]) $(id).disabled = true;
+  $("#confirmMsg").textContent = file ? "Θόλωμα προσώπων και αποστολή…" : "Αποστολή επιβεβαίωσης…";
+  try {
+    const fd = new FormData();
+    fd.append("fixed", fixed ? "true" : "false");
+    if (file) fd.append("photo", file);
+    await api(`/api/reports/${myReport}/confirm`, { method: "POST", body: fd });
+    const text = fixed
+      ? "Ευχαριστούμε! Επιβεβαιώσατε ότι διορθώθηκε."
+      : "Η αναφορά άνοιξε ξανά και το εμπόδιο επανήλθε στον χάρτη.";
+    toast(text); speak(text);
+    await loadHazards(); if (dest) await drawRoute();
+    await pollStatus();
+  } catch (e) { toast("Σφάλμα: " + e.message); $("#confirmMsg").textContent = ""; }
+  for (const id of ["#confirmYes", "#confirmNo", "#confirmNoPhoto"]) $(id).disabled = false;
+  $("#confirmPhoto").value = "";
+  confirmBusy = false;
+}
+$("#confirmYes").onclick = () => sendConfirm(true, null);
+$("#confirmNo").onclick = () => sendConfirm(false, null);
+$("#confirmNoPhoto").onclick = () => $("#confirmPhoto").click();
+$("#confirmPhoto").onchange = () => { const f = $("#confirmPhoto").files[0]; if (f) sendConfirm(false, f); };
+// --- end T1 ---
 
 api("/api/health").then(h => { $("#mode").textContent = h.mock ? "MOCK δεδομένα" : "AthensGov Sandbox · " + h.persona;
   $("#mode").classList.toggle("mock", h.mock); });
