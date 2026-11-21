@@ -272,6 +272,9 @@ def equity():
         g = groups.setdefault(d, {"district": d, "reports": 0, "resolved": 0, "first_action_h": []})
         g["reports"] += 1
         g["resolved"] += r.get("status") == "resolved"
+        # --- T1: "Is it fixed?" loop ---
+        _equity_track_reopen(g, r)
+        # --- end T1 ---
         hist = r.get("history") or []
         if len(hist) > 1:
             h = _hours(hist[0]["at"], hist[1]["at"])
@@ -282,6 +285,9 @@ def equity():
         hs = sorted(g.pop("first_action_h"))
         g["median_hours_to_first_action"] = round(hs[len(hs) // 2], 2) if hs else None
         g["resolved_share"] = round(g["resolved"] / g["reports"], 2) if g["reports"] else None
+        # --- T1: "Is it fixed?" loop ---
+        _equity_finalize_reopen(g)
+        # --- end T1 ---
         rows.append(g)
     rows.sort(key=lambda g: -g["reports"])
     return {"items": rows, "district_source": "AthensGov municipal-districts-athens" if ckan.enabled() else "off"}
@@ -400,12 +406,90 @@ def approve(rid: str, d: Decision | None = None):
 
 @app.post("/api/reports/{rid}/resolve")
 def resolve(rid: str):
-    return _merge(sb.update_request(rid, status="resolved", note="Το πρόβλημα αποκαταστάθηκε"))
+    updated = sb.update_request(rid, status="resolved", note="Το πρόβλημα αποκαταστάθηκε")
+    # --- T1: "Is it fixed?" loop ---
+    store.ask_confirmation(rid)
+    # --- end T1 ---
+    return _merge(updated)
 
 
 @app.post("/api/reports/{rid}/reject")
 def reject(rid: str, d: Decision | None = None):
     return _merge(sb.update_request(rid, status="rejected", note=(d.note if d and d.note else "Απορρίφθηκε από υπάλληλο")))
+
+
+# --- T1: "Is it fixed?" loop ---
+# Reopen note text (source: docs/TASKS.md T1 card; certainty: exact spec).
+REOPEN_NOTE = "Ο πολίτης αναφέρει ότι δεν διορθώθηκε"
+# Maximum confirmation photo size in bytes: 15 MB (source: matches /api/report upload cap in app/main.py; certainty: high).
+CONFIRM_MAX_PHOTO_BYTES = 15 * 1024 * 1024
+
+
+def _confirmation_view(request_id: str) -> dict | None:
+    conf = store.get_confirmation(request_id)
+    if conf and conf.get("photo"):
+        conf["photo_url"] = f"/photos/{conf['photo']}"
+    return conf
+
+
+def _equity_track_reopen(group: dict, report: dict) -> None:
+    conf = report.get("confirmation")
+    asked = conf is not None or report.get("status") == "resolved"
+    reopened = bool(conf and conf.get("fixed") is False)
+    group["_t1_asked"] = group.get("_t1_asked", 0) + int(asked)
+    group["_t1_reopened"] = group.get("_t1_reopened", 0) + int(reopened)
+
+
+def _equity_finalize_reopen(group: dict) -> None:
+    asked = group.pop("_t1_asked", 0)
+    reopened = group.pop("_t1_reopened", 0)
+    group["reopen_rate"] = round(reopened / asked, 2) if asked else None
+
+
+@app.post("/api/reports/{rid}/confirm")
+async def confirm_report(
+    rid: str,
+    request: Request,
+    fixed: bool = Form(...),
+    photo: UploadFile | None = File(None),
+):
+    """Citizen confirms whether a resolved report was actually fixed (FixMyStreet-style state loop)."""
+    try:
+        req = sb.get_request(rid)
+    except SandboxError as exc:
+        if str(exc).startswith("404"):
+            raise HTTPException(404, "report not found")
+        raise
+
+    photo_name: str | None = None
+    faces_blurred = 0
+    if photo is not None:
+        raw = await photo.read()
+        if raw:
+            if len(raw) > CONFIRM_MAX_PHOTO_BYTES:
+                raise HTTPException(413, "photo too large")
+            try:
+                processed = privacy.process_photo(raw)
+            except Exception:
+                raise HTTPException(400, "not a readable image")
+            photo_name = f"{uuid.uuid4().hex}.jpg"
+            # Only the blurred, EXIF-free JPEG is ever written to disk.
+            (config.PHOTO_DIR / photo_name).write_bytes(processed["jpeg"])
+            faces_blurred = processed["faces"]
+
+    if not fixed:
+        req = sb.update_request(rid, status="in_progress", note=REOPEN_NOTE)
+
+    store.record_confirmation(rid, fixed=fixed, photo=photo_name)
+    merged = _merge(req)
+    photo_url = f"{str(request.base_url).rstrip('/')}/photos/{photo_name}" if photo_name else None
+    return {
+        "request": merged,
+        "confirmation": merged["confirmation"],
+        "photo_url": photo_url,
+        "faces_blurred": faces_blurred,
+    }
+# --- end T1 ---
 
 
 def _merge(r: dict) -> dict:
@@ -414,6 +498,9 @@ def _merge(r: dict) -> dict:
         local["photo_url"] = f"/photos/{local['photo']}"
         local["needs_check"] = local["confidence"] < config.CONFIDENCE_THRESHOLD
     r["local"] = local
+    # --- T1: "Is it fixed?" loop ---
+    r["confirmation"] = _confirmation_view(r["id"])
+    # --- end T1 ---
     # Stoa: is there a public works record here that could still be under the contractor's guarantee?
     cat = (local or {}).get("category") or r.get("category") or r.get("category_name")
     try:

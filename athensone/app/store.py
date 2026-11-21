@@ -50,6 +50,9 @@ def all_reports():
 def clear():
     with _lock:
         _conn.execute("DELETE FROM reports")
+        # --- T1: "Is it fixed?" loop ---
+        _conn.execute("DELETE FROM confirmations")
+        # --- end T1 ---
         _conn.commit()
 
 
@@ -58,3 +61,67 @@ def _row(r):
     d["ai"] = json.loads(d.pop("ai_json") or "{}")
     d["accessibility_blocker"] = bool(d["accessibility_blocker"])
     return d
+
+
+# --- T1: "Is it fixed?" loop ---
+# Sandbox only tracks submitted/received/in_progress/resolved/rejected, so citizen
+# confirmation state lives in SQLite (source: docs/TASKS.md T1, sure).
+from datetime import datetime, timezone  # noqa: E402
+
+_conn.execute(
+    """CREATE TABLE IF NOT EXISTS confirmations (
+        request_id TEXT PRIMARY KEY,
+        asked_at TEXT NOT NULL,
+        answered_at TEXT,
+        fixed INTEGER,
+        photo TEXT
+    )"""
+)
+_conn.commit()
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _conf_row(r: sqlite3.Row) -> dict:
+    d = dict(r)
+    d["fixed"] = None if d["fixed"] is None else bool(d["fixed"])
+    return d
+
+
+def ask_confirmation(request_id: str) -> dict:
+    now = _now_iso()
+    with _lock:
+        _conn.execute(
+            "INSERT OR REPLACE INTO confirmations (request_id, asked_at, answered_at, fixed, photo) "
+            "VALUES (?, ?, NULL, NULL, NULL)",
+            (request_id, now),
+        )
+        _conn.commit()
+    return get_confirmation(request_id)
+
+
+def record_confirmation(request_id: str, fixed: bool, photo: str | None = None) -> dict:
+    now = _now_iso()
+    with _lock:
+        existing = _conn.execute(
+            "SELECT asked_at FROM confirmations WHERE request_id=?", (request_id,)
+        ).fetchone()
+        asked_at = existing["asked_at"] if existing else now
+        _conn.execute(
+            "INSERT OR REPLACE INTO confirmations (request_id, asked_at, answered_at, fixed, photo) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (request_id, asked_at, now, int(fixed), photo),
+        )
+        _conn.commit()
+    return get_confirmation(request_id)
+
+
+def get_confirmation(request_id: str) -> dict | None:
+    row = _conn.execute(
+        "SELECT request_id, asked_at, answered_at, fixed, photo FROM confirmations WHERE request_id=?",
+        (request_id,),
+    ).fetchone()
+    return _conf_row(row) if row else None
+# --- end T1 ---
