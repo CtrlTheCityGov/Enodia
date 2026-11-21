@@ -3,6 +3,7 @@
 // Every read tries, in this order (SPEC «Offline fallback» 3):
 //   1. live:  our backend under /api/map/… (A-33), 5 s timeout, cookie identity only (A-34)
 //   2. cache: the last good live answer for the same URL, kept in localStorage
+//      (not for stoaAsk and routing: their request holds the user's question and position, A-38)
 //   3. mock:  the snapshot file in web/mock/
 // and resolves to the SPEC shape plus a top-level `source: "live" | "cache" | "mock"`.
 // Writes (sendReport, redeem) never fall back to fake data.
@@ -82,6 +83,32 @@ export class OfflineError extends Error {
   }
 }
 
+// Thrown by sendReport when the server answered and said no (a 4xx other than 404: daily cap,
+// bad photo, ...). Not offline: the caller shows the reason instead of queueing (A-38).
+export class RejectedError extends Error {
+  constructor(status, detail) {
+    super(`rejected: HTTP ${status}`);
+    this.name = "RejectedError";
+    this.status = status;   // the HTTP status, e.g. 429
+    this.detail = detail;   // the server's `detail` (FastAPI's error field), or null if none
+  }
+}
+
+// A non-2xx answer from liveJson, with the status and the server's `detail`.
+class HttpError extends Error {
+  constructor(status, detail) {
+    super(`HTTP ${status}`);
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+// A-38: a 4xx other than 404 is the server rejecting the request. Everything else that fails
+// (network error, timeout, 404 = endpoint not merged yet, 5xx) counts as offline.
+function isRejection(err) {
+  return err instanceof HttpError && err.status >= 400 && err.status < 500 && err.status !== 404;
+}
+
 // ---------- low-level helpers ----------
 
 // One live request. Resolves to the parsed JSON body; rejects on a network error, a timeout
@@ -101,7 +128,16 @@ async function liveJson(path, init = {}) {
       credentials: "same-origin", // the ao_token cookie is the identity (A-34)
       signal: controller ? controller.signal : undefined,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      let detail = null;
+      try {
+        const body = await res.json();
+        if (body && body.detail !== undefined) detail = body.detail;
+      } catch {
+        // no JSON body: detail stays null
+      }
+      throw new HttpError(res.status, detail);
+    }
     return res.json();
   })();
   try {
@@ -159,18 +195,17 @@ function postJson(body) {
 //   path:     live URL path + query; also the cache key
 //   init:     fetch options (POST body)
 //   fallback: async () => the mock answer (without `source`)
-async function read(key, path, init, fallback) {
-  // Same URL and same POST body = same cache entry.
-  const cacheKey = init && init.body ? `${path} ${init.body}` : path;
+//   cache:    false = skip the cache step entirely (stoaAsk, routing: A-38)
+async function read(key, path, init, fallback, { cache = true } = {}) {
   try {
     const data = await liveJson(path, init);
-    writeCache(cacheKey, data);
+    if (cache) writeCache(path, data);
     report(key, "live");
     return { ...data, source: "live" };
   } catch {
     // fall through to the cache
   }
-  const cached = readCache(cacheKey);
+  const cached = cache ? readCache(path) : null;
   if (cached) {
     report(key, "cache");
     return { ...cached, source: "cache" };
@@ -212,15 +247,17 @@ export function points() {
 }
 
 // center = [lon, lat]; history = earlier turns of the chat.
+// Never cached: question and center would sit on the device (A-38). Offline -> mock/stoa.json.
 export function stoaAsk(question, center, history = []) {
   return read("stoa", "/api/map/stoa_ask", postJson({ question, center, history }),
-    () => stoaFromMock(question));
+    () => stoaFromMock(question), { cache: false });
 }
 
 // from, to = [lon, lat]; profile = "wheelchair" | "stroller" | "cool".
+// Never cached: from and to are the user's position and destination (A-38). Offline -> straight line.
 export function routing(from, to, profile) {
   return read("routing", "/api/map/routing", postJson({ from, to, profile }),
-    async () => straightLine(from, to));
+    async () => straightLine(from, to), { cache: false });
 }
 
 // Mock-only files (card B1): always source "mock".
@@ -240,6 +277,7 @@ export async function base() {
 
 // fields = {category, lon, lat, note, work_id?, photo?} (SPEC: multipart). Rejects with
 // OfflineError when the backend can't be reached; the caller queues it (SPEC «Offline fallback» 5).
+// Rejects with RejectedError {status, detail} when the server says no (A-38); the caller shows why.
 export async function sendReport(fields) {
   const form = new FormData();
   for (const [name, value] of Object.entries(fields || {})) {
@@ -250,7 +288,8 @@ export async function sendReport(fields) {
   let data;
   try {
     data = await liveJson("/api/map/reports", { method: "POST", body: form });
-  } catch {
+  } catch (err) {
+    if (isRejection(err)) throw new RejectedError(err.status, err.detail);
     throw new OfflineError();
   }
   report("sendReport", "live");
@@ -258,11 +297,13 @@ export async function sendReport(fields) {
 }
 
 // Offline the answer is {ok: false, error: "offline"}: a voucher is never invented.
+// Rejected by the server (A-38): {ok: false, error: "rejected", status, detail}.
 export async function redeem(rewardId) {
   let data;
   try {
     data = await liveJson("/api/map/points/redeem", postJson({ reward_id: rewardId }));
-  } catch {
+  } catch (err) {
+    if (isRejection(err)) return { ok: false, error: "rejected", status: err.status, detail: err.detail };
     return { ok: false, error: "offline" };
   }
   report("redeem", "live");
