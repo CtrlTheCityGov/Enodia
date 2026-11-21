@@ -160,3 +160,37 @@ From the T4 review. **Files:** `app/stoa_ask.py`, `tests/test_T9_fix_t4.py`.
 | `test_dropped_guarantee_wording_falls_back` | rephraser removes "πιθανώς εντός" | template returned |
 | `test_abbreviation_not_split` | contractor name with "Α.Ε." | every sentence still ends with `[ΑΔΑ …]` |
 | `test_unknown_street_with_known_type_refuses` | "Οδός Ανύπαρκτη πεζοδρόμιο" | the refusal text |
+
+## Real-data round
+
+| Task | Owner | State |
+|---|---|---|
+| T10 City districts and air stations from CKAN | E | approved (advisor default A-21), running |
+
+### T10: City districts and air stations from CKAN (owner E)
+Checked live on Sat 21 Nov: all 5 datasets answer, and `env-all-stations` has fresh rows (AQI, temperature, PM) up to
+today, but `air_latest()` returns 0 stations and `district_of()` returns None. Why: the station registry has no
+coordinates (only address, `neighbourhood_id`, `municipal_district_id`); the districts dataset has only `id` and
+`name`, no geometry. The geometry is in `neighbourhoods-athens` (datastore `0283af02-…`, 144 rows): `polygon_geo` as
+**WKT** (`POLYGON ((lon lat, …))`), `position_lat`/`position_lon` (centre) and `municipal_district_id`. All values
+come back as strings.
+**Files:** `app/ckan.py`, `tests/test_T10_ckan_geo.py`, `tests/fixtures/ckan/` (new, small hand-made fixtures).
+- `_geom()` also parses WKT `POINT`, `POLYGON`, `MULTIPOLYGON` strings.
+- `district_of(lat, lng)`: neighbourhood polygon containing the point → its `municipal_district_id` → the district
+  `name` from `municipal-districts-athens`. Keep the old path for a dataset that does ship geometry.
+- Env stations without coordinates get their neighbourhood's `position_lat`/`position_lon` and
+  `"location": "neighbourhood_centre"` (A-21), so screens can say "περίπου". Stations with real coordinates get
+  `"location": "exact"`.
+- Numbers that arrive as strings are converted (`_num`).
+- Tests fake `ckan._call` / `_fetch_url` (monkeypatch) with fixtures; no network.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_wkt_polygon_parsed` | `"POLYGON ((23.74 37.96, 23.75 37.96, 23.75 37.97, 23.74 37.96))"` | GeoJSON Polygon with those rings |
+| `test_wkt_multipolygon_parsed` | a 2-part MULTIPOLYGON | GeoJSON MultiPolygon, 2 parts |
+| `test_district_of_point_in_neighbourhood` | fixture neighbourhood (district 2) around Plateia Varnava 37.9667, 23.7437 | "2ο Δημοτικό Διαμέρισμα Αθήνας" |
+| `test_district_of_point_outside` | a point outside every fixture polygon | None, no error |
+| `test_station_placed_at_neighbourhood_centre` | registry row with no coordinates, neighbourhood with centre | station lat/lng = centre, `location` "neighbourhood_centre" |
+| `test_air_latest_has_items` | fixtures: 2 stations, 4 measurement rows | 2 items, newest row per station, `temp_c` and `aqi` numbers |
+| `test_nearest_air_varnava` | fixture station centre 0.5 km from Varnava | that station, `distance_km` ≈ 0.5 |
+| `test_station_without_neighbourhood_skipped` | registry row whose neighbourhood is unknown | not in items, no error |

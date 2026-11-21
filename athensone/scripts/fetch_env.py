@@ -38,7 +38,9 @@ def main():
     ap.add_argument("--bbox", default="37.955,23.690,38.020,23.780", help="south,west,north,east")
     ap.add_argument("--out", default="data/env/features.json")
     a = ap.parse_args()
-    r = httpx.post(OVERPASS, data={"data": Q.format(b=a.bbox)}, timeout=200)
+    # Overpass answers 406 to clients without a User-Agent (seen Sat 21 Nov 2026); a generic one is enough.
+    headers = {"User-Agent": "AthensOne/0.1 (Apps4Athens hackathon prototype)", "Accept": "application/json"}
+    r = httpx.post(OVERPASS, data={"data": Q.format(b=a.bbox)}, headers=headers, timeout=200)
     r.raise_for_status()
     f = {k: [] for k in ("tree", "park", "bench", "drinking_water", "toilets_wheelchair", "busy_road", "accessible_place")}
     for e in r.json()["elements"]:

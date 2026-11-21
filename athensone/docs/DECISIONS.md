@@ -35,3 +35,6 @@
 - **A-19** ("ok continue") T5 CenterFace threshold 0.2 (deface CLI default): more recall on small or turned faces.
 - **A-20** ("ok continue") `deface` is installed by a separate README line, `pip install --no-deps deface==1.5.0`,
   so `requirements.txt` can never pull OpenCV 5.
+- **A-21** (advisor default, Evgenii may change) Air stations with no coordinates in the City registry are placed at
+  their neighbourhood's centre and flagged `"location": "neighbourhood_centre"` ("περίπου" on screen). Rejected:
+  geocoding each address through Nominatim (outside service, rate limits, more to explain).
