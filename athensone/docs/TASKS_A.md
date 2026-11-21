@@ -16,12 +16,12 @@ criteria and recorded in the code report.
 
 | Task | Phase | State |
 |---|---|---|
-| A0 Skeleton + test harness | 0 | card, needs approval |
-| A1 Map core: 3D, Light/Dark, offline style | 1 | card, needs approval |
-| A2 Six layers + pill bar | 2 | card, needs approval |
-| A3 Φούσκα έργου | 2 | card, needs approval |
-| A4 Routing drawer + animated route | 2 | card, needs approval |
-| A5 Mobile layout, reasons highlight, smooth buses | 3 | idea, card later |
+| A0 Skeleton + test harness | 0 | done (merged into dev-a) |
+| A1 Map core: 3D, Light/Dark, offline style | 1 | done (merged into dev-a) |
+| A2 Six layers + pill bar | 2 | done (merged into dev-a) |
+| A3 Φούσκα έργου | 2 | done (merged into dev-a) |
+| A4 Routing drawer + animated route | 2 | done (merged into dev-a) |
+| A5 Mobile layout, reasons highlight, smooth buses, A-35 bus | 3 | done (merged into dev-a) |
 
 ### A0: Skeleton + test harness (phase 0)
 The folder layout of SPEC «Αρχιτεκτονική», empty but loading, so both devs can start in separate files.
@@ -127,3 +127,31 @@ SPEC F5, «Routing», HUD «Κάτω κέντρο». Route cost per profile is D
 | `test_fit_bounds_padding_leaves_drawer` | drawer 300 px high | `fitBounds` bottom padding ≥ 324 |
 | `test_route_label` | 1 520 m, 1 260 s, two reasons | «21′ · 1,5 km · αποφεύγει 2 έργα, −2°C σκιά» |
 | `test_route_label_no_reasons` | `reasons: []` | duration and distance only, no dangling separator |
+
+### A5: Mobile 390 px layout, reasons highlight, smooth buses & A-35 bus (phase 3)
+SPEC Phase 3 («Κινητό layout, highlight των reasons στον χάρτη, λεία κίνηση λεωφορείων»), F6 `flyTo` + temporary highlight, Acceptance criterion (390 px mobile layout without HUD overlaps), `A-35` (approved by Αναστάσης: `mount({ map, api, root, bus })` + shared `EventTarget` `bus`), `A-37` (`pm25` env weighting), plus pre-freeze review leftovers (WCAG 2.5.3 `#theme-toggle`, `routing.js` `localStorage`/race guards, `workpopup.js` corner tips).
+**Files:** `web/css/hud.css`, `web/citizen.html`, `web/js/main.js`, `web/js/map.js`, `web/js/layers/transit.js`, `web/js/layers/env.js`, `web/js/ui/routing.js`, `web/js/ui/workpopup.js`, `web/tests/A5_polish.test.js`.
+- **Smooth bus movement (`layers/transit.js`):** export `interpolateBuses(prevFC, nextFC, t)` (linear interpolation for buses matching by `properties.id`/`id`; new buses pass straight through); when a 20 s bus poll returns new positions, animate smoothly via `requestAnimationFrame` and cancel any in-flight rAF when a newer poll arrives or buses are toggled off.
+- **Route `reasons` highlight (`ui/routing.js`):** export `highlightReasons(map, reasons, lookup)`; draws/updates a dedicated highlight layer (`route-reasons-highlight`) for returned `reasons[{text, layer, feature_id}]`, clears it when `reasons` is empty or route clears, and restores it across `style.load`.
+- **Shared `EventTarget` `bus` & Dev B `mount(ctx)` (`main.js`, `ui/workpopup.js`, `ui/routing.js`, per `A-35`):**
+  - `main.js` creates `const bus = new EventTarget()`, mounts loaded Dev B UI modules (`points.js`, `report.js`, `stoa.js`, `workstab.js`) with `mod.mount({ map, api, root, bus })` when `typeof mod?.mount === "function"`, and loads offline base geometry from `api.offlineBase?.()` / `api.base?.()` into `state.offlineGeo` (no direct `fetch`).
+  - `bus` event `map:flyto` (`{ lon, lat, label }`) → `map.flyTo({ center: [lon, lat], zoom: 17, pitch: 60 })` + temporary highlight marker/layer.
+  - `bus` event `route:request` (`{ to: [lon, lat] }`) → sets destination in `routing.js` and triggers route calculation.
+  - `workpopup.js` «Ανέφερε πρόοδο» dispatches `new CustomEvent("report:open", { detail: { work_id } })` on `bus` (in addition to `reportModule` fallback) and renders the button when `bus` or `reportModule` is available.
+- **Mobile 390 px HUD layout (`hud.css`, `ui/routing.js`):** at `<= 600 px` (including 390 px), zero overlap across `#hud-tabs`, `#hud-points`, `#hud-layerbar`, `#hud-offline`, `#hud-report`, `#hud-routing`, `#hud-stoa` (routing drawer collapses cleanly on narrow screens; safe margins for bottom-left `+` and bottom-right Stoa bubble).
+- **Pre-freeze polish:**
+  - Fix WCAG 2.5.3 `label-content-name-mismatch` on `#theme-toggle` in `citizen.html` (remove mismatched static `aria-label` so visible Greek label is the accessible name, or include visible text).
+  - Support `"pm25"` mode in `layers/env.js` alongside `"temp"` and `"aqi"` (`A-37`).
+  - Fix `routing.js` review leftovers: access `globalThis.localStorage` inside `try/catch` (sandboxed iframe `SecurityError`), and ignore stale out-of-order async `api.routing()` responses via a request sequence counter.
+  - Theme MapLibre corner-anchor popup tips (`-top-left`, `-top-right`, `-bottom-left`, `-bottom-right`) in `hud.css`.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_bus_interpolation_midpoint` | previous & next bus FeatureCollections, `t = 0.5` | matching bus `id` at exact midpoint `[lon, lat]`; newly appearing bus passed through unchanged |
+| `test_bus_animation_stops_on_toggle_off` | mocked rAF, poll updates buses then toggle off | `cancelAnimationFrame` called and no further `setData` updates after toggle off |
+| `test_reasons_highlight_renders_matching_features` | `highlightReasons(map, reasons, lookup)` then `[]` | adds/populates `route-reasons-highlight` layer with matched features; clears to 0 features on `[]` |
+| `test_bus_flyto_moves_map_to_spec_camera` | dispatch `map:flyto` `{ lon, lat, label }` on `bus` | `map.flyTo` called with `{ center: [lon, lat], zoom: 17, pitch: 60 }` |
+| `test_bus_mounts_dev_b_ui_modules` | fake Dev B module exporting `mount(ctx)` | `bootstrap()` calls `mount({ map, api, root, bus })` with an `EventTarget` `bus` |
+| `test_workpopup_dispatches_report_open_on_bus` | popup with `bus`, click «Ανέφερε πρόοδο» | `report:open` event dispatched on `bus` with `detail.work_id` |
+| `test_theme_toggle_wcag_label_in_name` | read `web/citizen.html` `#theme-toggle` | no `aria-label` that omits the visible Greek button text (WCAG 2.5.3) |
+| `test_routing_ignores_stale_async_response_and_storage_security_error` | throwing `localStorage` getter + slow req #1 resolving after fast req #2 | no uncaught `SecurityError`; req #2 route stays drawn and req #1 is ignored |
