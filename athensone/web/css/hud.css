@@ -196,3 +196,107 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* --- A2 --- */
+/* Layer toggle pill bar & chips (SPEC.md "HUD (glassmorphism)", TASKS_A.md A2). */
+.layerbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.layerbar::-webkit-scrollbar {
+  display: none;
+}
+
+.layer-chip {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 7px 12px;
+  border-radius: var(--glass-radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.layer-chip:hover {
+  background: var(--hud-hover-bg);
+}
+
+.layer-chip:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+/* Active chip fills chosen for >= 5.0:1 WCAG AA contrast against white text (certainty: design default). */
+.layer-chip.is-active,
+.layer-chip[aria-pressed="true"] {
+  background: var(--hud-active-bg);
+  color: #ffffff;
+}
+
+.layer-chip[data-layer="env"].is-active,
+.layer-chip[data-layer="env"][aria-pressed="true"] {
+  background: #b45309;
+  color: #ffffff;
+}
+
+.layer-chip[data-layer="access"].is-active,
+.layer-chip[data-layer="access"][aria-pressed="true"] {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.layer-chip[data-layer="works"].is-active,
+.layer-chip[data-layer="works"][aria-pressed="true"] {
+  background: #c2410c;
+  color: #ffffff;
+}
+
+.layer-chip[data-layer="transit-buses"].is-active,
+.layer-chip[data-layer="transit-buses"][aria-pressed="true"] {
+  background: #0369a1;
+  color: #ffffff;
+}
+
+/* Official Athens Metro M3 blue (source: A2 prompt & STASY branding, certainty: verified in prompt; 5.9:1 with white). */
+.layer-chip[data-layer="transit-rail"].is-active,
+.layer-chip[data-layer="transit-rail"][aria-pressed="true"] {
+  background: #0066b3;
+  color: #ffffff;
+}
+
+.layer-chip[data-layer="health"].is-active,
+.layer-chip[data-layer="health"][aria-pressed="true"] {
+  background: #15803d;
+  color: #ffffff;
+}
+
+/* Horizontal scroll under 600 px without overlapping top-left tabs or top-right points (TASKS_A.md A2, SPEC.md). */
+@media (max-width: 600px) {
+  #hud-layerbar.hud-top-center {
+    top: calc(var(--hud-gap) * 2 + var(--hud-top-row-height));
+    left: var(--hud-gap);
+    right: var(--hud-gap);
+    transform: none;
+    max-width: calc(100vw - 2 * var(--hud-gap));
+    display: flex;
+    overflow-x: auto;
+  }
+
+  #hud-offline {
+    top: calc(var(--hud-gap) * 3 + var(--hud-top-row-height) * 2);
+  }
+}
+/* --- /A2 --- */
