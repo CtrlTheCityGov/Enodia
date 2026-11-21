@@ -8,7 +8,7 @@ Board and cards. The main checkout's copy is current. Workflow and rules: `../..
 | T2 Points wallet, earn side | B | approved, on integrate |
 | T3 Heat alert banner | C | approved, on integrate |
 | T4 Ask Stoa, cited answers | D | approved, on integrate |
-| T5 Better face blur | B | waiting: deface dependency needs approval (Q-1) |
+| T5 Better face blur | B | approved (A-18), running |
 
 Baseline before T1–T4: `8 passed` (Python 3.14, offline test command).
 

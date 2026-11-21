@@ -15,8 +15,7 @@
 
 ## Open
 
-- **Q-1** T5: add `deface` (MIT) as a dependency? It pulls onnxruntime (~large). Recommendation: yes, with the
-  OpenCV Haar fallback kept, only if T1–T4 are merged before ~02:00.
+- **A-18** (Sat 21 Nov, "do them") T5 approved: add `deface` 1.5.0 (MIT) with the OpenCV Haar fallback kept; it pulls onnxruntime.
 
 ## Sat 21 Nov, after the T1–T4 code ("continue" = advisor's recommendations accepted)
 
