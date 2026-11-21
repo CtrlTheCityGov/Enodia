@@ -48,3 +48,6 @@ Later improvements, not work to do now. Each with its reason.
 - B11: `works_map._open_reports()` counts sandbox requests only (not SQLite-only `work_progress` rows in `map_reports`);
   `routing_map._open_reports()` reads legacy `store.all_reports()` rather than `map_reports`; offline queue `flush()` in
   `ui/report.js` emits `points:earned` on `bus` but not `report:created`.
+- B12: when the sandbox is down, `routing_map._open_reports()` drops linked `obstacle` map reports (missing `"submitted"`
+  default in `status.get(row["city_request_id"])`); duplicate `obstacle`/`damage` map reports within 50 m / 30 min have
+  `city_request_id = None` and increment `works_map` `reports_count`.
