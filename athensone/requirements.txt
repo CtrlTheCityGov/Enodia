@@ -7,3 +7,14 @@ opencv-python-headless>=4.9,<5   # 4.x ships the Haar face models we use
 numpy>=1.26
 python-dotenv>=1.0
 pytest>=8
+
+# --- T5: Better face blur ---
+# Do NOT put bare `deface==1.5.0` directly in this file: its package metadata pulls
+# `opencv-python` 5.x, which overwrites `cv2` and removes `cv2.CascadeClassifier`
+# (breaking the Haar fallback). Keep `opencv-python-headless>=4.9,<5` above and
+# install deface separately without its dependencies:
+#   pip install --no-deps deface==1.5.0
+# Runtime needs of `deface.centerface.CenterFace` are only `numpy` and `cv2` (above);
+# without `onnxruntime`, CenterFace automatically runs on OpenCV's `cv2.dnn` backend.
+scikit-image>=0.22               # offline face fixture in tests/test_T5_blur.py (BSD-3-Clause)
+# --- end T5 ---

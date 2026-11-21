@@ -1,11 +1,12 @@
 """Privacy proxy: runs BEFORE a photo is stored or sent to any AI model.
 
 1. Reads GPS from EXIF (to drop the map pin automatically, FixMyStreet-style).
-2. Blurs faces (OpenCV Haar cascades, frontal + profile).
+2. Blurs faces: CenterFace through 'deface' (MIT) first, OpenCV Haar cascades (frontal + profile)
+   as the fallback when deface is missing or fails (T5).
 3. Re-encodes the image as JPEG WITHOUT any EXIF (location, phone model, time are gone).
 
-Licence plates: not detected in this prototype. Production path: an open plate
-detector (or the open-source 'deface' / 'EgoBlur' models) at the same step.
+Licence plates: not detected in this prototype (deface does faces only). Production path:
+an open plate detector at the same step.
 """
 from __future__ import annotations
 
@@ -54,15 +55,54 @@ def _detect_faces(gray):
     return boxes
 
 
+# --- T5: Better face blur ---
+# CenterFace detection threshold: 0.2 matches deface 1.5.0 CLI `--thresh` default
+# (deface/deface.py); verified locally in the installed deface 1.5.0 package.
+CENTERFACE_THRESHOLD = 0.2
+
+
+def _detect_faces_centerface(rgb: np.ndarray) -> list[tuple[int, int, int, int]] | None:
+    """Detect faces with deface's CenterFace (uses cv2.dnn when onnxruntime is absent).
+
+    Returns (x, y, w, h) boxes, or None if deface is unavailable or fails so the caller
+    falls back to the OpenCV Haar cascade.
+    """
+    try:
+        from deface.centerface import CenterFace
+
+        # Fresh instance per photo (same as deface.image_detect): reusing a single
+        # cv2.dnn Net across varying image shapes corrupts detections on OpenCV 4.14.
+        detector = CenterFace(in_shape=None, backend="auto")
+        dets, _ = detector(rgb, threshold=CENTERFACE_THRESHOLD)
+    except Exception:
+        return None
+    h_img, w_img = rgb.shape[:2]
+    boxes: list[tuple[int, int, int, int]] = []
+    for det in dets:
+        x0 = max(0, min(w_img, int(round(float(det[0])))))
+        y0 = max(0, min(h_img, int(round(float(det[1])))))
+        x1 = max(0, min(w_img, int(round(float(det[2])))))
+        y1 = max(0, min(h_img, int(round(float(det[3])))))
+        if x1 > x0 and y1 > y0:
+            boxes.append((x0, y0, x1 - x0, y1 - y0))
+    return boxes
+# --- end T5 ---
+
+
 def process_photo(raw: bytes):
     """Return dict(jpeg=bytes, gps=(lat,lng)|None, faces=int, width, height)."""
     img = Image.open(io.BytesIO(raw))
     gps = read_gps(img)
     img = ImageOps.exif_transpose(img).convert("RGB")  # apply rotation, then drop EXIF
     img.thumbnail((MAX_SIDE, MAX_SIDE))
-    bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-    gray = cv2.equalizeHist(cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY))
-    faces = _detect_faces(gray)
+    # --- T5: Better face blur ---
+    rgb = np.array(img)
+    bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    faces = _detect_faces_centerface(rgb)
+    if faces is None:
+        gray = cv2.equalizeHist(cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY))
+        faces = _detect_faces(gray)
+    # --- end T5 ---
     for (x, y, w, h) in faces:
         pad = int(0.25 * max(w, h))
         x0, y0 = max(0, x - pad), max(0, y - pad)
