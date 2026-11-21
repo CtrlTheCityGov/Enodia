@@ -7,7 +7,7 @@ T=$1 TITLE=$2 CHK=$3
 [[ $T == [AB]<-> && -n $TITLE ]] || { echo 'usage: gen-prompts.sh A<n>|B<n> "<title>" "<review checks>"'; exit 64; }
 M=$(git rev-parse --show-toplevel); W=$M/.worktrees; mkdir -p $W
 TRACK=${T[1]}; base=dev-${(L)TRACK}; BOARD=$M/athensone/docs/TASKS_$TRACK.md
-JS="node --test web/tests/"
+JS="{ [ ! -d web/tests ] || node --test web/tests/; }"
 PY="env MOCK=1 VISION_PROVIDER=mock VALHALLA_URL=http://127.0.0.1:9 WEATHER=off CKAN_MODE=off STOA_TODAY=2026-11-21 .venv/bin/python -m pytest -q"
 if [[ $TRACK == A ]]; then RUN="$JS"; OWNER="Αναστάσης (Dev A)"
 else RUN="$PY && $JS"; OWNER="Evgenii (Dev B)"; fi
