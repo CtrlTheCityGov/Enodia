@@ -50,3 +50,14 @@
 - **A-24** Geometry in the database is stored as plain lat/lng columns (works on SQLite and Postgres);
   PostGIS types only where a module needs spatial indexing, behind the same service functions.
 - **A-25** The old `web/*.html` pages stay served until the React app reaches parity (T12), then redirect to it.
+- **A-26** ("the main feature is the Google Maps alternative for Athens; all features are around it") AthensOne is a
+  map app: the map is the home screen, and every module is a layer, a search result, a place panel or a route on it.
+  Modules plug into the map through layer/panel extension points (A-23).
+- **A-27** (advisor default) Basemap: MapLibre vector tiles, OpenFreeMap style by default (free, no key, OSM data);
+  production points `MAP_STYLE_URL` at a self-hosted Protomaps PMTiles extract of Attica. Greek labels first.
+  Rejected: `tile.openstreetmap.org` raster tiles (its usage policy forbids app traffic), Google/Mapbox (keys, cost,
+  data leaves the EU).
+- **A-28** (advisor default) Search: our own index of OSM names, addresses and POIs for Athens (Greek, Greeklish,
+  English, accent-insensitive) in the DB, plus our own layers (cool places, works, services). Rejected for now:
+  public Nominatim/Photon as the main search (rate limits, every query leaves our servers); Photon self-hosted is the
+  scale-up path.

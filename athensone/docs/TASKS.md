@@ -200,7 +200,8 @@ come back as strings.
 | Task | Owner | State |
 |---|---|---|
 | T11 Backend re-architecture | advisor/agents | approved (A-22..A-24), running |
-| T12 React frontend | advisor/agents | approved (A-22, A-23, A-25), running |
+| T12 React frontend, map first | advisor/agents | approved (A-22, A-23, A-25..A-27), running |
+| T22 Map core: search, places, basemap | agents | waits for T11 |
 
 ### T11: Backend into routers + SQLAlchemy/Alembic
 **Files:** `app/` (all), `alembic.ini`, `alembic/`, `requirements.txt`, `tests/test_T11_arch.py`. **No existing test may be
@@ -228,31 +229,81 @@ and must keep passing as they are.
 | `test_module_without_router_ignored` | a module package without `router` | app starts, no error |
 | `test_openapi_has_tags` | `/openapi.json` | each router's tag is present |
 
-### T12: React frontend
+### T12: React frontend, map first
+AthensOne is a map app for Athens (an open alternative to Google Maps): **the map is the app**, every feature is a
+layer, a search result, a place panel or a route on it (A-26).
 **Files:** `frontend/` (new), `app/main.py` only to mount `frontend/dist` at `/app/` when it exists (inside a
 `# --- T12 ---` block), `tests/test_T12_frontend_mount.py`. Don't touch `web/` (A-25).
 - Vite + React 18 + TypeScript (strict) + react-router + MapLibre GL (BSD-3) + `openapi-typescript` client generated
-  from `/openapi.json` into `src/api/schema.ts` (script `npm run gen:api`, reads a saved `openapi.json` so it works
-  offline). No CSS framework: CSS modules with the colour tokens from `web/app.css`.
-- Pages with parity to today: Citizen (`/app/`: ask with sources, cool places, map, navigate with profiles and heat
-  mode, report with photo, my report status timeline + "Is it fixed?", points chip + district bars, heat banner),
-  Operator (`/app/operator`: reports list grouped, approve/reject/resolve, AI draft, Stoa card + radar + Ask Stoa,
-  equity table with reopen rate), AI register (`/app/ai-register`).
-- Module routes (A-23): `src/modules/<name>/index.tsx` exporting `{path, title, element, area: "citizen"|"operator"}`,
-  picked up with `import.meta.glob`; navigation built from them.
-- Greek UI text as today; WCAG 2.2 AA (labels, focus, contrast, keyboard).
-- Tests: Vitest + Testing Library + `vitest-axe` on each page with a mocked API; `npm run build` succeeds.
+  from a saved `openapi.json` into `src/api/schema.ts` (`npm run gen:api`, works offline). CSS modules, colour tokens
+  from `web/app.css`; no CSS framework.
+- **Shell (the whole screen is the map):** full-screen MapLibre map with a vector basemap (A-27: style URL from
+  `VITE_MAP_STYLE`, default OpenFreeMap "liberty", Greek labels `name:el` first, then `name`); a search bar on top
+  (calls `GET /api/search?q=`; until T22 lands, a stub that searches cool places and works cards client-side);
+  a **layer drawer** built from `GET /api/layers` (live layers toggle on the map; roadmap layers shown greyed
+  "σύντομα"); a **place panel** (side panel on desktop, bottom sheet on phone) for whatever was clicked or found;
+  a **directions panel** with the profiles (walk, wheelchair, walker, stroller, visually impaired) and heat mode,
+  drawing `/api/navigate` on the map; locate-me button (browser geolocation, used only on the device, never sent
+  except as a route start).
+- Features as map content, with today's behaviour: Ask (answer with sources, results pinned), cool places, reports
+  (photo report from a map long-press or the + button; status timeline and "Is it fixed?" in the place panel),
+  hazards, Stoa works layer + card in the place panel, env layers (shade, benches, busy roads), air and WiFi layers,
+  heat banner over the map, points chip in the header. Operator view `/app/operator`: the same map with the
+  report clusters, plus the triage list, approve/reject/resolve, Stoa radar + Ask Stoa, equity table.
+  AI register `/app/ai-register` (plain page).
+- Module extension points (A-23): `src/modules/<name>/index.tsx` exports any of `{layer, panel, route, navItem}`;
+  discovered with `import.meta.glob`; a module's layer appears in the drawer, its panel opens for its features.
+- Greek UI, WCAG 2.2 AA: the map has a text alternative (the list of what is shown), keyboard access to search,
+  drawer, panels; focus moves into a panel when it opens.
+- Tests: Vitest + Testing Library + `vitest-axe`, MapLibre mocked (no WebGL in tests); `npm run build` succeeds.
 
 | Test | Given | Expected |
 |---|---|---|
-| `frontend: citizen renders ask box` | mocked API | a labelled question field and the cool-places list |
-| `frontend: ask shows sources` | `/api/ask` mock with 2 sources | 2 source links rendered |
-| `frontend: heat banner when hot` | `/api/heat` hot, forced | banner with "δοκιμαστικό" |
+| `frontend: map fills the screen` | app renders | a map container labelled "Χάρτης", search box, layers button |
+| `frontend: search shows results and flies to one` | search mock with 2 results | 2 results; clicking one opens the place panel and calls `flyTo` |
+| `frontend: layer drawer from api` | `/api/layers` mock (live + roadmap) | live ones toggle a map layer; roadmap ones disabled with "σύντομα" |
+| `frontend: directions draws route` | `/api/navigate` mock | a route line added; profile and heat mode sent in the request |
+| `frontend: ask shows sources` | `/api/ask` mock with 2 sources | 2 source links in the panel |
+| `frontend: report from map` | long-press then submit with a photo | POST `/api/report` with lat/lng of the press |
+| `frontend: heat banner when hot` | `/api/heat` hot, forced | banner over the map with "δοκιμαστικό" |
 | `frontend: operator approve calls API` | click Approve | POST `/api/reports/{id}/approve` |
-| `frontend: module route discovered` | a test module in `src/modules/` | its route and nav entry exist |
-| `frontend: no axe violations` | each page, mocked API | 0 violations |
+| `frontend: module layer discovered` | a test module exporting a layer | it appears in the layer drawer |
+| `frontend: map has text alternative` | 3 features shown | a list of the 3 is available to screen readers |
+| `frontend: no axe violations` | each view, mocked API | 0 violations |
 | `test_frontend_mounted_when_built` (pytest) | a fake `frontend/dist/index.html` | `GET /app/` returns it |
 | `test_frontend_absent_ok` (pytest) | no `dist` | app starts; `/app/` 404; old `/web/` still works |
+
+### T22: Map core: search, places, basemap (backend)
+The parts that make it a maps app. Module `app/modules/places/` (A-23), after T11.
+- `scripts/fetch_places.py`: one Overpass pull for the Municipality of Athens: named streets (`highway` with
+  `name`), POIs (`amenity`, `shop`, `tourism`, `leisure`, `office`, `public_transport` with `name`), addresses
+  (`addr:street` + `addr:housenumber`), squares and neighbourhoods; keeps `name`, `name:el`, `name:en`, `alt_name`,
+  `opening_hours`, `wheelchair`, `phone`, `website`, coordinates. Saved to `data/places/places.json`, loaded into the
+  DB (`places` table). Same User-Agent as `fetch_env.py`. Data © OpenStreetMap contributors, ODbL.
+- `GET /api/search?q=&lat=&lng=&limit=` (A-28): accent- and case-insensitive Greek, **Greeklish** ("plateia varnava"
+  → "Πλατεία Βάρναβα") and English; prefix matching; house numbers ("Ερμού 10"); ranking by match quality, then
+  distance to `lat,lng` when given; also searches cool places, works cards and municipal services by name. Each
+  result: `{id, kind, name, subtitle, lat, lng, source}`.
+- `GET /api/places/{id}`: details with the OSM tags above, `wheelchair` shown as yes/limited/no/UNKNOWN (never
+  guessed), opening hours parsed to "open now" only when the tag parses, plus what other layers know about the spot
+  (nearby reports, works card, accessibility points from T14).
+- `GET /api/geocode/reverse?lat&lng`: nearest street + number, for the report form.
+- Basemap (A-27): `GET /api/map/style` returns the style URL the frontend should use (OpenFreeMap by default,
+  `MAP_STYLE_URL` to point at a self-hosted Protomaps PMTiles extract of Attica).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_search_accent_insensitive` | fixture "Πλατεία Βάρναβα", q "πλατεια βαρναβα" | it is first |
+| `test_search_greeklish` | q "plateia varnava" | same first result |
+| `test_search_english_name` | `name:en` "Varnava Square", q "varnava sq" | that place |
+| `test_search_house_number` | address Ερμού 10, q "Ερμου 10" | that address first |
+| `test_search_ranks_by_distance` | two "Λέσχη Φιλίας", lat/lng near one | the near one first |
+| `test_search_includes_cool_places_and_works` | q matching a works street | a `works` result |
+| `test_place_details_wheelchair_unknown` | place without tag | `wheelchair` "UNKNOWN" |
+| `test_opening_hours_open_now` | "Mo-Fr 09:00-17:00", fixed time Tue 10:00 | open_now true |
+| `test_opening_hours_unparsable` | "by appointment" | open_now null, raw text kept |
+| `test_reverse_geocode` | point next to fixture address | that street and number |
+| `test_map_style_default_and_env` | unset / `MAP_STYLE_URL` set | OpenFreeMap URL / the env URL |
 
 ## Full app, wave 1 and 2 (start after T11 and T12 are merged)
 
