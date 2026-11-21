@@ -106,8 +106,8 @@ export function mount({ map, api, root, container, bus }) {
     width: `min(${PANEL_W}px, calc(100vw - 24px))`,
     height: `min(${PANEL_H}px, calc(100vh - 96px))`,
     transformOrigin: "bottom right",
-    transition: `transform ${ANIM_MS}ms ease, opacity ${ANIM_MS}ms ease`,
-    transform: "scale(0.6) translateY(20px)",
+    transition: `transform ${ANIM_MS}ms cubic-bezier(0.16, 1, 0.3, 1), opacity ${ANIM_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+    transform: "scale(0.86) translateY(14px)",
     opacity: "0",
     visibility: "hidden",
     display: "flex",
@@ -152,8 +152,10 @@ export function mount({ map, api, root, container, bus }) {
   function setOpen(next) {
     open = next;
     bubble.setAttribute("aria-expanded", String(open));
+    const curve = open ? "cubic-bezier(0.16, 1, 0.3, 1)" : "cubic-bezier(0.32, 0.72, 0, 1)";
+    panel.style.transition = `transform ${ANIM_MS}ms ${curve}, opacity ${ANIM_MS}ms ${curve}`;
     if (open) panel.style.visibility = "visible";
-    panel.style.transform = open ? "none" : "scale(0.6) translateY(20px)";
+    panel.style.transform = open ? "scale(1) translateY(0)" : "scale(0.86) translateY(14px)";
     panel.style.opacity = open ? "1" : "0";
     if (open) input.focus();
     else setTimeout(() => { if (!open) panel.style.visibility = "hidden"; }, ANIM_MS);

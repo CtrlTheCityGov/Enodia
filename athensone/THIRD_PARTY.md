@@ -15,6 +15,7 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `numpy` | `>=1.26` | BSD-3-Clause | Array operations for photo processing and face detection | https://github.com/numpy/numpy |
 | `python-dotenv` | `>=1.0` | BSD-3-Clause | `.env` configuration loading | https://github.com/theskumar/python-dotenv |
 | `pytest` | `>=8` | MIT | Offline test suite | https://github.com/pytest-dev/pytest |
+| `tzdata` | `>=2024.1` (`sys_platform == "win32"`) | Apache-2.0 | IANA timezone database for `zoneinfo.ZoneInfo("Europe/Athens")` on Windows | https://github.com/python/tzdata |
 | `scikit-image` | `>=0.22` | BSD-3-Clause | Bundled offline face test fixture (`skimage.data.astronaut`) in `tests/test_T5_blur.py` | https://github.com/scikit-image/scikit-image |
 
 ### T5: Face detection (`deface` / CenterFace)

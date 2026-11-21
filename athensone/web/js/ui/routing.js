@@ -14,6 +14,25 @@ export const PROFILES = [
 // MapLibre source and layer IDs for the active route (source: A4_routing.test.js; certainty: verified).
 export const ROUTE_SOURCE_ID = "route";
 export const ROUTE_LAYER_ID = "route-line";
+export const ROUTE_GLOW_LAYER_ID = "route-glow";
+
+// MapLibre source & layer IDs for live/simulated GPS directional puck (UI/UX upgrade #6).
+const NAV_GPS_SOURCE_ID = "nav-gps-source";
+const NAV_GPS_HALO_LAYER_ID = "nav-gps-halo";
+const NAV_GPS_PUCK_LAYER_ID = "nav-gps-puck";
+const NAV_FOLLOW_PITCH = 65;
+const NAV_FOLLOW_ZOOM = 18;
+// Demo simulation pace (~14 m/s so a 600 m Syntagma->Monastiraki walk animates cleanly in ~40 s on stage).
+const NAV_SIM_SPEED_MPS = 14;
+const WALK_SPEED_MPS = 1.3;
+
+// Instant 1-tap Waze-style hazard pills shown during Turn-by-Turn Navigation (UI/UX upgrade #6).
+export const QUICK_NAV_HAZARDS = Object.freeze([
+  Object.freeze({ id: "congestion", category: "congestion", icon: "🚗", label: "Συμφόρηση", note: "Συμφόρηση" }),
+  Object.freeze({ id: "closed_sidewalk", category: "obstacle", icon: "🚧", label: "Κλειστό πεζοδρόμιο", note: "Κλειστό πεζοδρόμιο" }),
+  Object.freeze({ id: "ramp_blocked", category: "obstacle", icon: "♿", label: "Εμπόδιο σε ράμπα", note: "Εμπόδιο σε ράμπα" }),
+  Object.freeze({ id: "defect", category: "damage", icon: "🕳️", label: "Κακοτεχνία", note: "Κακοτεχνία" }),
+]);
 
 // MapLibre source and layer IDs for highlighted routing reasons (source: TASKS_A.md A5 & A5_polish.test.js; certainty: verified).
 export const REASONS_HIGHLIGHT_SOURCE_ID = "route-reasons-highlight-source";
@@ -257,12 +276,15 @@ export function animateRoute(map, layerId = ROUTE_LAYER_ID, onComplete = null, o
     if (onProgress) {
       onProgress(progress);
     }
-    if (
-      map &&
-      typeof map.setPaintProperty === "function" &&
-      (typeof map.getLayer !== "function" || map.getLayer(layerId))
-    ) {
-      map.setPaintProperty(layerId, "line-gradient", gradientAt(progress));
+    if (map && typeof map.setPaintProperty === "function") {
+      const grad = gradientAt(progress);
+      // Update outer glow BEFORE core layerId so setPaintCalls.at(-1) stays on route-line (A4_routing.test.js).
+      if (layerId === ROUTE_LAYER_ID && typeof map.getLayer === "function" && map.getLayer(ROUTE_GLOW_LAYER_ID)) {
+        map.setPaintProperty(ROUTE_GLOW_LAYER_ID, "line-gradient", grad);
+      }
+      if (typeof map.getLayer !== "function" || map.getLayer(layerId)) {
+        map.setPaintProperty(layerId, "line-gradient", grad);
+      }
     }
   }
 
@@ -466,6 +488,24 @@ function toRouteFeature(routeOrGeojson) {
   };
 }
 
+function routeGlowLayerSpec(progress) {
+  return {
+    id: ROUTE_GLOW_LAYER_ID,
+    type: "line",
+    source: ROUTE_SOURCE_ID,
+    layout: {
+      "line-cap": "round",
+      "line-join": "round",
+    },
+    paint: {
+      "line-width": ROUTE_LINE_WIDTH_PX + 10,
+      "line-blur": 9,
+      "line-opacity": 0.42,
+      "line-gradient": gradientAt(progress),
+    },
+  };
+}
+
 function routeLayerSpec(progress) {
   return {
     id: ROUTE_LAYER_ID,
@@ -493,6 +533,13 @@ function ensureRouteOverlayOnMap(map, geojson, progress) {
     map.addSource(ROUTE_SOURCE_ID, routeSource(geojson));
   }
 
+  const hasGlowLayer = typeof map.getLayer === "function" ? Boolean(map.getLayer(ROUTE_GLOW_LAYER_ID)) : false;
+  if (!hasGlowLayer && typeof map.addLayer === "function") {
+    map.addLayer(routeGlowLayerSpec(progress));
+  } else if (hasGlowLayer && typeof map.setPaintProperty === "function") {
+    map.setPaintProperty(ROUTE_GLOW_LAYER_ID, "line-gradient", gradientAt(progress));
+  }
+
   const hasLayer = typeof map.getLayer === "function" ? Boolean(map.getLayer(ROUTE_LAYER_ID)) : false;
   if (!hasLayer && typeof map.addLayer === "function") {
     map.addLayer(routeLayerSpec(progress));
@@ -509,7 +556,230 @@ function reapplyRouteOverlay(targetMap) {
   ensureRouteOverlayOnMap(targetMap, routeState.geojson, routeState.progress);
   return {
     id: ROUTE_SOURCE_ID,
-    layerIds: [ROUTE_LAYER_ID],
+    layerIds: [ROUTE_GLOW_LAYER_ID, ROUTE_LAYER_ID],
+  };
+}
+
+// ---------- Turn-by-turn geometry & GPS puck helpers (UI/UX upgrade #6) ----------
+
+const navGpsStateByMap = new WeakMap();
+
+function haversineMeters([lon1, lat1], [lon2, lat2]) {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371000 * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+export function computeBearing([lon1, lat1], [lon2, lat2]) {
+  const rad = Math.PI / 180;
+  const dLon = (lon2 - lon1) * rad;
+  const y = Math.sin(dLon) * Math.cos(lat2 * rad);
+  const x =
+    Math.cos(lat1 * rad) * Math.sin(lat2 * rad) -
+    Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos(dLon);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+function classifyTurn(prevBearing, nextBearing) {
+  let delta = ((nextBearing - prevBearing + 540) % 360) - 180;
+  if (delta > 30) return { icon: "↱", text: "Στρίψτε δεξιά" };
+  if (delta < -30) return { icon: "↰", text: "Στρίψτε αριστερά" };
+  return { icon: "⬆️", text: "Συνεχίστε ευθεία" };
+}
+
+export function sampleRouteAtDistance(coords, distanceM) {
+  if (!Array.isArray(coords) || coords.length === 0) {
+    return null;
+  }
+  if (coords.length === 1) {
+    return {
+      lon: coords[0][0],
+      lat: coords[0][1],
+      bearing: 0,
+      remainingM: 0,
+      distToTurnM: 0,
+      turn: { icon: "🏁", text: "Φτάσατε στον προορισμό" },
+      arrived: true,
+    };
+  }
+
+  const segLens = [];
+  let totalM = 0;
+  for (let i = 0; i < coords.length - 1; i += 1) {
+    const len = haversineMeters(coords[i], coords[i + 1]);
+    segLens.push(len);
+    totalM += len;
+  }
+
+  const clamped = Math.max(0, Math.min(totalM, distanceM));
+  if (totalM === 0 || clamped >= totalM - 1) {
+    const last = coords[coords.length - 1];
+    const prev = coords[coords.length - 2];
+    return {
+      lon: last[0],
+      lat: last[1],
+      bearing: computeBearing(prev, last),
+      remainingM: 0,
+      distToTurnM: 0,
+      turn: { icon: "🏁", text: "Φτάσατε στον προορισμό" },
+      arrived: true,
+    };
+  }
+
+  let acc = 0;
+  let segIdx = 0;
+  for (let i = 0; i < segLens.length; i += 1) {
+    if (acc + segLens[i] >= clamped) {
+      segIdx = i;
+      break;
+    }
+    acc += segLens[i];
+  }
+
+  const segLen = segLens[segIdx] || 1;
+  const t = Math.max(0, Math.min(1, (clamped - acc) / segLen));
+  const p0 = coords[segIdx];
+  const p1 = coords[segIdx + 1];
+  const lon = p0[0] + (p1[0] - p0[0]) * t;
+  const lat = p0[1] + (p1[1] - p0[1]) * t;
+  const bearing = computeBearing(p0, p1);
+  const remainingM = Math.max(0, totalM - clamped);
+
+  // Look ahead for the next noticeable turn along the polyline.
+  let distToTurnM = segLen * (1 - t);
+  let turn = { icon: "🏁", text: "Προορισμός ευθεία" };
+  let prevB = bearing;
+  for (let j = segIdx + 1; j < coords.length - 1; j += 1) {
+    const nextB = computeBearing(coords[j], coords[j + 1]);
+    const candidate = classifyTurn(prevB, nextB);
+    if (candidate.icon !== "⬆️") {
+      turn = candidate;
+      break;
+    }
+    distToTurnM += segLens[j];
+    prevB = nextB;
+  }
+
+  return {
+    lon,
+    lat,
+    bearing,
+    remainingM,
+    distToTurnM: Math.round(distToTurnM),
+    turn,
+    arrived: false,
+  };
+}
+
+function ensureNavGpsOnMap(map, gpsPoint) {
+  if (!map || !gpsPoint) {
+    return;
+  }
+  const fc = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { bearing: gpsPoint.bearing ?? 0 },
+        geometry: { type: "Point", coordinates: [gpsPoint.lon, gpsPoint.lat] },
+      },
+    ],
+  };
+
+  const existingSrc = typeof map.getSource === "function" ? map.getSource(NAV_GPS_SOURCE_ID) : null;
+  if (existingSrc && typeof existingSrc.setData === "function") {
+    existingSrc.setData(fc);
+  } else if (typeof map.addSource === "function") {
+    map.addSource(NAV_GPS_SOURCE_ID, { type: "geojson", data: fc });
+  }
+
+  if (typeof map.getLayer === "function" && !map.getLayer(NAV_GPS_HALO_LAYER_ID) && typeof map.addLayer === "function") {
+    map.addLayer({
+      id: NAV_GPS_HALO_LAYER_ID,
+      type: "circle",
+      source: NAV_GPS_SOURCE_ID,
+      paint: {
+        "circle-radius": 22,
+        "circle-color": "#38bdf8",
+        "circle-opacity": 0.28,
+        "circle-blur": 0.5,
+      },
+    });
+  }
+
+  if (typeof map.getLayer === "function" && !map.getLayer(NAV_GPS_PUCK_LAYER_ID) && typeof map.addLayer === "function") {
+    map.addLayer({
+      id: NAV_GPS_PUCK_LAYER_ID,
+      type: "circle",
+      source: NAV_GPS_SOURCE_ID,
+      paint: {
+        "circle-radius": 9,
+        "circle-color": "#2563eb",
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 3,
+      },
+    });
+  }
+}
+
+function reapplyNavGpsOverlay(targetMap) {
+  const gps = navGpsStateByMap.get(targetMap);
+  if (!gps) return null;
+  ensureNavGpsOnMap(targetMap, gps);
+  return { id: NAV_GPS_SOURCE_ID, layerIds: [NAV_GPS_HALO_LAYER_ID, NAV_GPS_PUCK_LAYER_ID] };
+}
+
+function clearNavGpsFromMap(map) {
+  if (!map) return;
+  navGpsStateByMap.delete(map);
+  const src = typeof map.getSource === "function" ? map.getSource(NAV_GPS_SOURCE_ID) : null;
+  if (src && typeof src.setData === "function") {
+    src.setData({ type: "FeatureCollection", features: [] });
+  }
+}
+
+function readEnvBadgesNear(map, lon, lat, route) {
+  let shadeText = null;
+  if (Array.isArray(route?.reasons)) {
+    for (const r of route.reasons) {
+      const txt = typeof r === "string" ? r : r?.text ?? "";
+      const m = txt.match(/(\d+\s*%[^,]*|−?\d+\s*°C[^,]*)/i);
+      if (m) {
+        shadeText = m[1].trim();
+        break;
+      }
+    }
+  }
+  let aqiText = "AQI άγνωστο";
+  const envSrc = typeof map?.getSource === "function" ? map.getSource("env-source") : null;
+  const feats = extractFeaturesList(envSrc?.data ?? envSrc?._data);
+  if (feats.length > 0 && Number.isFinite(lon) && Number.isFinite(lat)) {
+    let best = null;
+    let bestDist = Infinity;
+    for (const f of feats) {
+      const c = f?.geometry?.coordinates;
+      if (!Array.isArray(c) || c.length < 2) continue;
+      const d = haversineMeters([lon, lat], c);
+      if (d < bestDist) {
+        bestDist = d;
+        best = f.properties;
+      }
+    }
+    if (best) {
+      if (Number.isFinite(Number(best.aqi))) {
+        aqiText = `AQI ${best.aqi}`;
+      } else if (Number.isFinite(Number(best.pm25))) {
+        aqiText = `PM2.5 ${Math.round(Number(best.pm25))}`;
+      }
+    }
+  }
+  return {
+    shadeBadge: shadeText ? `🌳 ${shadeText}` : "🌳 Προφίλ διαδρομής",
+    aqiBadge: `🍃 ${aqiText}`,
   };
 }
 
@@ -834,6 +1104,13 @@ export function initRouting(container, map, api, options = {}) {
     requestRoute();
   });
   actionsRow.appendChild(routeBtn);
+
+  // Start Navigation CTA revealed once a route is ready (UI/UX upgrade #6).
+  const startNavBtn = doc.createElement("button");
+  startNavBtn.type = "button";
+  startNavBtn.className = "routing-nav-start-btn hidden";
+  startNavBtn.textContent = "🧭 Έναρξη Πλοήγησης";
+  actionsRow.appendChild(startNavBtn);
   form.appendChild(actionsRow);
 
   const summaryEl = doc.createElement("div");
@@ -841,6 +1118,334 @@ export function initRouting(container, map, api, options = {}) {
   summaryEl.setAttribute("role", "status");
   summaryEl.setAttribute("aria-live", "polite");
   drawer.appendChild(summaryEl);
+
+  // ---------- Live GPS Turn-by-Turn Navigation + Simulate GPS + Instant Waze "⚡ Αναφορά εδώ" ----------
+  let navActive = false;
+  let navWatchId = null;
+  let navSimRafId = null;
+  let navSimRunning = false;
+  let navSimDistM = 0;
+  let navSimLastTs = null;
+  let navCurrentPos = null;
+  let navChevronMarker = null;
+  let navChevronEl = null;
+  let navHudEl = null;
+  let navReportWrap = null;
+  let navReportTray = null;
+  let navQuickOpen = false;
+  let navRouteCoords = [];
+  let navTurnIconEl = null;
+  let navTurnTextEl = null;
+  let navMetaEl = null;
+  let navShadeEl = null;
+  let navAqiEl = null;
+  let navSimBtn = null;
+
+  function updateChevronMarker(lon, lat, bearing) {
+    if (!map) return;
+    navGpsStateByMap.set(map, { lon, lat, bearing });
+    registerOverlay(reapplyNavGpsOverlay);
+    ensureNavGpsOnMap(map, { lon, lat, bearing });
+
+    const MarkerCtor = globalThis.maplibregl?.Marker;
+    if (typeof MarkerCtor !== "function" || typeof doc.createElement !== "function") {
+      return;
+    }
+    if (!navChevronMarker) {
+      navChevronEl = doc.createElement("div");
+      navChevronEl.className = "nav-gps-chevron";
+      navChevronEl.setAttribute("aria-hidden", "true");
+      navChevronMarker = new MarkerCtor({ element: navChevronEl, rotationAlignment: "map" })
+        .setLngLat([lon, lat])
+        .addTo(map);
+    } else {
+      navChevronMarker.setLngLat([lon, lat]);
+    }
+    if (navChevronEl?.style) {
+      navChevronEl.style.setProperty("--nav-bearing", `${Math.round(bearing)}deg`);
+    }
+  }
+
+  function updateNavHudReadout(sample) {
+    if (!sample) return;
+    navCurrentPos = { lng: sample.lon, lat: sample.lat, bearing: sample.bearing };
+    updateChevronMarker(sample.lon, sample.lat, sample.bearing);
+
+    if (navTurnIconEl) navTurnIconEl.textContent = sample.turn.icon;
+    if (navTurnTextEl) {
+      navTurnTextEl.textContent = sample.arrived
+        ? sample.turn.text
+        : `${sample.turn.text} σε ${sample.distToTurnM} m`;
+    }
+    if (navMetaEl) {
+      const etaMin = Math.max(1, Math.round(sample.remainingM / WALK_SPEED_MPS / 60));
+      const distStr =
+        sample.remainingM >= 1000
+          ? `${(sample.remainingM / 1000).toFixed(1).replace(".", ",")} km`
+          : `${Math.round(sample.remainingM)} m`;
+      navMetaEl.textContent = sample.arrived ? "Άφιξη" : `${etaMin}′ · ${distStr}`;
+    }
+    const badges = readEnvBadgesNear(map, sample.lon, sample.lat, lastRoute);
+    if (navShadeEl) navShadeEl.textContent = badges.shadeBadge;
+    if (navAqiEl) navAqiEl.textContent = badges.aqiBadge;
+
+    if (map && typeof map.easeTo === "function") {
+      map.easeTo({
+        center: [sample.lon, sample.lat],
+        pitch: NAV_FOLLOW_PITCH,
+        zoom: NAV_FOLLOW_ZOOM,
+        bearing: sample.bearing,
+        duration: navSimRunning ? 180 : 450,
+      });
+    }
+  }
+
+  function stopSim() {
+    navSimRunning = false;
+    navSimLastTs = null;
+    if (navSimRafId !== null && typeof globalThis.cancelAnimationFrame === "function") {
+      globalThis.cancelAnimationFrame(navSimRafId);
+      navSimRafId = null;
+    }
+    if (navSimBtn) {
+      navSimBtn.setAttribute("aria-pressed", "false");
+      navSimBtn.classList?.remove("is-active");
+      navSimBtn.textContent = "▶ Προσομοίωση GPS";
+    }
+  }
+
+  function startSim() {
+    if (navRouteCoords.length < 2) return;
+    if (navSimRunning) {
+      stopSim();
+      return;
+    }
+    navSimRunning = true;
+    navSimLastTs = null;
+    const totalSample = sampleRouteAtDistance(navRouteCoords, navSimDistM);
+    if (totalSample?.arrived) {
+      navSimDistM = 0;
+    }
+    if (navSimBtn) {
+      navSimBtn.setAttribute("aria-pressed", "true");
+      navSimBtn.classList?.add("is-active");
+      navSimBtn.textContent = "⏸ Παύση GPS";
+    }
+    const raf = globalThis.requestAnimationFrame;
+    if (typeof raf !== "function") return;
+
+    function tick(ts) {
+      if (!navSimRunning || !navActive) return;
+      const now = typeof ts === "number" ? ts : Date.now();
+      if (navSimLastTs === null) navSimLastTs = now;
+      const dtSec = Math.min(0.15, Math.max(0, (now - navSimLastTs) / 1000));
+      navSimLastTs = now;
+      navSimDistM += NAV_SIM_SPEED_MPS * dtSec;
+      const sample = sampleRouteAtDistance(navRouteCoords, navSimDistM);
+      if (sample) {
+        updateNavHudReadout(sample);
+        if (sample.arrived) {
+          stopSim();
+          bus?.dispatchEvent(
+            new CustomEvent("toast:show", { detail: { message: "🏁 Φτάσατε στον προορισμό σας!" } }),
+          );
+          return;
+        }
+      }
+      navSimRafId = raf(tick);
+    }
+    navSimRafId = raf(tick);
+  }
+
+  function toggleQuickReportTray(open) {
+    navQuickOpen = Boolean(open);
+    if (navReportTray) {
+      navReportTray.hidden = !navQuickOpen;
+    }
+    const trigger = navReportWrap?.querySelector?.(".nav-quick-report-btn");
+    if (trigger) {
+      trigger.setAttribute("aria-expanded", String(navQuickOpen));
+    }
+  }
+
+  function ensureNavUiBuilt() {
+    if (navHudEl) return;
+    const hudHost =
+      doc.querySelector?.(".hud") ?? container.parentNode ?? container;
+
+    navHudEl = doc.createElement("div");
+    navHudEl.id = "nav-hud";
+    navHudEl.className = "glass nav-hud hidden";
+    navHudEl.setAttribute("role", "region");
+    navHudEl.setAttribute("aria-label", "Πλοήγηση στροφή προς στροφή");
+
+    const topRow = doc.createElement("div");
+    topRow.className = "nav-hud__primary";
+    navTurnIconEl = doc.createElement("span");
+    navTurnIconEl.className = "nav-hud__icon";
+    navTurnIconEl.textContent = "⬆️";
+
+    const infoCol = doc.createElement("div");
+    infoCol.className = "nav-hud__info";
+    navTurnTextEl = doc.createElement("div");
+    navTurnTextEl.className = "nav-hud__instruction";
+    navTurnTextEl.textContent = "Έτοιμο για πλοήγηση";
+    navMetaEl = doc.createElement("div");
+    navMetaEl.className = "nav-hud__meta";
+    infoCol.appendChild(navTurnTextEl);
+    infoCol.appendChild(navMetaEl);
+
+    const endBtn = doc.createElement("button");
+    endBtn.type = "button";
+    endBtn.className = "nav-hud__end-btn";
+    endBtn.textContent = "Τέλος";
+    endBtn.addEventListener("click", () => stopNavigation());
+
+    topRow.appendChild(navTurnIconEl);
+    topRow.appendChild(infoCol);
+    topRow.appendChild(endBtn);
+
+    const bottomRow = doc.createElement("div");
+    bottomRow.className = "nav-hud__secondary";
+    navShadeEl = doc.createElement("span");
+    navShadeEl.className = "nav-hud__badge";
+    navAqiEl = doc.createElement("span");
+    navAqiEl.className = "nav-hud__badge";
+    navSimBtn = doc.createElement("button");
+    navSimBtn.type = "button";
+    navSimBtn.className = "nav-hud__sim-btn";
+    navSimBtn.setAttribute("aria-pressed", "false");
+    navSimBtn.textContent = "▶ Προσομοίωση GPS";
+    navSimBtn.addEventListener("click", () => startSim());
+
+    bottomRow.appendChild(navShadeEl);
+    bottomRow.appendChild(navAqiEl);
+    bottomRow.appendChild(navSimBtn);
+
+    navHudEl.appendChild(topRow);
+    navHudEl.appendChild(bottomRow);
+    hudHost.appendChild(navHudEl);
+
+    // Floating "⚡ Αναφορά εδώ" button + 1-tap Waze hazard pills during navigation.
+    navReportWrap = doc.createElement("div");
+    navReportWrap.className = "nav-quick-report hidden";
+
+    navReportTray = doc.createElement("div");
+    navReportTray.className = "glass nav-quick-report__tray";
+    navReportTray.hidden = true;
+    for (const h of QUICK_NAV_HAZARDS) {
+      const pill = doc.createElement("button");
+      pill.type = "button";
+      pill.className = "nav-quick-report__pill";
+      pill.setAttribute("data-quick-hazard", h.id);
+      pill.textContent = `${h.icon} ${h.label}`;
+      pill.addEventListener("click", () => {
+        const pos = navCurrentPos || map?.getCenter?.();
+        toggleQuickReportTray(false);
+        bus?.dispatchEvent(
+          new CustomEvent("report:quick", {
+            detail: { category: h.category, note: h.note, lngLat: pos },
+          }),
+        );
+      });
+      navReportTray.appendChild(pill);
+    }
+
+    const reportHereBtn = doc.createElement("button");
+    reportHereBtn.type = "button";
+    reportHereBtn.className = "glass glass-pill nav-quick-report-btn";
+    reportHereBtn.setAttribute("aria-expanded", "false");
+    reportHereBtn.textContent = "⚡ Αναφορά εδώ";
+    reportHereBtn.addEventListener("click", () => toggleQuickReportTray(!navQuickOpen));
+
+    navReportWrap.appendChild(navReportTray);
+    navReportWrap.appendChild(reportHereBtn);
+    hudHost.appendChild(navReportWrap);
+  }
+
+  function startNavigation() {
+    if (!lastRoute) return;
+    const pts = [];
+    collectCoords(lastRoute, pts);
+    if (pts.length < 2) return;
+
+    navRouteCoords = pts;
+    navActive = true;
+    navSimDistM = 0;
+    ensureNavUiBuilt();
+    setCollapsed(true);
+    navHudEl?.classList?.remove("hidden");
+    navReportWrap?.classList?.remove("hidden");
+    toggleQuickReportTray(false);
+
+    const initialSample = sampleRouteAtDistance(navRouteCoords, 0);
+    if (initialSample) {
+      updateNavHudReadout(initialSample);
+    }
+
+    // Start real GPS tracking if browser geolocation is available (graceful indoors).
+    const geo = globalThis.navigator?.geolocation;
+    if (geo && typeof geo.watchPosition === "function") {
+      try {
+        navWatchId = geo.watchPosition(
+          (pos) => {
+            if (!navActive || navSimRunning) return;
+            const lon = pos.coords.longitude;
+            const lat = pos.coords.latitude;
+            const heading = Number.isFinite(pos.coords.heading)
+              ? pos.coords.heading
+              : (navCurrentPos?.bearing ?? 0);
+            const destPt = navRouteCoords[navRouteCoords.length - 1];
+            const remM = haversineMeters([lon, lat], destPt);
+            updateNavHudReadout({
+              lon,
+              lat,
+              bearing: heading,
+              remainingM: remM,
+              distToTurnM: Math.round(Math.min(remM, 80)),
+              turn: remM < 18
+                ? { icon: "🏁", text: "Φτάσατε στον προορισμό" }
+                : { icon: "⬆️", text: "Ακολουθήστε τη διαδρομή" },
+              arrived: remM < 18,
+            });
+          },
+          () => {
+            // Indoors / denied GPS: user can tap "Προσομοίωση GPS" immediately.
+          },
+          { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 },
+        );
+      } catch {
+        navWatchId = null;
+      }
+    }
+  }
+
+  function stopNavigation() {
+    navActive = false;
+    stopSim();
+    if (navWatchId !== null && typeof globalThis.navigator?.geolocation?.clearWatch === "function") {
+      try {
+        globalThis.navigator.geolocation.clearWatch(navWatchId);
+      } catch {
+        // ignore
+      }
+      navWatchId = null;
+    }
+    if (navChevronMarker && typeof navChevronMarker.remove === "function") {
+      navChevronMarker.remove();
+      navChevronMarker = null;
+      navChevronEl = null;
+    }
+    clearNavGpsFromMap(map);
+    toggleQuickReportTray(false);
+    navHudEl?.classList?.add("hidden");
+    navReportWrap?.classList?.add("hidden");
+    if (map && typeof map.easeTo === "function") {
+      map.easeTo({ pitch: 55, bearing: -15, zoom: 15.5, duration: 600 });
+    }
+  }
+
+  startNavBtn.addEventListener("click", () => startNavigation());
 
   function setCollapsed(nextCollapsed) {
     collapsed = Boolean(nextCollapsed);
@@ -999,6 +1604,7 @@ export function initRouting(container, map, api, options = {}) {
       }
 
       lastRoute = route;
+      startNavBtn.classList?.remove("hidden");
       if (sourceTag && sourceTag !== "live" && typeof options?.onNonLiveSource === "function") {
         options.onNonLiveSource(sourceTag);
       }
@@ -1097,7 +1703,12 @@ export function initRouting(container, map, api, options = {}) {
     },
     setCollapsed,
     requestRoute,
+    startNavigation,
+    stopNavigation,
     destroy: () => {
+      if (navActive) {
+        stopNavigation();
+      }
       if (typeof cancelAnimation === "function") {
         cancelAnimation();
         cancelAnimation = null;

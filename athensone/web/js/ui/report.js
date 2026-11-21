@@ -1,5 +1,5 @@
-// B6: the «+» report flow (SPEC F3, HUD «Κάτω αριστερά», «Offline fallback» 5).
-// «+» → radial menu of 5 categories → draggable pin at the map centre → optional photo → send.
+// B6: the «+» report flow (SPEC F3, HUD «Κάτω αριστερά», «Offline fallback» 5;
+// UI/UX upgrades #3/#4/#5/#6: macOS fold animations, auto-close + glass toast, instant quick-report).
 // No DOM or maplibregl at import time (CLAUDE.md), so Node can test the pure parts; mount(ctx) builds the UI (A-35).
 
 // The 5 categories in SPEC order with their Greek labels. Source: SPEC F3, TASKS_B.md B6. Certainty: verified.
@@ -16,6 +16,9 @@ export const QUEUE_KEY = "ao_report_queue";
 
 // Message while the photo is uploaded and blurred. Source: SPEC HUD «Κάτω αριστερά». Certainty: verified.
 export const BLUR_MESSAGE = "Θολώνουμε πρόσωπα και πινακίδες…";
+
+// Fold-close animation duration matching hud.css macos-fold (design default).
+const FOLD_CLOSE_MS = 200;
 
 // Multipart fields of POST /reports (SPEC «Backend contracts»): category, lon, lat, note, work_id?, photo?
 export function buildForm({ category, lngLat, note = "", photo = null, work_id = null }) {
@@ -98,11 +101,48 @@ function el(tag, attrs = {}, text = "") {
   return node;
 }
 
+function canAnimateFold() {
+  return typeof window !== "undefined" && typeof window.requestAnimationFrame === "function";
+}
+
+function foldHide(node, timerRef) {
+  if (timerRef.id !== null) {
+    clearTimeout(timerRef.id);
+    timerRef.id = null;
+  }
+  if (node.hidden) {
+    node.classList?.remove("is-closing");
+    return;
+  }
+  if (!canAnimateFold()) {
+    node.classList?.remove("is-closing");
+    node.hidden = true;
+    return;
+  }
+  node.classList?.add("is-closing");
+  timerRef.id = setTimeout(() => {
+    timerRef.id = null;
+    node.hidden = true;
+    node.classList?.remove("is-closing");
+  }, FOLD_CLOSE_MS);
+}
+
+function foldShow(node, timerRef) {
+  if (timerRef.id !== null) {
+    clearTimeout(timerRef.id);
+    timerRef.id = null;
+  }
+  node.classList?.remove("is-closing");
+  node.hidden = false;
+}
+
 // ctx = {map, api, root, container, bus} (DECISIONS.md A-35).
 export function mount({ map, api, root, container, bus }) {
   root = container || root;
   const storage = window.localStorage;
   const state = { category: null, work_id: null, marker: null };
+  const menuTimer = { id: null };
+  const panelTimer = { id: null };
 
   const fab = el("button", { type: "button", class: "glass report-fab", "aria-label": "Νέα αναφορά",
     "aria-expanded": "false", "aria-controls": "report-menu" }, "+");
@@ -130,19 +170,32 @@ export function mount({ map, api, root, container, bus }) {
   root.append(fab, menu, panel);
 
   function toggleMenu(open) {
-    menu.hidden = !open;
+    if (open) {
+      foldShow(menu, menuTimer);
+    } else {
+      foldHide(menu, menuTimer);
+    }
     fab.setAttribute("aria-expanded", String(open));
   }
 
-  function closeForm() {
-    panel.hidden = true;
+  function closeForm(immediate = false) {
+    if (immediate) {
+      if (panelTimer.id !== null) {
+        clearTimeout(panelTimer.id);
+        panelTimer.id = null;
+      }
+      panel.classList?.remove("is-closing");
+      panel.hidden = true;
+    } else {
+      foldHide(panel, panelTimer);
+    }
     state.marker?.remove();
     state.marker = null;
   }
 
   function openForm(category, workId, lngLat) {
     toggleMenu(false);
-    closeForm();
+    closeForm(true);
     state.category = category;
     state.work_id = workId;
     const label = CATEGORIES.find((c) => c.id === category)?.label || category;
@@ -155,7 +208,7 @@ export function mount({ map, api, root, container, bus }) {
     state.marker = new window.maplibregl.Marker({ draggable: true })
       .setLngLat(lngLat || map.getCenter())
       .addTo(map);
-    panel.hidden = false;
+    foldShow(panel, panelTimer);
     note.focus();
   }
 
@@ -167,7 +220,13 @@ export function mount({ map, api, root, container, bus }) {
     }
   }
 
-  fab.addEventListener("click", () => toggleMenu(menu.hidden));
+  function notifyToast(message, extra = {}) {
+    bus?.dispatchEvent(new CustomEvent("toast:show", {
+      detail: { message, durationMs: 3000, ...extra },
+    }));
+  }
+
+  fab.addEventListener("click", () => toggleMenu(menu.hidden || menu.classList?.contains("is-closing")));
   root.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       toggleMenu(false);
@@ -175,7 +234,7 @@ export function mount({ map, api, root, container, bus }) {
       fab.focus();
     }
   });
-  cancelBtn.addEventListener("click", closeForm);
+  cancelBtn.addEventListener("click", () => closeForm());
 
   panel.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -188,26 +247,39 @@ export function mount({ map, api, root, container, bus }) {
     try {
       const out = await submitReport(input, api, storage);
       if (out.queued) {
-        status.textContent = out.photoDropped
-          ? "Χωρίς σύνδεση: η αναφορά θα σταλεί μόλις επανέλθει το δίκτυο, χωρίς τη φωτογραφία."
-          : "Χωρίς σύνδεση: η αναφορά θα σταλεί μόλις επανέλθει το δίκτυο.";
-        state.marker?.remove();
-        state.marker = null;
+        const queuedMsg = out.photoDropped
+          ? "Αναφορά αποθηκεύτηκε offline (χωρίς φωτογραφία) — θα σταλεί αυτόματα."
+          : "Αναφορά αποθηκεύτηκε offline — θα σταλεί μόλις επανέλθει το δίκτυο.";
+        note.value = "";
+        photo.value = "";
+        sendBtn.disabled = false;
+        closeForm();
+        bus.dispatchEvent(new CustomEvent("report:created", {
+          detail: { id: `offline-${Date.now()}`, category: input.category, lon, lat },
+        }));
+        notifyToast(queuedMsg);
         return;
       }
       const r = out.result;
-      status.textContent = r.points_awarded > 0 ? `Ευχαριστούμε! +${r.points_awarded} πόντοι` : "Ευχαριστούμε! Η αναφορά καταχωρήθηκε.";
+      const toastMsg = r.points_awarded > 0
+        ? `Αναφορά καταχωρήθηκε · +${r.points_awarded} Πόντοι Γειτονιάς`
+        : "Αναφορά καταχωρήθηκε";
       if (r.photo_url_blurred) {
         preview.src = r.photo_url_blurred; // only the backend's blurred copy is ever shown (SPEC «Privacy»)
-        preview.hidden = false;
       }
-      state.marker?.remove();
-      state.marker = null;
+      // Reset form fields and smoothly fold-close the report window (UI/UX upgrade #5).
+      note.value = "";
+      photo.value = "";
+      status.textContent = "";
+      preview.hidden = true;
+      sendBtn.disabled = false;
+      closeForm();
       earned(r);
       // Shared report refresh event and payload: TASKS_B.md B11 (verified).
       bus.dispatchEvent(new CustomEvent("report:created", {
         detail: { id: r.id, category: input.category, lon, lat },
       }));
+      notifyToast(toastMsg, r.photo_url_blurred ? { photo_url_blurred: r.photo_url_blurred } : {});
     } catch {
       status.textContent = "Η αναφορά δεν έγινε δεκτή. Ελέγξτε τα στοιχεία και δοκιμάστε ξανά.";
       sendBtn.disabled = false;
@@ -218,6 +290,43 @@ export function mount({ map, api, root, container, bus }) {
   bus.addEventListener("report:open", (e) => {
     const { work_id = null, lngLat = null } = e.detail || {};
     openForm("work_progress", work_id, lngLat);
+  });
+
+  // Instant 1-tap Waze-style "⚡ Αναφορά εδώ" from Navigation mode (UI/UX upgrade #6).
+  bus.addEventListener("report:quick", async (e) => {
+    const detail = e?.detail || {};
+    const category = detail.category || "incident";
+    const quickNote = detail.note || "";
+    const pos = detail.lngLat || map?.getCenter?.();
+    const lon = Number(pos?.lng ?? pos?.lon ?? (Array.isArray(pos) ? pos[0] : NaN));
+    const lat = Number(pos?.lat ?? (Array.isArray(pos) ? pos[1] : NaN));
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+    const label = quickNote || CATEGORIES.find((c) => c.id === category)?.label || "Αναφορά";
+    try {
+      const out = await submitReport(
+        { category, lngLat: { lng: lon, lat }, note: quickNote, photo: null, work_id: null },
+        api,
+        storage,
+      );
+      if (out.queued) {
+        bus.dispatchEvent(new CustomEvent("report:created", {
+          detail: { id: `offline-${Date.now()}`, category, lon, lat },
+        }));
+        notifyToast(`⚡ ${label} · αποθηκεύτηκε offline`);
+        return;
+      }
+      const r = out.result;
+      earned(r);
+      bus.dispatchEvent(new CustomEvent("report:created", {
+        detail: { id: r.id, category, lon, lat },
+      }));
+      const msg = r.points_awarded > 0
+        ? `⚡ ${label} καταχωρήθηκε · +${r.points_awarded} Πόντοι Γειτονιάς`
+        : `⚡ ${label} καταχωρήθηκε`;
+      notifyToast(msg);
+    } catch {
+      notifyToast("Η γρήγορη αναφορά δεν έγινε δεκτή.");
+    }
   });
 
   const flush = async () => (await flushQueue(api, storage)).forEach(earned);

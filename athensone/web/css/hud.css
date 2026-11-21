@@ -1,18 +1,21 @@
 /* AthensOne Citizen Map — HUD & glassmorphism styles (SPEC.md "Map & Visual Spec"). */
 
 :root {
-  /* Glassmorphism surface and border values from SPEC.md "HUD (glassmorphism)" (certainty: verified). */
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.3);
-  --glass-blur: 12px;
-  --glass-shadow: 0 4px 16px rgba(15, 23, 42, 0.14); /* Standard soft shadow matching SPEC "ήπια σκιά" (certainty: design default). */
+  /* Upgraded frosted glassmorphism tokens (SPEC.md "HUD (glassmorphism)" + UI/UX polish #7). */
+  --glass-bg: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.34);
+  --glass-blur: 20px;
+  --glass-saturate: 180%;
+  --glass-shadow: 0 10px 32px rgba(15, 23, 42, 0.16), 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.45);
   --glass-radius-pill: 999px; /* SPEC.md "HUD (glassmorphism)" (certainty: verified). */
-  --glass-radius-panel: 16px; /* SPEC.md "HUD (glassmorphism)" (certainty: verified). */
-  --hud-text: #111827; /* High-contrast dark ink on light glass for WCAG AA (certainty: design default). */
+  --glass-radius-panel: 18px; /* SPEC.md "HUD (glassmorphism)" refined panel radius. */
+  --spring-open: cubic-bezier(0.16, 1, 0.3, 1); /* macOS spring open curve (UI/UX upgrade #3). */
+  --spring-close: cubic-bezier(0.32, 0.72, 0, 1); /* macOS fold close curve (UI/UX upgrade #3). */
+  --hud-text: #0f172a; /* High-contrast dark ink on light glass for WCAG AA (certainty: design default). */
   --hud-active-bg: #1d4ed8; /* WCAG AA (>6.7:1 with white) active tab pill fill (certainty: design default). */
   --hud-active-text: #ffffff;
-  --hud-hover-bg: rgba(17, 24, 39, 0.08);
-  --hud-divider: rgba(17, 24, 39, 0.16);
+  --hud-hover-bg: rgba(15, 23, 42, 0.07);
+  --hud-divider: rgba(15, 23, 42, 0.14);
   --hud-focus: #1d4ed8;
   --hud-offline-dot: #d97706; /* Amber offline status indicator (certainty: design default). */
   --hud-gap: 12px; /* Edge inset for floating HUD controls (certainty: design default). */
@@ -20,13 +23,15 @@
 }
 
 [data-theme="dark"] {
-  /* Dark glassmorphism surface from SPEC.md "HUD (glassmorphism)" (certainty: verified). */
-  --glass-bg: rgba(20, 24, 32, 0.55);
-  --hud-text: #f3f4f6; /* High-contrast light ink on dark glass for WCAG AA (certainty: design default). */
+  /* Dark frosted glassmorphism surface (SPEC.md + UI/UX polish #7). */
+  --glass-bg: rgba(17, 24, 39, 0.66);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 14px 40px rgba(0, 0, 0, 0.48), 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --hud-text: #f8fafc; /* High-contrast light ink on dark glass for WCAG AA (certainty: design default). */
   --hud-active-bg: #2563eb; /* WCAG AA (>5.1:1 with white) active tab pill fill in dark mode (certainty: design default). */
   --hud-active-text: #ffffff;
-  --hud-hover-bg: rgba(243, 244, 246, 0.12);
-  --hud-divider: rgba(243, 244, 246, 0.22);
+  --hud-hover-bg: rgba(248, 250, 252, 0.11);
+  --hud-divider: rgba(248, 250, 252, 0.18);
   --hud-focus: #93c5fd;
   --hud-offline-dot: #fbbf24;
 }
@@ -68,8 +73,8 @@ body {
 
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   border-radius: var(--glass-radius-panel);
   box-shadow: var(--glass-shadow);
@@ -1877,3 +1882,495 @@ body {
   z-index: 25;
 }
 /* --- /A6 --- */
+
+/* --- UI/UX Polish (Upgrades #1–#7) --- */
+
+/* Tactile micro-interactions & clean typography across all HUD controls. */
+.hud button {
+  transition:
+    transform 140ms var(--spring-open),
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 180ms ease,
+    opacity 160ms ease;
+}
+
+.hud button:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+.points-balance,
+.routing-summary,
+.nav-hud__meta,
+.nav-hud__instruction {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Clean minimal scrollbars inside floating drawers. */
+.workstab-panel,
+.points-panel,
+.report-panel,
+.stoa-log {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+.workstab-panel::-webkit-scrollbar,
+.points-panel::-webkit-scrollbar,
+.report-panel::-webkit-scrollbar,
+.stoa-log::-webkit-scrollbar {
+  width: 5px;
+}
+
+.workstab-panel::-webkit-scrollbar-thumb,
+.points-panel::-webkit-scrollbar-thumb,
+.report-panel::-webkit-scrollbar-thumb,
+.stoa-log::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+/* 1. Sleek 2D / 3D Buildings pill toggle inside layerbar. */
+.layerbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--hud-divider);
+  flex: 0 0 auto;
+  margin: 0 2px;
+}
+
+.view-mode-btn {
+  appearance: none;
+  border: 1px solid var(--hud-divider);
+  background: transparent;
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  padding: 7px 11px;
+  border-radius: var(--glass-radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.view-mode-btn:hover {
+  background: var(--hud-hover-bg);
+}
+
+.view-mode-btn:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.view-mode-btn.is-active,
+.view-mode-btn[aria-pressed="true"] {
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.38);
+}
+
+/* 3. macOS-style spring unfold & fold-close animations anchored to each trigger button. */
+@keyframes macos-unfold-up {
+  from {
+    opacity: 0;
+    transform: scale(0.86) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes macos-fold-up {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.86) translateY(14px);
+  }
+}
+
+@keyframes macos-unfold-down {
+  from {
+    opacity: 0;
+    transform: scale(0.86) translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes macos-fold-down {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.86) translateY(-12px);
+  }
+}
+
+.report-menu,
+.report-panel {
+  transform-origin: bottom left;
+}
+
+.report-menu:not([hidden]),
+.report-panel:not([hidden]) {
+  animation: macos-unfold-up 260ms var(--spring-open) both;
+}
+
+.report-menu.is-closing,
+.report-panel.is-closing {
+  animation: macos-fold-up 200ms var(--spring-close) both;
+  pointer-events: none;
+}
+
+.points-panel {
+  transform-origin: top right;
+}
+
+.points-panel:not([hidden]) {
+  animation: macos-unfold-down 260ms var(--spring-open) both;
+}
+
+.points-panel.is-closing {
+  animation: macos-fold-down 200ms var(--spring-close) both;
+  pointer-events: none;
+}
+
+.workstab-panel {
+  transform-origin: top left;
+}
+
+.workstab-panel:not([hidden]) {
+  animation: macos-unfold-down 260ms var(--spring-open) both;
+}
+
+.workstab-panel.is-closing {
+  animation: macos-fold-down 200ms var(--spring-close) both;
+  pointer-events: none;
+}
+
+.maplibregl-popup.work-popup .maplibregl-popup-content {
+  transform-origin: bottom center;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  animation: macos-unfold-up 240ms var(--spring-open) both;
+}
+
+.routing-drawer {
+  transform-origin: bottom center;
+  transition: transform 280ms var(--spring-open), box-shadow 220ms ease;
+}
+
+/* 4. Report pin popup typography. */
+.report-pin-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 170px;
+}
+
+.report-pin-popup__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.report-pin-popup__note {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.9;
+}
+
+.report-pin-popup__meta {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+/* 5. Sleek floating top-center glassmorphism toast (3s auto-dismiss). */
+.hud-toast {
+  position: fixed;
+  top: calc(var(--hud-gap) * 2 + var(--hud-top-row-height));
+  left: 50%;
+  transform: translate(-50%, -14px) scale(0.92);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 40;
+  transition: transform 280ms var(--spring-open), opacity 220ms var(--spring-open);
+}
+
+.hud-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.hud-toast.is-leaving {
+  opacity: 0;
+  transform: translate(-50%, -10px) scale(0.94);
+  transition: transform 200ms var(--spring-close), opacity 200ms var(--spring-close);
+}
+
+.hud-toast__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  font-size: 0.84rem;
+  font-weight: 650;
+  white-space: nowrap;
+  max-width: min(460px, calc(100vw - 24px));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-toast__thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--glass-border);
+  flex: none;
+}
+
+/* 6. Start Navigation CTA & Turn-by-Turn GPS HUD + Instant Waze "⚡ Αναφορά εδώ". */
+.routing-actions {
+  gap: 8px;
+}
+
+.routing-nav-start-btn {
+  appearance: none;
+  border: none;
+  border-radius: var(--glass-radius-pill);
+  background: linear-gradient(135deg, #16a34a, #059669);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+}
+
+.routing-nav-start-btn:hover {
+  filter: brightness(1.06);
+}
+
+.routing-nav-start-btn:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.nav-hud {
+  position: fixed;
+  top: calc(var(--hud-gap) * 2 + var(--hud-top-row-height));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(440px, calc(100vw - 24px));
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 30;
+  transform-origin: top center;
+  animation: macos-unfold-down 300ms var(--spring-open) both;
+}
+
+.nav-hud__primary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-hud__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  flex: none;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.32);
+}
+
+.nav-hud__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nav-hud__instruction {
+  font-size: 0.96rem;
+  font-weight: 750;
+  line-height: 1.25;
+  color: var(--hud-text);
+}
+
+.nav-hud__meta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.78;
+  margin-top: 2px;
+}
+
+.nav-hud__end-btn {
+  appearance: none;
+  border: none;
+  border-radius: var(--glass-radius-pill);
+  background: #dc2626;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 7px 12px;
+  cursor: pointer;
+  flex: none;
+}
+
+.nav-hud__secondary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nav-hud__badge {
+  font-size: 0.75rem;
+  font-weight: 650;
+  padding: 4px 9px;
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-hover-bg);
+  border: 1px solid var(--hud-divider);
+}
+
+.nav-hud__sim-btn {
+  margin-left: auto;
+  appearance: none;
+  border: 1px solid var(--hud-divider);
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-hover-bg);
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 11px;
+  cursor: pointer;
+}
+
+.nav-hud__sim-btn.is-active,
+.nav-hud__sim-btn[aria-pressed="true"] {
+  background: var(--hud-active-bg);
+  border-color: var(--hud-active-bg);
+  color: #ffffff;
+}
+
+/* Glowing blue directional GPS chevron marker. */
+.nav-gps-chevron {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(37, 99, 235, 0) 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.nav-gps-chevron::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 14px solid #38bdf8;
+  filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.9));
+  transform: rotate(var(--nav-bearing, 0deg)) translateY(-10px);
+  transition: transform 180ms linear;
+}
+
+/* Floating instant Waze "⚡ Αναφορά εδώ" button & 1-tap hazard pills during navigation. */
+.nav-quick-report {
+  position: fixed;
+  bottom: calc(var(--hud-gap) * 2 + 58px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+}
+
+.nav-quick-report-btn {
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 750;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.42);
+}
+
+.nav-quick-report__tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  max-width: min(420px, calc(100vw - 24px));
+  transform-origin: bottom center;
+  animation: macos-unfold-up 240ms var(--spring-open) both;
+}
+
+.nav-quick-report__pill {
+  appearance: none;
+  border: 1px solid var(--hud-divider);
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-hover-bg);
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-quick-report__pill:hover {
+  background: var(--hud-active-bg);
+  border-color: var(--hud-active-bg);
+  color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .hud-toast {
+    top: calc(var(--hud-gap) * 3 + var(--hud-top-row-height) * 2);
+  }
+
+  .nav-hud {
+    top: calc(var(--hud-gap) * 3 + var(--hud-top-row-height) * 2);
+    width: calc(100vw - 2 * var(--hud-gap));
+    padding: 10px 12px;
+  }
+
+  .nav-quick-report {
+    bottom: calc(var(--hud-gap) * 2 + 64px);
+  }
+}
+/* --- /UI/UX Polish --- */

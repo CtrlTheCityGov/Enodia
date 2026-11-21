@@ -7,6 +7,7 @@ opencv-python-headless>=4.9,<5   # 4.x ships the Haar face models we use
 numpy>=1.26
 python-dotenv>=1.0
 pytest>=8
+tzdata>=2024.1; sys_platform == "win32"  # IANA timezone DB for ZoneInfo("Europe/Athens") on Windows (Apache-2.0)
 
 # --- T5: Better face blur ---
 # Do NOT put bare `deface==1.5.0` directly in this file: its package metadata pulls

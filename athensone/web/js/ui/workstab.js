@@ -459,9 +459,27 @@ export async function mount({ map, api, root, container, bus }) {
     }
   }
 
+  let closeTimer = null;
   function setOpen(next) {
     state.open = Boolean(next);
-    panel.hidden = !state.open;
+    if (closeTimer !== null) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+    if (state.open) {
+      panel.classList?.remove("is-closing");
+      panel.hidden = false;
+    } else if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function" && !panel.hidden) {
+      panel.classList?.add("is-closing");
+      closeTimer = setTimeout(() => {
+        closeTimer = null;
+        panel.hidden = true;
+        panel.classList?.remove("is-closing");
+      }, 200);
+    } else {
+      panel.classList?.remove("is-closing");
+      panel.hidden = true;
+    }
     mapTab.setAttribute("aria-selected", String(!state.open));
     mapTab.setAttribute("tabindex", state.open ? "-1" : "0");
     mapTab.classList.toggle("is-active", !state.open);

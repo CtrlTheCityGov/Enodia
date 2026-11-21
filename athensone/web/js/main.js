@@ -42,9 +42,11 @@ const THEME_LABEL_TO_LIGHT = "Φωτεινό";
 // Stoa AI citation flyTo camera and temporary highlight settings (zoom/pitch from SPEC.md "HUD (glassmorphism)"; highlight duration design default).
 const FLYTO_ZOOM = 17;
 const FLYTO_PITCH = 60;
+const FLYTO_DURATION_MS = 1100;
 const FLYTO_HIGHLIGHT_SOURCE_ID = "flyto-highlight-source";
 const FLYTO_HIGHLIGHT_LAYER_ID = "flyto-highlight";
 const FLYTO_HIGHLIGHT_DURATION_MS = 6000;
+const TOAST_DEFAULT_DURATION_MS = 3000;
 
 // Dev B UI modules and their HUD mount slots (source: SPEC.md "Αρχιτεκτονική" & TASKS_A.md A5 / A-35; certainty: verified).
 const DEV_B_UI_MOUNTS = [
@@ -266,6 +268,69 @@ export async function bootstrap(
   const map = mapContainer ? createMap(mapContainer, state) : null;
 
   const flyToHighlightState = { timerId: null };
+  const toastEl = root.getElementById("hud-toast");
+  let toastTimer = null;
+
+  function showToast(detail) {
+    if (!toastEl || !detail) {
+      return;
+    }
+    const text = typeof detail === "string" ? detail : String(detail.message ?? detail.text ?? "").trim();
+    if (!text) {
+      return;
+    }
+    const duration =
+      Number.isFinite(detail?.durationMs) && detail.durationMs > 0
+        ? detail.durationMs
+        : TOAST_DEFAULT_DURATION_MS;
+
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+
+    const doc = toastEl.ownerDocument ?? root;
+    const pill = typeof doc.createElement === "function" ? doc.createElement("div") : null;
+    if (pill) {
+      pill.className = "glass glass-pill hud-toast__pill";
+      if (detail?.photo_url_blurred) {
+        const img = doc.createElement("img");
+        img.className = "hud-toast__thumb";
+        img.src = detail.photo_url_blurred;
+        img.alt = "Θολωμένη φωτογραφία αναφοράς";
+        pill.appendChild(img);
+      }
+      const span = doc.createElement("span");
+      span.className = "hud-toast__text";
+      span.textContent = text;
+      pill.appendChild(span);
+      if (typeof toastEl.replaceChildren === "function") {
+        toastEl.replaceChildren(pill);
+      } else {
+        toastEl.textContent = text;
+      }
+    } else {
+      toastEl.textContent = text;
+    }
+
+    toastEl.classList?.remove("is-leaving");
+    toastEl.classList?.add("is-visible");
+
+    toastTimer = setTimeout(() => {
+      toastEl.classList?.add("is-leaving");
+      toastEl.classList?.remove("is-visible");
+      toastTimer = setTimeout(() => {
+        toastTimer = null;
+        toastEl.classList?.remove("is-leaving");
+        if (typeof toastEl.replaceChildren === "function") {
+          toastEl.replaceChildren();
+        } else {
+          toastEl.textContent = "";
+        }
+      }, 240);
+    }, duration);
+  }
+
   if (typeof bus.addEventListener === "function") {
     bus.addEventListener("map:flyto", (event) => {
       const detail = event?.detail;
@@ -287,22 +352,33 @@ export async function bootstrap(
           center: [lon, lat],
           zoom: FLYTO_ZOOM,
           pitch: FLYTO_PITCH,
+          duration: FLYTO_DURATION_MS,
+          essential: true,
         });
       }
       showFlyToHighlight(map, lon, lat, detail?.label, flyToHighlightState);
     });
 
-    /* --- A6 --- */
+    /* --- A6 / Upgrade #4 --- */
+    // Immediately land & pulse the newly reported pin on the map, then merge with backend refresh.
+    bus.addEventListener("report:created", (event) => {
+      if (!map) {
+        return;
+      }
+      if (event?.detail) {
+        reportsLayer.addReportPin(map, event.detail);
+      }
+      reportsLayer.refresh(map, api, state);
+    });
+
     // Refresh live citizen report pins immediately after a newly submitted Waze report awards points (TASKS_A.md A6).
     bus.addEventListener("points:earned", () => {
       if (map) {
         reportsLayer.refresh(map, api, state);
       }
     });
-    bus.addEventListener("report:created", () => {
-      if (map) {
-        reportsLayer.refresh(map, api, state);
-      }
+    bus.addEventListener("toast:show", (event) => {
+      showToast(event?.detail);
     });
     /* --- /A6 --- */
   }

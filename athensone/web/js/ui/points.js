@@ -119,10 +119,35 @@ export async function mount({ api, root, container, bus }) {
     if (!panel.hidden) renderPanel();
   }
 
+  let closeTimer = null;
+  function setPanelOpen(open) {
+    if (closeTimer !== null) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+    if (open) {
+      panel.classList?.remove("is-closing");
+      panel.hidden = false;
+      pill.setAttribute("aria-expanded", "true");
+      renderPanel();
+      return;
+    }
+    pill.setAttribute("aria-expanded", "false");
+    if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function" && !panel.hidden) {
+      panel.classList?.add("is-closing");
+      closeTimer = setTimeout(() => {
+        closeTimer = null;
+        panel.hidden = true;
+        panel.classList?.remove("is-closing");
+      }, 200);
+    } else {
+      panel.classList?.remove("is-closing");
+      panel.hidden = true;
+    }
+  }
+
   pill.addEventListener("click", () => {
-    panel.hidden = !panel.hidden;
-    pill.setAttribute("aria-expanded", String(!panel.hidden));
-    if (!panel.hidden) renderPanel();
+    setPanelOpen(panel.hidden || panel.classList?.contains("is-closing"));
   });
 
   // points:earned {delta, reason} (A-35): bump the balance now, pulse 600 ms, show a rising «+N».
