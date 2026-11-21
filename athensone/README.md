@@ -1,21 +1,37 @@
-# AthensOne AI · «Η Γειτονιά μου AI»
+# AthensOne · «Η Γειτονιά μου AI»
 
-**Apps4Athens 3.0 Gov Hackathon · 21–22 Nov 2026 · Serafio · Track: AthensGov AI Transformation (Η)**
+**A map app for Athens: an open alternative to Google Maps, built on the City's own data.**
 
-One closed loop, built on the AthensGov Sandbox API: a resident asks a question and gets an answer with
-official sources, walks a step-free route to a Friendship Club, the route changes around a blocked ramp
-someone just photographed (faces blurred), and a municipal officer approves the fix, which the resident
-sees live.
+Apps4Athens 3.0 Gov Hackathon · 21–22 Nov 2026 · Serafio · Track: AthensGov AI Transformation (Η)
 
-> AthensGov answers questions. We close the loop, from a photo on the sidewalk to a crew on the way,
-> with a source on every answer, faces blurred, and a human deciding.
->
-> **New: Stoa layer.** Before a crew goes out, the operator sees whether the street's works may still be under
-> the contractor's guarantee (Diavgeia + ΚΗΜΔΗΣ, with the source sentence), and gets a draft dossier to sign.
-> One shared map with layers. See [docs/STOA_MERGE.md](docs/STOA_MERGE.md).
->
-> **New: navigation.** Step-free routes per profile (wheelchair, walker, stroller, visually impaired), ranked on
-> shade, distance from traffic and places to rest, heat-aware. See [docs/NAVIGATION.md](docs/NAVIGATION.md).
+The map is the app. Search for a street, an address, a place or a City service and the map takes you there; open
+anything on it to see what the City knows about that spot; ask for a route and get one that fits how you walk.
+Every feature is a layer, a place panel or a route on that one map:
+
+- **Search and places**: Greek, Greeklish and English, accent-insensitive; opening hours, wheelchair access,
+  contact details from OpenStreetMap; plus the City's own layers (T22).
+- **Directions**: step-free routes per profile (wheelchair, walker, stroller, visually impaired), ranked on shade,
+  distance from traffic and places to rest; heat-aware; they avoid obstacles residents just reported.
+  See [docs/NAVIGATION.md](docs/NAVIGATION.md).
+- **Ask the City**: answers with official sources from the AthensGov Sandbox, pinned on the map.
+- **Reports**: one photo, faces blurred and EXIF removed before storage or AI; duplicates within 50 m merge; status
+  timeline; "Is it fixed?" after the repair; the route redraws around open hazards.
+- **Stoa (public works)**: works on each street, guarantee clock, cited answers `[ΑΔΑ …]`, a draft claim for the
+  engineer. See [docs/STOA_MERGE.md](docs/STOA_MERGE.md).
+- **City data layers**: air-quality stations, WiFi, districts (AthensGov CKAN); trees, benches, water, busy roads,
+  accessible places (OpenStreetMap). Heat banner with the nearest cool place.
+- **Πόντοι Γειτονιάς**: points for verified civic actions, by district, never by person.
+- **Operator view**: the same map for City staff, with the triage list, approve and dispatch, Stoa radar and an
+  equity table per district.
+- **Coming as modules** (cards in [docs/TASKS.md](docs/TASKS.md)): accessibility mappers, Your Voice, Give & Share,
+  What's On, points rewards, Smart Clean, Smart Parking, operator KPIs.
+
+One loop shows it end to end in the demo: a resident asks a question and gets an answer with sources, walks a
+step-free route to a Friendship Club, the route changes around a blocked ramp someone just photographed, and a
+municipal officer approves the fix, which the resident sees live.
+
+> AthensGov answers questions. We put the whole city on one map and close the loop, from a photo on the sidewalk
+> to a crew on the way, with a source on every answer, faces blurred, and a human deciding.
 
 ## Quick start (5 minutes)
 

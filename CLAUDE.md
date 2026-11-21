@@ -12,10 +12,16 @@ economics), `AthensOne_Build_Plan.pdf` (tonight's features, repo licence verdict
 
 ## What the product is
 
-One closed loop on the AthensGov Sandbox API: a resident asks a question and gets an answer with official sources,
-walks a step-free route to a Friendship Club, the route changes around a blocked ramp someone just photographed
-(faces blurred), and a municipal officer approves the fix, which the resident sees live. Stoa adds the works memory:
-before a crew goes out, the operator sees whether the street may still be under the contractor's guarantee.
+**AthensOne is a map app for Athens: an open alternative to Google Maps, built on the City's own data (A-26).**
+The map is the home screen. Search (streets, addresses, places, City services), the place panel and directions are
+the core. Every other feature is something on that map: a layer (reports, works, air, shade, accessibility points),
+a place panel (a report's timeline, a works card, an event), or a route (step-free, shaded, around hazards). When you
+design a feature, first answer: what does it put on the map, what opens when it's clicked, and does it change routes?
+
+The demo loop on top of it: a resident asks a question and gets an answer with official sources, walks a step-free
+route to a Friendship Club, the route changes around a blocked ramp someone just photographed (faces blurred), and a
+municipal officer approves the fix, which the resident sees live. Stoa adds the works memory: before a crew goes
+out, the operator sees whether the street may still be under the contractor's guarantee.
 
 | File | Job |
 |---|---|
