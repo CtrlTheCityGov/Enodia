@@ -196,3 +196,167 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* --- A4 --- */
+/* Routing bottom sheet drawer styles (SPEC.md F5, "HUD (glassmorphism)", "Routing"; TASKS_A.md A4). */
+.routing-drawer {
+  width: min(420px, calc(100vw - 2 * var(--hud-gap)));
+  padding: 6px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routing-handle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  border-radius: var(--glass-radius-pill);
+}
+
+.routing-handle:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.routing-handle-bar {
+  width: 40px; /* Standard bottom-sheet grabber pill width (certainty: design default). */
+  height: 4px;
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-divider);
+}
+
+.routing-drawer.is-collapsed .routing-body {
+  display: none;
+}
+
+.routing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routing-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.routing-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--hud-text);
+}
+
+.routing-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.routing-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--hud-divider);
+  background: rgba(255, 255, 255, 0.7); /* High-contrast input surface over light glass (certainty: design default). */
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+[data-theme="dark"] .routing-input {
+  background: rgba(15, 23, 42, 0.65); /* High-contrast input surface over dark glass (certainty: design default). */
+}
+
+.routing-input:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 1px;
+}
+
+.routing-pick-btn,
+.routing-profile-btn,
+.routing-submit-btn {
+  appearance: none;
+  border: 1px solid var(--hud-divider);
+  background: transparent;
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: var(--glass-radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.routing-pick-btn:hover,
+.routing-profile-btn:hover {
+  background: var(--hud-hover-bg);
+}
+
+.routing-pick-btn:focus-visible,
+.routing-profile-btn:focus-visible,
+.routing-submit-btn:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.routing-pick-btn.is-active,
+.routing-pick-btn[aria-pressed="true"],
+.routing-profile-btn.is-active,
+.routing-profile-btn[aria-pressed="true"] {
+  background: var(--hud-active-bg);
+  border-color: var(--hud-active-bg);
+  color: var(--hud-active-text);
+}
+
+.routing-profiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.routing-profile-btn {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.routing-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.routing-submit-btn {
+  width: 100%;
+  background: var(--hud-active-bg);
+  border-color: var(--hud-active-bg);
+  color: var(--hud-active-text);
+  padding: 8px 14px;
+}
+
+.routing-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.routing-summary {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hud-text);
+  min-height: 1.2em;
+  text-align: center;
+}
+
+.routing-summary:empty {
+  display: none;
+}
+/* --- /A4 --- */
