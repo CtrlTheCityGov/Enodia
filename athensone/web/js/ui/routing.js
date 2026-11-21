@@ -2196,9 +2196,20 @@ export function initRouting(container, map, api, options = {}) {
     requestRoute();
   }
 
+  function handleReportsChangedEvent() {
+    if (!lastRoute) {
+      return;
+    }
+    if (!resolvePoint("from") || !resolvePoint("to")) {
+      return;
+    }
+    requestRoute();
+  }
+
   const bus = options?.bus && typeof options.bus.addEventListener === "function" ? options.bus : null;
   if (bus) {
     bus.addEventListener("route:request", handleRouteRequestEvent);
+    bus.addEventListener("reports:changed", handleReportsChangedEvent);
   }
 
   form.addEventListener("submit", (e) => {
@@ -2223,9 +2234,11 @@ export function initRouting(container, map, api, options = {}) {
     },
     setCollapsed,
     requestRoute,
+    refreshActiveRoute: handleReportsChangedEvent,
     startNavigation,
     stopNavigation,
     destroy: () => {
+      lastRoute = null;
       if (navActive) {
         stopNavigation();
       }
@@ -2238,6 +2251,7 @@ export function initRouting(container, map, api, options = {}) {
       }
       if (bus && typeof bus.removeEventListener === "function") {
         bus.removeEventListener("route:request", handleRouteRequestEvent);
+        bus.removeEventListener("reports:changed", handleReportsChangedEvent);
       }
     },
   };

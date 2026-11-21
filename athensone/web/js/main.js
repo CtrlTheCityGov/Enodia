@@ -359,7 +359,45 @@ export async function bootstrap(
       showFlyToHighlight(map, lon, lat, detail?.label, flyToHighlightState);
     });
 
-    /* --- A6 / Upgrade #4 --- */
+    /* --- A6 / Upgrade #4 / A-LOOP-1 --- */
+    let lastReportStatuses = null;
+    function extractReportStatuses(fc) {
+      const statuses = new Map();
+      const features = Array.isArray(fc?.features) ? fc.features : [];
+      for (let i = 0; i < features.length; i += 1) {
+        const f = features[i];
+        const key = f?.properties?.id ?? f?.id ?? `idx-${i}`;
+        const status = f?.properties?.status ?? "submitted";
+        statuses.set(String(key), String(status));
+      }
+      return statuses;
+    }
+    function reportStatusesChanged(prev, next) {
+      if (!prev) return false;
+      if (prev.size !== next.size) return true;
+      for (const [k, v] of next) {
+        if (prev.get(k) !== v) return true;
+      }
+      return false;
+    }
+    async function refreshReportsAndSync() {
+      if (!map) return null;
+      if (!lastReportStatuses && typeof map.getSource === "function") {
+        const srcData = map.getSource(reportsLayer.SOURCE_ID)?.data;
+        if (srcData && Array.isArray(srcData.features) && srcData.features.length > 0) {
+          lastReportStatuses = extractReportStatuses(srcData);
+        }
+      }
+      const fc = await reportsLayer.refresh(map, api, state);
+      const nextStatuses = extractReportStatuses(fc);
+      const changed = reportStatusesChanged(lastReportStatuses, nextStatuses);
+      lastReportStatuses = nextStatuses;
+      if (changed && typeof bus.dispatchEvent === "function") {
+        bus.dispatchEvent(new CustomEvent("reports:changed", { detail: { count: nextStatuses.size } }));
+      }
+      return fc;
+    }
+
     // Immediately land & pulse the newly reported pin on the map, then merge with backend refresh.
     bus.addEventListener("report:created", (event) => {
       if (!map) {
@@ -368,13 +406,13 @@ export async function bootstrap(
       if (event?.detail) {
         reportsLayer.addReportPin(map, event.detail);
       }
-      reportsLayer.refresh(map, api, state);
+      refreshReportsAndSync();
     });
 
     // Refresh live citizen report pins immediately after a newly submitted Waze report awards points (TASKS_A.md A6).
     bus.addEventListener("points:earned", () => {
       if (map) {
-        reportsLayer.refresh(map, api, state);
+        refreshReportsAndSync();
       }
     });
     bus.addEventListener("toast:show", (event) => {
@@ -382,13 +420,13 @@ export async function bootstrap(
     });
     if (typeof globalThis.addEventListener === "function") {
       globalThis.addEventListener("focus", () => {
-        if (map) reportsLayer.refresh(map, api, state);
+        if (map) refreshReportsAndSync();
       });
     }
     if (root && typeof root.addEventListener === "function") {
       root.addEventListener("visibilitychange", () => {
         if (map && root.visibilityState === "visible") {
-          reportsLayer.refresh(map, api, state);
+          refreshReportsAndSync();
         }
       });
     }

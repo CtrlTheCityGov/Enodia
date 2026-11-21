@@ -60,6 +60,108 @@ const busAnimByMap = new WeakMap();
 const lastBusesByMap = new WeakMap();
 const busPollGenByMap = new WeakMap();
 const busesActiveByMap = new WeakMap();
+const apiByMap = new WeakMap();
+const stationPopupBoundMaps = new WeakSet();
+
+function escapeHtml(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderStationPopupHtml(name, line, bodyHtml = "") {
+  const lineBadge = line ? ` <span class="prov-updated">${escapeHtml(line)}</span>` : "";
+  return (
+    `<div class="transit-popup">` +
+    `<strong class="transit-popup__title">${escapeHtml(name)}</strong>${lineBadge}` +
+    bodyHtml +
+    `</div>`
+  );
+}
+
+function formatArrivalsHtml(res) {
+  const arrivals = Array.isArray(res?.arrivals) ? res.arrivals : [];
+  const rawSrc = String(res?.source ?? "").trim().toLowerCase();
+  const provHtml =
+    rawSrc === "live"
+      ? `<span class="prov-pill prov-pill--live">LIVE</span>`
+      : rawSrc === "cache" || rawSrc === "cached"
+        ? `<span class="prov-pill prov-pill--cached">CACHED</span>`
+        : rawSrc === "mock" || rawSrc === "demo"
+          ? `<span class="prov-pill prov-pill--demo">DEMO</span>`
+          : "";
+  const header = provHtml ? `<div class="work-popup__prov">${provHtml}</div>` : "";
+  if (arrivals.length === 0) {
+    return `${header}<p class="transit-popup__empty">Δεν υπάρχουν διαθέσιμες αφίξεις.</p>`;
+  }
+  const items = arrivals
+    .filter((a) => a && a.wait_min != null && Number.isFinite(Number(a.wait_min)))
+    .slice(0, 6)
+    .map((a) => {
+      const route = a.line || a.route_code || a.route || a.line_id || "Γραμμή";
+      const mins = Math.max(0, Math.round(Number(a.wait_min)));
+      return `<li class="transit-popup__item"><span>${escapeHtml(route)}</span><strong>${mins} λεπτά</strong></li>`;
+    })
+    .join("");
+  if (!items) {
+    return `${header}<p class="transit-popup__empty">Δεν υπάρχουν διαθέσιμες αφίξεις.</p>`;
+  }
+  return `${header}<ul class="transit-popup__list">${items}</ul>`;
+}
+
+function bindStationPopup(map) {
+  if (!map || stationPopupBoundMaps.has(map) || typeof map.on !== "function") {
+    return;
+  }
+  stationPopupBoundMaps.add(map);
+  map.on("mouseenter", RAIL_STATIONS_LAYER_ID, () => {
+    const canvas = typeof map.getCanvas === "function" ? map.getCanvas() : null;
+    if (canvas?.style) canvas.style.cursor = "pointer";
+  });
+  map.on("mouseleave", RAIL_STATIONS_LAYER_ID, () => {
+    const canvas = typeof map.getCanvas === "function" ? map.getCanvas() : null;
+    if (canvas?.style) canvas.style.cursor = "";
+  });
+  map.on("click", RAIL_STATIONS_LAYER_ID, async (event) => {
+    const feature = event?.features?.[0];
+    const PopupCtor = globalThis.maplibregl?.Popup;
+    if (!feature || !event?.lngLat || typeof PopupCtor !== "function") {
+      return;
+    }
+    const p = feature.properties || {};
+    const name = p.name || p.title || p.label || "Στάση / Σταθμός";
+    const line = p.line || p.ref || "";
+    const rawCode = p.stop_code ?? p.stopCode ?? "";
+    const stopCode = rawCode != null ? String(rawCode).trim() : "";
+    const currentApi = apiByMap.get(map);
+    const canFetch = Boolean(stopCode && typeof currentApi?.transitArrivals === "function");
+
+    const initialBody = canFetch
+      ? `<p class="transit-popup__loading">Φόρτωση αφίξεων…</p>`
+      : "";
+    const popup = new PopupCtor({ className: "glass work-popup" })
+      .setLngLat(event.lngLat)
+      .setHTML(renderStationPopupHtml(name, line, initialBody))
+      .addTo(map);
+
+    if (!canFetch) {
+      return;
+    }
+    try {
+      const res = await currentApi.transitArrivals(stopCode);
+      if (typeof popup.setHTML === "function") {
+        popup.setHTML(renderStationPopupHtml(name, line, formatArrivalsHtml(res)));
+      }
+    } catch {
+      if (typeof popup.setHTML === "function") {
+        popup.setHTML(renderStationPopupHtml(name, line, `<p class="transit-popup__empty">Μη διαθέσιμες αφίξεις.</p>`));
+      }
+    }
+  });
+}
 
 function getBusFeatureId(feature) {
   if (!feature || typeof feature !== "object") {
@@ -388,6 +490,7 @@ export async function register(map, api, state = {}) {
     return { id, layerIds };
   }
 
+  apiByMap.set(map, api);
   const busesOn = Boolean(state?.visible?.[BUSES_ID]);
   const railOn = Boolean(state?.visible?.[RAIL_ID]);
 
@@ -465,6 +568,8 @@ export async function register(map, api, state = {}) {
       });
     }
   }
+
+  bindStationPopup(map);
 
   // Only call api.transit when a transit sub-layer is actually active (TASKS_A.md A2).
   if (busesOn) {

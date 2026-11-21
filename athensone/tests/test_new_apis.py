@@ -158,3 +158,49 @@ def test_three_act_demo_loop(monkeypatch):
     )
     assert not any(r["id"] == saved["id"] for r in routing_map._open_reports())
     assert client.get("/api/map/reports").json()["features"][0]["properties"]["status"] == "resolved"
+
+
+def test_operator_invalid_status_transition_409():
+    from app import main as app_main
+
+    client = TestClient(app)
+    r1 = app_main.sb.create_request(
+        category="sidewalk", title="t1", address="addr", description="desc", lat=37.975, lng=23.734
+    )["id"]
+    assert client.post(f"/api/reports/{r1}/resolve").status_code == 200
+    assert client.post(f"/api/reports/{r1}/approve").status_code == 409
+    assert client.post(f"/api/reports/{r1}/reject").status_code == 409
+
+    r2 = app_main.sb.create_request(
+        category="sidewalk", title="t2", address="addr", description="desc", lat=37.975, lng=23.734
+    )["id"]
+    assert client.post(f"/api/reports/{r2}/reject").status_code == 200
+    assert client.post(f"/api/reports/{r2}/approve").status_code == 409
+    assert client.post(f"/api/reports/{r2}/resolve").status_code == 409
+
+
+def test_provenance_source_and_updated_at():
+    from datetime import datetime
+
+    from app import main as app_main
+
+    valid_sources = {"live", "cache", "snapshot", "mock"}
+    client = TestClient(app)
+
+    rid = app_main.sb.create_request(
+        category="sidewalk", title="dossier-prov", address="addr", description="desc", lat=37.96603, lng=23.74212
+    )["id"]
+
+    endpoints = [
+        client.get("/api/map/reports"),
+        client.get("/api/map/points"),
+        client.post("/api/map/stoa_ask", json={"question": "Πότε τελειώνει το έργο στην Δείγμα Οδός Α;"}),
+        client.post(f"/api/reports/{rid}/dossier"),
+    ]
+    for resp in endpoints:
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body.get("source") in valid_sources
+        updated_at = body.get("updated_at")
+        assert isinstance(updated_at, str) and updated_at
+        datetime.fromisoformat(updated_at.replace("Z", "+00:00"))

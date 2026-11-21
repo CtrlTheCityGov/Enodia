@@ -20,7 +20,7 @@
 <div class="ops">
   <div class="list">
     <!-- --- T4: Ask Stoa, cited answers --- -->
-    <section class="radar" aria-labelledby="stoaAskH" style="background:#f3f7fc">
+    <section class="radar ask" aria-labelledby="stoaAskH">
       <h2 id="stoaAskH">🔎 Ρωτήστε τη Stoa (με ΑΔΑ)</h2>
       <form id="stoaAskForm" class="row" style="margin-top:6px">
         <input id="stoaAskQ" type="text" placeholder="π.χ. Δείγμα Οδός Α ή ασφαλτόστρωση" aria-label="Ερώτηση για έργα ή οδό">
@@ -49,7 +49,7 @@
       <div id="dBadges"></div>
       <p id="dDesc" class="muted" style="white-space:pre-line"></p>
       <img id="dImg" class="photo hidden" alt="Φωτογραφία με θολωμένα πρόσωπα">
-      <div id="dAi" class="card" style="background:#f8fafc"></div>
+      <div id="dAi" class="card subtle"></div>
       <div id="dWorks" class="card works hidden" aria-live="polite"></div>
       <label for="dReply"><b>Απάντηση προς τον πολίτη</b> <span class="muted">(πρόταση AI, μπορείτε να την αλλάξετε)</span></label>
       <textarea id="dReply"></textarea>
@@ -153,38 +153,105 @@ function render(it, fresh) {
 }
 
 function ev(f) { return f && f.value != null ? f : null; }
+function extractAda(g) {
+  const candidates = [
+    typeof g?.ada === "string" ? g.ada : g?.ada?.value,
+    g?.completion_date?.source?.ada,
+    g?.amount_paid_eur?.source?.ada,
+    g?.contractor?.source?.ada,
+    g?.street?.source?.ada,
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim()) return c.trim();
+  }
+  return null;
+}
+function addClaimStat(grid, label, val) {
+  const card = document.createElement("div"); card.className = "stoa-claim__stat";
+  const l = document.createElement("span"); l.className = "stoa-claim__stat-label"; l.textContent = label;
+  const v = document.createElement("span"); v.className = "stoa-claim__stat-val"; v.textContent = val;
+  card.append(l, v);
+  grid.appendChild(card);
+}
 function renderWorks(it, fresh) {
   const box = $("#dWorks"), g = it.guarantee;
   $("#approve").textContent = "✔ Έγκριση & αποστολή συνεργείου";
   if (!g) { box.classList.add("hidden"); box.innerHTML = ""; return; }
   if (!fresh && box.dataset.id === it.id + g.id) return;  // keep an open dossier while polling
   box.dataset.id = it.id + g.id; box.classList.remove("hidden"); box.innerHTML = "";
-  const c = g.clock, h = document.createElement("b"); h.textContent = "🏗 Stoa · Ιστορικό έργων σε αυτό το σημείο"; box.appendChild(h);
-  const hb = document.createElement("div"); hb.style.margin = "6px 0";
-  hb.appendChild(badge(c.status === "ACTIVE" ? "εντός εγγύησης;" : c.status === "ENDED" ? "εγγύηση έληξε" : "ΑΓΝΩΣΤΟ",
+  const c = g.clock || {};
+
+  const head = document.createElement("div"); head.className = "stoa-claim__head";
+  const h = document.createElement("h3"); h.className = "stoa-claim__title";
+  h.textContent = "🏗 Stoa Guarantee Claim · Εγγύηση έργου";
+  head.appendChild(h);
+  const adaCode = extractAda(g);
+  if (adaCode) {
+    if (adaCode.toUpperCase().startsWith("SEED-")) {
+      const span = document.createElement("span"); span.className = "badge warn";
+      span.textContent = `[ΑΔΑ ${adaCode}] · SEED`;
+      head.appendChild(span);
+    } else if (/^[\p{L}\p{N}-]+$/u.test(adaCode)) {
+      const a = document.createElement("a"); a.className = "stoa-claim__ada";
+      a.href = `https://diavgeia.gov.gr/decision/view/${encodeURIComponent(adaCode)}`;
+      a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.textContent = `[ΑΔΑ ${adaCode}]`;
+      head.appendChild(a);
+    }
+  }
+  box.appendChild(head);
+
+  const hb = document.createElement("div"); hb.className = "stoa-claim__badges";
+  hb.appendChild(badge(c.status === "ACTIVE" ? "Εντός εγγύησης" : c.status === "ENDED" ? "Εγγύηση έληξε" : "Άγνωστη κατάσταση",
     c.status === "ACTIVE" ? "good" : c.status === "ENDED" ? "" : "warn"));
-  if (c.status === "ACTIVE") hb.appendChild(badge("Tier " + c.tier, TIER_CLS[c.tier]));
-  hb.appendChild(badge(g.distance_m + " m από την αναφορά", "info"));
+  if (c.status === "ACTIVE" && c.tier) hb.appendChild(badge("Tier " + c.tier, TIER_CLS[c.tier]));
+  if (g.distance_m != null) hb.appendChild(badge(g.distance_m + " m από την αναφορά", "info"));
+  if (g.works_type_el) hb.appendChild(badge(g.works_type_el));
+  if (g.street?.value) hb.appendChild(badge(g.street.value));
   box.appendChild(hb);
-  const p = document.createElement("p"); p.style.margin = "4px 0";
-  p.textContent = `${g.works_type_el} · ${g.street?.value || "?"} · ${g.contractor?.value || "ανάδοχος ΑΓΝΩΣΤΟΣ"} · πληρωμές ${eur(g.amount_paid_eur?.value)}`;
-  box.appendChild(p);
-  const hl = document.createElement("p"); hl.style.margin = "4px 0"; hl.innerHTML = "<b></b>"; hl.querySelector("b").textContent = g.headline_el; box.appendChild(hl);
-  const f = document.createElement("p"); f.className = "muted"; f.style.margin = "4px 0";
-  f.textContent = c.formula + (c.term_label ? ` · περάτωση ${c.anchor_label}, όρος εγγύησης ${c.term_label}` : "");
-  box.appendChild(f);
+
+  if (g.headline_el) {
+    const hl = document.createElement("p"); hl.style.margin = "4px 0 8px";
+    const b = document.createElement("b"); b.textContent = g.headline_el; hl.appendChild(b);
+    box.appendChild(hl);
+  }
+
+  const grid = document.createElement("div"); grid.className = "stoa-claim__grid";
+  const contractorVal = typeof g.contractor === "string" ? g.contractor : ev(g.contractor)?.value;
+  if (contractorVal) addClaimStat(grid, "Ανάδοχος", contractorVal);
+  const paidVal = typeof g.amount_paid_eur === "number" ? g.amount_paid_eur : ev(g.amount_paid_eur)?.value;
+  if (paidVal != null) addClaimStat(grid, "Πληρωμές (€)", eur(paidVal));
+  const periodLabel = c.term_label || (ev(g.guarantee_months)?.value != null ? `${ev(g.guarantee_months).value} μήνες` : null);
+  if (periodLabel) addClaimStat(grid, "Περίοδος εγγύησης", periodLabel);
+  if (c.days_left != null) {
+    const daysText = c.days_left <= 0 ? "Έληξε" : `${c.days_left} ημ.`;
+    addClaimStat(grid, "Υπόλοιπο ημερών", daysText);
+  }
+  if (grid.children.length > 0) box.appendChild(grid);
+
+  if (c.formula || c.anchor_label) {
+    const f = document.createElement("p"); f.className = "muted"; f.style.margin = "4px 0";
+    f.textContent = [c.formula, c.anchor_label ? `περάτωση ${c.anchor_label}` : ""].filter(Boolean).join(" · ");
+    box.appendChild(f);
+  }
   const q = ev(g.completion_date);
-  if (q?.quote) { const bq = document.createElement("blockquote"); bq.textContent = `«${q.quote}» · ΑΔΑ ${q.source?.ada}, σελ. ${q.source?.page}`; box.appendChild(bq); }
+  if (q?.quote) {
+    const bq = document.createElement("blockquote");
+    bq.textContent = `«${q.quote}»` + (q.source?.ada ? ` · ΑΔΑ ${q.source.ada}${q.source.page != null ? `, σελ. ${q.source.page}` : ""}` : "");
+    box.appendChild(bq);
+  }
   if (c.status === "ACTIVE") {
     $("#approve").textContent = "✔ Έγκριση (συνεργείο Δήμου)";
     const warn = document.createElement("p"); warn.className = "badge warn"; warn.style.display = "block"; warn.style.padding = "8px";
     warn.textContent = "Πριν στείλετε συνεργείο του Δήμου: η βλάβη ίσως καλύπτεται από την εγγύηση του αναδόχου. Ελέγξτε ότι είναι φθορά του έργου (όχι εμπόδιο ή εκσκαφή ΕΥΔΑΠ/ΔΕΔΔΗΕ).";
     box.appendChild(warn);
-    const b = document.createElement("button"); b.className = "ghost"; b.textContent = "📄 Προσχέδιο φακέλου προς ανάδοχο";
+    const actions = document.createElement("div"); actions.className = "stoa-claim__actions";
+    const b = document.createElement("button"); b.type = "button"; b.className = "ghost"; b.textContent = "📄 Φάκελος Εγγύησης";
     b.onclick = async () => { const d = await api(`/api/reports/${it.id}/dossier`, { method: "POST" });
       let pre = box.querySelector("pre"); if (!pre) { pre = document.createElement("pre"); box.appendChild(pre); }
       pre.textContent = d.text; };
-    box.appendChild(b);
+    actions.appendChild(b);
+    box.appendChild(actions);
   }
 }
 
@@ -280,7 +347,19 @@ async function act(kind) {
 }
 $("#approve").onclick = () => act("approve"); $("#reject").onclick = () => act("reject"); $("#resolve").onclick = () => act("resolve");
 
-api("/api/health").then(h => { $("#mode").textContent = h.mock ? "MOCK δεδομένα" : "AthensGov Sandbox"; $("#mode").classList.toggle("mock", h.mock); });
+api("/api/health").then(h => {
+  const modeEl = $("#mode");
+  const rawSrc = (h?.source || (h?.mock ? "mock" : "live")).toLowerCase();
+  const isMock = Boolean(h?.mock || rawSrc === "mock" || rawSrc === "demo");
+  const isCache = rawSrc === "cache" || rawSrc === "cached";
+  const provLabel = isMock ? "DEMO" : isCache ? "CACHED" : "LIVE";
+  const ts = h?.updated_at || h?.timestamp;
+  const tsLabel = ts ? ` · ${new Date(ts).toLocaleString("el-GR")}` : "";
+  const subLabel = isMock ? "Mock δεδομένα" : "AthensGov Sandbox";
+  modeEl.textContent = `${provLabel} · ${subLabel}${tsLabel}`;
+  modeEl.classList.remove("live", "cache", "mock");
+  modeEl.classList.add(isMock ? "mock" : isCache ? "cache" : "live");
+});
 map.on("load", () => { addWorksLayer(); load(); loadRadar(); loadEquity(); }); setInterval(load, 5000); setInterval(loadEquity, 15000);
 </script>
 </body>

@@ -51,6 +51,35 @@ function linkCitations(escapedText, citations) {
   });
 }
 
+function formatUpdatedAt(value) {
+  if (value == null || value === "") return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toLocaleString("el-GR");
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = new Date(trimmed);
+    return Number.isNaN(parsed.getTime()) ? trimmed : parsed.toLocaleString("el-GR");
+  }
+  return null;
+}
+
+export function renderProvenanceHtml(res) {
+  if (!res || typeof res !== "object") return "";
+  const rawSrc = String(res.source ?? res.data_source ?? "").trim().toLowerCase();
+  const isSeed = String(res.data_source ?? "").trim().toUpperCase() === "SEED";
+  let prov = null;
+  if (rawSrc === "live" && !isSeed) prov = { key: "live", label: "LIVE" };
+  else if (rawSrc === "cache" || rawSrc === "cached") prov = { key: "cached", label: "CACHED" };
+  else if (rawSrc === "mock" || rawSrc === "demo" || rawSrc === "seed" || isSeed) prov = { key: "demo", label: "DEMO" };
+  const updatedStr = formatUpdatedAt(res.updated_at);
+  if (!prov && !updatedStr) return "";
+  const parts = [];
+  if (prov) parts.push(`<span class="prov-pill prov-pill--${prov.key}">${prov.label}</span>`);
+  if (isSeed) parts.push(`<span class="prov-seed">SEED</span>`);
+  if (updatedStr) parts.push(`<span class="prov-updated">${escapeHtml(updatedStr)}</span>`);
+  return `<div class="stoa-prov">${parts.join(" ")}</div>`;
+}
+
 /** HTML for one answer: escaped text, Markdown links to http(s) only, citation labels as flyTo links. */
 export function renderAnswerHtml(answerMd, citations = []) {
   const escaped = escapeHtml(answerMd);
@@ -305,7 +334,8 @@ export function mount({ map, api, root, container, bus }) {
     }
     send.disabled = false;
     const answerMd = res?.answer_md || REFUSAL;
-    addMessage("bot", renderAnswerHtml(answerMd, res?.citations || []), answerMd.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
+    const provHtml = renderProvenanceHtml(res ?? { source: "mock" });
+    addMessage("bot", provHtml + renderAnswerHtml(answerMd, res?.citations || []), answerMd.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
     history.push({ question, answer_md: answerMd });
   });
 
@@ -319,6 +349,7 @@ export function mount({ map, api, root, container, bus }) {
 
       let finalMd = built.answer_md;
       const mergedCitations = [...built.citations];
+      let extraMeta = null;
 
       // Enrich with verified Diavgeia / Stoa records if an avoided municipal work names a street.
       const avoidedWorks = detail?.route?.comparison?.avoided_works;
@@ -333,6 +364,7 @@ export function mount({ map, api, root, container, bus }) {
             history: [],
           });
           if (extra?.answer_md && extra.answer_md !== REFUSAL) {
+            extraMeta = extra;
             finalMd += `\n\nΕπίσημα στοιχεία Διαύγειας (${firstStreet}):\n${extra.answer_md}`;
             if (Array.isArray(extra.citations)) {
               mergedCitations.push(...extra.citations);
@@ -343,7 +375,8 @@ export function mount({ map, api, root, container, bus }) {
         }
       }
 
-      addMessage("bot", renderAnswerHtml(finalMd, mergedCitations), finalMd.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
+      const routeProvHtml = renderProvenanceHtml(extraMeta ?? { source: detail?.route?.source });
+      addMessage("bot", routeProvHtml + renderAnswerHtml(finalMd, mergedCitations), finalMd.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
       history.push({ question: built.question, answer_md: finalMd });
     });
   }

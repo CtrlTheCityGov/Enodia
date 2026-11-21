@@ -1,6 +1,8 @@
 """B8: `POST /api/map/stoa_ask` (SPEC contract `POST /stoa_ask`, path per A-33). Logic lives in app/stoa_map.py."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
@@ -20,4 +22,7 @@ class StoaAskIn(BaseModel):
 
 @router.post("/api/map/stoa_ask")
 def stoa_ask_map(body: StoaAskIn) -> dict:
-    return stoa_map.answer(body.question, body.center, body.history)
+    out = stoa_map.answer(body.question, body.center, body.history)
+    out.setdefault("source", "mock" if config.MOCK else "live")
+    out.setdefault("updated_at", datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"))
+    return out

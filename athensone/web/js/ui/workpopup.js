@@ -150,6 +150,46 @@ function isSeedWork(data) {
   return ada.toUpperCase().startsWith(SEED_ADA_PREFIX);
 }
 
+function formatUpdatedAt(value) {
+  if (value == null || value === "") {
+    return null;
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toLocaleString("el-GR");
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = new Date(trimmed);
+    return Number.isNaN(parsed.getTime()) ? trimmed : parsed.toLocaleString("el-GR");
+  }
+  return null;
+}
+
+function buildProvenanceHtml(data, options, isSeed) {
+  const rawSource = data?.source ?? data?.data_source ?? options?.source ?? null;
+  const norm = typeof rawSource === "string" ? rawSource.trim().toLowerCase() : "";
+  let prov = null;
+  if (norm === "live") {
+    prov = { key: "live", label: "LIVE" };
+  } else if (norm === "cache" || norm === "cached") {
+    prov = { key: "cached", label: "CACHED" };
+  } else if (norm === "mock" || norm === "demo" || norm === "seed" || isSeed) {
+    prov = { key: "demo", label: "DEMO" };
+  }
+  const updatedStr = formatUpdatedAt(data?.updated_at ?? options?.updated_at);
+  if (!prov && !updatedStr) {
+    return "";
+  }
+  const pillHtml = prov
+    ? `<span class="prov-pill prov-pill--${prov.key}">${prov.label}</span>`
+    : "";
+  const updatedHtml = updatedStr
+    ? `<span class="prov-updated">${escapeHtml(updatedStr)}</span>`
+    : "";
+  return `<div class="work-popup__prov">${pillHtml}${updatedHtml}</div>`;
+}
+
 export function guaranteeCountdown(handover, guaranteeEnd, today = new Date()) {
   const handoverMs = parseUtcDayMs(handover);
   const endMs = parseUtcDayMs(guaranteeEnd);
@@ -273,12 +313,15 @@ export function popupHtml(props, today = new Date(), options = {}) {
       ? `<div class="work-popup__actions"><button type="button" class="work-popup__report-btn" data-work-id="${escapeHtml(workId)}">${REPORT_BUTTON_LABEL}</button></div>`
       : "";
 
+  const provHtml = buildProvenanceHtml(data, options, isSeed);
+
   return [
     `<article class="work-popup__card" aria-label="Στοιχεία έργου">`,
     `<header class="work-popup__header">`,
     `<h3 class="work-popup__title">${escapeHtml(titleText)}</h3>`,
     `<span class="work-popup__status work-popup__status--${statusClass}">${escapeHtml(statusText)}</span>`,
     `</header>`,
+    provHtml,
     `<dl class="work-popup__details">`,
     `<div class="work-popup__row">`,
     `<dt class="work-popup__label">Ανάδοχος</dt>`,

@@ -6,6 +6,7 @@ POST /api/map/reports/{id}/confirm  confirmations + 1, +2 to the confirmer (not 
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import math
 import uuid
 
@@ -100,7 +101,10 @@ def list_map_reports(bbox: str | None = None, since: str | None = None):
                 status_by_request[str(req["id"])] = str(req["status"])
     except SandboxError:
         pass
-    return map_reports.geojson(box, ts, status_by_request=status_by_request)
+    out = map_reports.geojson(box, ts, status_by_request=status_by_request)
+    out["source"] = "mock" if _sandbox().mock else "live"
+    out["updated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return out
 
 
 @router.post("/api/map/reports/{rid}/confirm")

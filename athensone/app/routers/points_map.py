@@ -4,10 +4,12 @@ The existing /api/points/me and /api/points/districts stay untouched; this modul
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
 
-from .. import points, rewards
+from .. import config, points, rewards
 
 router = APIRouter()
 
@@ -74,6 +76,8 @@ def map_points(request: Request, response: Response) -> dict:
         "district": _district(ledger),
         "history": _history(account, ledger),
         "rewards": rewards.load_rewards(),
+        "source": "mock" if config.MOCK else "live",
+        "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
     }
 
 

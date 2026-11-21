@@ -4,14 +4,14 @@ The browser only talks to this server. The sandbox API key never leaves it.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import time
 import uuid
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-
-import time
 
 import httpx
 
@@ -524,8 +524,16 @@ class Decision(BaseModel):
     note: str | None = None
 
 
+def _require_transition(rid: str, disallowed: tuple[str, ...]) -> None:
+    """Reject operator status transitions from terminal states in `disallowed`."""
+    current = sb.get_request(rid).get("status")
+    if current in disallowed:
+        raise HTTPException(409, "Invalid status transition")
+
+
 @app.post("/api/reports/{rid}/approve")
 def approve(rid: str, d: Decision | None = None):
+    _require_transition(rid, ("resolved", "rejected"))
     note = (d.note if d and d.note else "Εγκρίθηκε από υπάλληλο του Δήμου · το συνεργείο ειδοποιήθηκε")
     out = _merge(sb.update_request(rid, status="in_progress", note=note))
     # --- T2: Points wallet, earn side ---
@@ -539,6 +547,7 @@ def approve(rid: str, d: Decision | None = None):
 
 @app.post("/api/reports/{rid}/resolve")
 def resolve(rid: str):
+    _require_transition(rid, ("rejected",))
     updated = sb.update_request(rid, status="resolved", note="Το πρόβλημα αποκαταστάθηκε")
     # --- T1: "Is it fixed?" loop ---
     store.ask_confirmation(rid)
@@ -548,6 +557,7 @@ def resolve(rid: str):
 
 @app.post("/api/reports/{rid}/reject")
 def reject(rid: str, d: Decision | None = None):
+    _require_transition(rid, ("resolved",))
     return _merge(sb.update_request(rid, status="rejected", note=(d.note if d and d.note else "Απορρίφθηκε από υπάλληλο")))
 
 
@@ -715,7 +725,12 @@ def dossier(rid: str):
         points.grant_for_report(rid, action="guarantee_claim", verified_by="engineer", district=r.get("district_name"))
     # --- /T7 ---
     # --- /T2 ---
-    return {"text": works.dossier(r, r["guarantee"]), "sent": False}
+    return {
+        "text": works.dossier(r, r["guarantee"]),
+        "sent": False,
+        "source": "mock" if sb.mock else "live",
+        "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+    }
 
 
 # --- T4: Ask Stoa, cited answers ---
