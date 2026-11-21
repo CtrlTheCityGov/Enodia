@@ -1,0 +1,64 @@
+{
+  "snapshot": "2026-11-21",
+  "note": "Simulated anonymous citizen points wallet for offline demo (no user_id). Point deltas follow SPEC.md «Κανόνες πόντων» (+5/+2/+15/+20); district goal 5000 matches DECISIONS.md A-9; rewards catalogue is an illustrative proposal pending Municipality of Athens approval.",
+  "balance": 62,
+  "district": {
+    "name": "1η Δημοτική Κοινότητα (Κέντρο — Σύνταγμα)",
+    "progress_pct": 68,
+    "goal": 5000
+  },
+  "history": [
+    {
+      "ts": "2026-11-18T09:12:00Z",
+      "delta": 5,
+      "reason": "Αναφορά εμποδίου (οδός Φιλελλήνων)"
+    },
+    {
+      "ts": "2026-11-19T14:30:00Z",
+      "delta": 2,
+      "reason": "Επιβεβαίωση αναφοράς γείτονα (οδός Σταδίου)"
+    },
+    {
+      "ts": "2026-11-20T10:05:00Z",
+      "delta": 15,
+      "reason": "Αναφορά προόδου έργου με φωτογραφία (Ερμού)"
+    },
+    {
+      "ts": "2026-11-20T16:40:00Z",
+      "delta": 20,
+      "reason": "Επιβεβαίωση αναφοράς από τον Δήμο Αθηναίων (+20 bonus)"
+    },
+    {
+      "ts": "2026-11-21T08:50:00Z",
+      "delta": 5,
+      "reason": "Αναφορά συμφόρησης (Λεωφ. Βασ. Σοφίας)"
+    },
+    {
+      "ts": "2026-11-21T11:15:00Z",
+      "delta": 15,
+      "reason": "Αναφορά προόδου έργου με φωτογραφία (Πανεπιστημίου)"
+    }
+  ],
+  "rewards": [
+    {
+      "id": "REW-01",
+      "title": "2 ώρες δωρεάν δημοτική στάθμευση",
+      "cost": 40
+    },
+    {
+      "id": "REW-02",
+      "title": "Εισιτήριο δημοτικής εκδήλωσης (Τεχνόπολη / ΟΠΑΝΔΑ)",
+      "cost": 50
+    },
+    {
+      "id": "REW-03",
+      "title": "Ημερήσιο πάσο δημοτικού γυμναστηρίου / κολυμβητηρίου",
+      "cost": 60
+    },
+    {
+      "id": "REW-04",
+      "title": "Κουπόνι 5€ σε τοπικά καταστήματα γειτονιάς",
+      "cost": 100
+    }
+  ]
+}
