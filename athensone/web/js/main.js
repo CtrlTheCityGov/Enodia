@@ -3,6 +3,9 @@
 // so Dev A loads without waiting for Dev B and imports safely in Node.
 
 import { createMap, setTheme } from "./map.js";
+/* --- A2 --- */
+import { addOverlays, registerOverlay } from "./map.js";
+/* --- /A2 --- */
 import * as envLayer from "./layers/env.js";
 import * as accessLayer from "./layers/access.js";
 import * as worksLayer from "./layers/works.js";
@@ -63,6 +66,48 @@ async function tryImport(specifier) {
     return null;
   }
 }
+
+/* --- A2 --- */
+let a2BoundApi = null;
+let a2OverlaysRegistered = false;
+
+function registerA2Overlays(api) {
+  a2BoundApi = api ?? null;
+  if (a2OverlaysRegistered) {
+    return;
+  }
+  a2OverlaysRegistered = true;
+
+  registerOverlay((m, st) => {
+    envLayer.register(m, a2BoundApi, st);
+    return { id: envLayer.id, layerIds: envLayer.layerIds };
+  });
+  registerOverlay((m, st) => {
+    accessLayer.register(m, a2BoundApi, st);
+    return { id: accessLayer.id, layerIds: accessLayer.layerIds };
+  });
+  registerOverlay((m, st) => {
+    worksLayer.register(m, a2BoundApi, st);
+    return { id: worksLayer.id, layerIds: worksLayer.layerIds };
+  });
+  registerOverlay((m, st) => {
+    transitLayer.register(m, a2BoundApi, st);
+    return { id: transitLayer.BUSES_ID, layerIds: transitLayer.busLayerIds };
+  });
+  registerOverlay(() => ({
+    id: transitLayer.RAIL_ID,
+    layerIds: transitLayer.railLayerIds,
+  }));
+  registerOverlay((m, st) => {
+    healthLayer.register(m, a2BoundApi, st);
+    return { id: healthLayer.id, layerIds: healthLayer.layerIds };
+  });
+  registerOverlay((m, st) => {
+    reportsLayer.register(m, a2BoundApi, st);
+    return { id: reportsLayer.id, layerIds: reportsLayer.layerIds };
+  });
+}
+/* --- /A2 --- */
 
 export async function bootstrap(root = typeof document !== "undefined" ? document : null) {
   if (!root || typeof root.getElementById !== "function") {
@@ -156,10 +201,16 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
     tabWorksBtn.addEventListener("click", () => selectTab("works"));
   }
 
+  /* --- A2 --- */
+  registerA2Overlays(api);
+  if (map && typeof map.isStyleLoaded === "function" && map.isStyleLoaded()) {
+    addOverlays(map, state);
+  }
   const layerBarEl = root.getElementById("hud-layerbar");
   if (layerBarEl) {
-    initLayerBar(layerBarEl, state);
+    initLayerBar(layerBarEl, state, { map, api });
   }
+  /* --- /A2 --- */
 
   if (map) {
     initWorkPopup(map, { reportModule: optional["./ui/report.js"] });
