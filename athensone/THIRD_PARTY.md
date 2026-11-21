@@ -44,3 +44,11 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | Municipality of Athens Open Data Portal (CKAN) | Snapshot `2026-11-21` | CC BY 4.0 | Environmental sensor readings (`env-all-stations`), neighbourhood polygons & municipal districts (`neighbourhoods-athens`, `municipal-districts-athens`) used in `web/mock/env.json` and `web/mock/base.geojson` | https://opendata.cityofathens.gr |
 | OpenStreetMap (OSM API 0.6 / Nominatim) | Snapshot `2026-11-21` | ODbL 1.0 | Accessibility features (`web/mock/access.geojson`), Metro/Suburban station coordinates (`web/mock/transit.geojson`), central Athens hospital & pharmacy locations (`web/mock/health.geojson`), and arterial street corridors (`web/mock/base.geojson`) | https://www.openstreetmap.org/copyright |
 | Diavgeia OpenData API (Διαύγεια — Δήμος Αθηναίων, org `6013`) | Verified `2026-11-21` | Greek Public Sector Open Data (Law 4727/2020) | Real Municipality of Athens public-works decision metadata (ADA, contractor, payment amount, ADAM, contract date) in `web/mock/works.geojson` | https://diavgeia.gov.gr/opendata |
+
+## External data sources (Track B)
+
+| Source | Endpoint / Dataset | Licence | Role | URL |
+|---|---|---|---|---|
+| Open-Meteo Forecast API | `/v1/forecast` (`temperature_2m`) | CC BY 4.0 (free tier: non-commercial use; attribution: *Weather data by Open-Meteo.com*) | Temperature grid in `app/envgrid_src.py` (`GET /api/map/env`) and weather in `app/main.py` | https://open-meteo.com/en/terms |
+| Open-Meteo Air Quality API | `/v1/air-quality` (`european_aqi`, `pm2_5`) | CC BY 4.0 (free tier: non-commercial use; attribution: *Weather data by Open-Meteo.com*) | European AQI and PM2.5 grid in `app/envgrid_src.py` (`GET /api/map/env`) | https://open-meteo.com/en/docs/air-quality-api |
+| AthensGov Open Data (CKAN) | `env-stations-registry`, `env-all-stations` | CC BY 4.0 | Municipal environmental sensor overrides within 300 m in `app/envgrid_src.py` via `app/ckan.py` | https://opendata.cityofathens.gr |
