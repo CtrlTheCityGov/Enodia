@@ -91,6 +91,15 @@ export async function mount({ api, root, container, bus }) {
     }
     panel.appendChild(rewardsList);
     panel.appendChild(status);
+
+    if (Array.isArray(state.leaderboard) && state.leaderboard.length > 0) {
+      panel.appendChild(el("h2", "", "Κατάταξη Γειτονιών"));
+      const lb = el("ul", "points-leaderboard");
+      for (const row of state.leaderboard.slice(0, 5)) {
+        lb.appendChild(el("li", "", `#${row.rank} ${row.district} · ${row.points} π. (${row.progress_pct}%)`));
+      }
+      panel.appendChild(lb);
+    }
   }
 
   async function redeem(reward, status) {
@@ -115,6 +124,14 @@ export async function mount({ api, root, container, bus }) {
   async function refresh() {
     const data = await api.points();
     if (data) state = { ...state, ...data };
+    if (typeof api.pointsLeaderboard === "function") {
+      try {
+        const lb = await api.pointsLeaderboard();
+        if (lb && Array.isArray(lb.districts)) state.leaderboard = lb.districts;
+      } catch {
+        // optional leaderboard enhancement
+      }
+    }
     renderPill();
     if (!panel.hidden) renderPanel();
   }

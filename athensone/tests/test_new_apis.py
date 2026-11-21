@@ -81,3 +81,30 @@ def test_map_reports_rejects_nonfinite_bbox():
     client = TestClient(app)
     r = client.get("/api/map/reports?bbox=23.7,37.9,nan,38.0")
     assert r.status_code == 422
+
+
+def test_reports_export_csv(monkeypatch):
+    from app import main as app_main
+
+    monkeypatch.setattr(
+        app_main.sb,
+        "list_requests",
+        lambda mine=True: {
+            "items": [
+                {
+                    "id": "REQ-1",
+                    "status": "submitted",
+                    "category": "pothole",
+                    "lat": 37.975,
+                    "lng": 23.734,
+                    "created_at": "2026-11-21T20:00:00Z",
+                }
+            ]
+        },
+    )
+    client = TestClient(app)
+    r = client.get("/api/reports/export")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/csv")
+    assert "id,status,category" in r.text
+    assert "REQ-1,submitted,pothole" in r.text

@@ -470,6 +470,35 @@ async def report(request: Request, response: Response, photo: UploadFile = File(
             "faces_blurred": p["faces"], "gps_from_photo": bool(p["gps"])}
 
 
+@app.get("/api/reports/export")
+def export_reports_csv():
+    """Export triaged reports as UTF-8 CSV for municipal operator handoff."""
+    import csv
+    import io
+    from fastapi.responses import Response
+
+    items = list_reports()["items"]
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["id", "status", "category", "district_name", "lat", "lng", "ai_confidence", "created_at"])
+    for r in items:
+        writer.writerow([
+            r.get("id", ""),
+            r.get("status", ""),
+            r.get("category", ""),
+            r.get("district_name", ""),
+            r.get("lat", ""),
+            r.get("lng", ""),
+            r.get("ai_confidence", ""),
+            r.get("created_at", ""),
+        ])
+    return Response(
+        content="\ufeff" + buf.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="athensone-reports.csv"'},
+    )
+
+
 @app.get("/api/reports/{rid}")
 def get_report(rid: str):
     return _merge(sb.get_request(rid))

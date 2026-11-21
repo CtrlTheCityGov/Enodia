@@ -249,6 +249,22 @@ export function points() {
   return read("points", "/api/map/points", undefined, () => mockJson("points.json"));
 }
 
+export function transitArrivals(stopCode) {
+  return liveJson(`/api/map/transit/arrivals${query({ stop_code: stopCode })}`);
+}
+
+export function coolSpots(lat, lng) {
+  return liveJson(`/api/map/cool-spots${query({ lat, lng })}`);
+}
+
+export function pointsLeaderboard() {
+  return liveJson("/api/map/points/leaderboard");
+}
+
+export function worksLookup(ada) {
+  return liveJson(`/api/map/works/lookup${query({ ada })}`);
+}
+
 // center = [lon, lat]; history = earlier turns of the chat. Accepts (question, center, history) or ({question, center, history}).
 // Never cached: question and center would sit on the device (A-38). Offline -> mock/stoa.json.
 export function stoaAsk(questionOrOpts, center, history = []) {
