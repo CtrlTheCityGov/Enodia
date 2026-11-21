@@ -28,7 +28,7 @@ for step in $steps; do
       *)      model=${TESTS_MODEL:-sonnet} ;;
     esac
     echo "$n $step: claude --model $model (foreground)"
-    (cd $W/$n && claude -p --model $model --permission-mode acceptEdits "$prompt") || { echo "$n $step: failed"; exit 1; }
+    (cd $W/$n && claude -p "$prompt" --model $model --permission-mode auto --add-dir $W $M) || { echo "$n $step: failed"; exit 1; }
   else
     case $step in
       code)   model=${CODE_MODEL:-gemini-4-neon-high} ;;
