@@ -165,7 +165,10 @@ def answer_works(question: str) -> dict | None:
 
 def answer_city(question: str, center: list[float]) -> dict:
     """The City answer with its sources as Markdown links; citations only for results with coordinates."""
-    res = city_ask(question, center) or {}
+    try:
+        res = city_ask(question, center) or {}
+    except Exception:
+        return _refusal()
     links = [s for s in res.get("sources") or [] if (s or {}).get("url")]
     if not links:
         return _refusal()
