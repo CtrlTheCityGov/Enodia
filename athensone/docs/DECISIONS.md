@@ -38,3 +38,15 @@
 - **A-21** (advisor default, Evgenii may change) Air stations with no coordinates in the City registry are placed at
   their neighbourhood's centre and flagged `"location": "neighbourhood_centre"` ("περίπου" on screen). Rejected:
   geocoding each address through Nominatim (outside service, rate limits, more to explain).
+
+## Sat 21 Nov evening: full app ("all modules", "full re-architecture")
+
+- **A-22** Stack changes (supersedes "no new framework" in CLAUDE.md): FastAPI split into routers; SQLAlchemy 2 +
+  Alembic with `DATABASE_URL` (SQLite by default and in tests, PostgreSQL 16 + PostGIS in Docker Compose);
+  React 18 + Vite + TypeScript + MapLibre GL frontend in `athensone/frontend/`; Docker Compose for the full stack.
+- **A-23** Modules are self-contained so they can be built in parallel: backend `app/modules/<name>/`
+  (`models.py`, `service.py`, `router.py`), discovered automatically (no shared registry file to edit); frontend
+  `frontend/src/modules/<name>/` (routes discovered with `import.meta.glob`).
+- **A-24** Geometry in the database is stored as plain lat/lng columns (works on SQLite and Postgres);
+  PostGIS types only where a module needs spatial indexing, behind the same service functions.
+- **A-25** The old `web/*.html` pages stay served until the React app reaches parity (T12), then redirect to it.

@@ -194,3 +194,62 @@ come back as strings.
 | `test_air_latest_has_items` | fixtures: 2 stations, 4 measurement rows | 2 items, newest row per station, `temp_c` and `aqi` numbers |
 | `test_nearest_air_varnava` | fixture station centre 0.5 km from Varnava | that station, `distance_km` ≈ 0.5 |
 | `test_station_without_neighbourhood_skipped` | registry row whose neighbourhood is unknown | not in items, no error |
+
+## Full app, wave 0 (foundation)
+
+| Task | Owner | State |
+|---|---|---|
+| T11 Backend re-architecture | advisor/agents | approved (A-22..A-24), running |
+| T12 React frontend | advisor/agents | approved (A-22, A-23, A-25), running |
+
+### T11: Backend into routers + SQLAlchemy/Alembic
+**Files:** `app/` (all), `alembic.ini`, `alembic/`, `requirements.txt`, `tests/test_T11_arch.py`. **No existing test may be
+changed**; they import `app.main.app`, `app.store`, `app.points`, `app.ckan`, `app.works`, `app.privacy`, `app.config`
+and must keep passing as they are.
+- `app/main.py` keeps `app` (FastAPI) but only wires things: middleware, exception handlers, static mounts, routers.
+- Endpoints move into `app/api/<area>.py` routers (meta, ask, places/navigate/heat, city, reports/confirm, works +
+  stoa ask, points, interop: Open311/NGSI-LD/DCAT, admin). Same paths, methods, bodies and responses.
+- `app/db.py`: SQLAlchemy 2.0 engine from `DATABASE_URL` (default `sqlite:///<DATA_DIR>/athensone.db`), declarative
+  `Base`, `get_session()` dependency, `init_db()`. Postgres URLs (`postgresql+psycopg://…`) work without code changes.
+- `app/store.py` and the points store keep their public functions and signatures, now on SQLAlchemy models
+  (`app/models.py`: reports, confirmations, points_ledger, report_accounts).
+- Alembic: `alembic/` with a baseline migration creating those tables; `init_db()` runs create_all for SQLite dev/tests.
+- Module discovery (A-23): `app/modules/__init__.py` imports every subpackage of `app/modules/` that has a `router`
+  and includes it under `/api/<name>`; models of every module register on `Base`. Ship one tiny example module
+  `app/modules/_example/` that tests use (excluded from production by its leading underscore unless `ENABLE_EXAMPLE=1`).
+
+| Test | Given | Expected |
+|---|---|---|
+| all existing tests | unchanged | pass |
+| `test_routes_unchanged` | the app's routes | every path+method that existed on main still exists (list from main's `app.routes`, kept in the test) |
+| `test_database_url_respected` | `DATABASE_URL=sqlite:///<tmp>/x.db` | tables are created in that file |
+| `test_alembic_baseline_matches_models` | run `alembic upgrade head` on an empty SQLite file | the tables and columns equal the models' |
+| `test_module_discovery` | `ENABLE_EXAMPLE=1` | `/api/_example/ping` answers 200 |
+| `test_module_without_router_ignored` | a module package without `router` | app starts, no error |
+| `test_openapi_has_tags` | `/openapi.json` | each router's tag is present |
+
+### T12: React frontend
+**Files:** `frontend/` (new), `app/main.py` only to mount `frontend/dist` at `/app/` when it exists (inside a
+`# --- T12 ---` block), `tests/test_T12_frontend_mount.py`. Don't touch `web/` (A-25).
+- Vite + React 18 + TypeScript (strict) + react-router + MapLibre GL (BSD-3) + `openapi-typescript` client generated
+  from `/openapi.json` into `src/api/schema.ts` (script `npm run gen:api`, reads a saved `openapi.json` so it works
+  offline). No CSS framework: CSS modules with the colour tokens from `web/app.css`.
+- Pages with parity to today: Citizen (`/app/`: ask with sources, cool places, map, navigate with profiles and heat
+  mode, report with photo, my report status timeline + "Is it fixed?", points chip + district bars, heat banner),
+  Operator (`/app/operator`: reports list grouped, approve/reject/resolve, AI draft, Stoa card + radar + Ask Stoa,
+  equity table with reopen rate), AI register (`/app/ai-register`).
+- Module routes (A-23): `src/modules/<name>/index.tsx` exporting `{path, title, element, area: "citizen"|"operator"}`,
+  picked up with `import.meta.glob`; navigation built from them.
+- Greek UI text as today; WCAG 2.2 AA (labels, focus, contrast, keyboard).
+- Tests: Vitest + Testing Library + `vitest-axe` on each page with a mocked API; `npm run build` succeeds.
+
+| Test | Given | Expected |
+|---|---|---|
+| `frontend: citizen renders ask box` | mocked API | a labelled question field and the cool-places list |
+| `frontend: ask shows sources` | `/api/ask` mock with 2 sources | 2 source links rendered |
+| `frontend: heat banner when hot` | `/api/heat` hot, forced | banner with "δοκιμαστικό" |
+| `frontend: operator approve calls API` | click Approve | POST `/api/reports/{id}/approve` |
+| `frontend: module route discovered` | a test module in `src/modules/` | its route and nav entry exist |
+| `frontend: no axe violations` | each page, mocked API | 0 violations |
+| `test_frontend_mounted_when_built` (pytest) | a fake `frontend/dist/index.html` | `GET /app/` returns it |
+| `test_frontend_absent_ok` (pytest) | no `dist` | app starts; `/app/` 404; old `/web/` still works |
