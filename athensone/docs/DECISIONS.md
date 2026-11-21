@@ -83,3 +83,15 @@
 - **A-33** (advisor default, closes Q-1) Endpoints with the SPEC's shapes live under `/api/map/`: `/api/map/works`,
   `/api/map/transit`, `/api/map/health` (on-duty pharmacies/hospitals), `/api/map/env`. `/api/health` stays the
   server status. Existing routes keep their shapes; `api.js` (B1) picks the `/api/map/` route where one exists.
+- **A-34** (advisor default) The SPEC's `user_id` is the existing points token: a random pseudonym in the `ao_token`
+  cookie (T2), never in a URL, never sent to the sandbox, never logged. `/api/map/points*` read it from the cookie;
+  `api.js` sends `credentials: "same-origin"` and ignores `user_id`.
+- **A-35** (proposal, needs Αναστάσης) Dev B's UI modules (`ui/report.js`, `ui/points.js`, `ui/stoa.js`,
+  `ui/workstab.js`) each export `mount(ctx)` with `ctx = {map, api, root, bus}`: the MapLibre map, the `api.js`
+  module, the HUD container element for that module (from `main.js`), and an `EventTarget` shared by all modules.
+  Events on `bus`: `points:earned` `{delta, reason}`, `report:open` `{work_id?, lngLat?}`, `map:flyto`
+  `{lon, lat, label}`, `route:request` `{to:[lon,lat]}`. `main.js` (Dev A) creates `bus` and calls `mount()`.
+- **A-36** (advisor default) SPEC points rules apply to the new map flow as new actions next to the T2 ones:
+  `map_report` 5, `confirm_other` 2, `work_progress_photo` 15, `city_confirmed` +20; cap 10 map reports/day; no
+  points for a report within 50 m and 30 min of another of the same category. The T2 actions (operator approve 10,
+  dossier 30, fix confirmed 5) stay for the existing routes, so their tests keep passing.

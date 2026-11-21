@@ -33,7 +33,8 @@ as `web/citizen-legacy.html` until freeze), `web/css/hud.css`, `web/js/main.js`,
 - Every module exports its functions and touches neither `document` nor `maplibregl` at import time (so Node can
   import it). `main.js` is the only file that runs code on load.
 - Dev B's files (`js/api.js`, `js/ui/{points,report,stoa,workstab}.js`, `mock/*`) are **not** created here; `main.js`
-  imports them only if they exist (dynamic `import()` in a try/catch), so A0 doesn't wait for B0.
+  imports them only if they exist (dynamic `import()` in a try/catch), so A0 doesn't wait for B0. It mounts them
+  as A-35 proposes (`mount({map, api, root, bus})`, shared `EventTarget` bus): **Αναστάσης confirms A-35 before A0**.
 
 | Test | Given | Expected |
 |---|---|---|

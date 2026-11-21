@@ -17,10 +17,10 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B3 `/api/map/transit` | 2 | ΟΑΣΑ telematics (buses), GTFS/OSM metro + suburban lines and stations | **running** |
 | B4 On-duty pharmacies/hospitals | 2 | `/api/map/health` (A-33) | **running** |
 | B5 Env grid | 2 | Open-Meteo forecast + air-quality on a grid over the Δήμος, `temp_c`, `aqi`, `pm25` per point | **running** |
-| B6 Report flow «+» | 2 | `ui/report.js`; `/api/report` accepts `category`, `work_id`, optional photo; plate blur; public location rounded ~10 m; points per SPEC rules | card to write |
-| B7 Points pill + panel | 2 | `ui/points.js`, pulse + «+N»; SPEC rewards; `/points/redeem` (Nice) | card to write |
-| B8 Stoa citations + flyTo | 2 | `/api/stoa/ask` returns `citations[{label, lon, lat, kind}]`; `ui/stoa.js` | card to write |
-| B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | card to write |
+| B6 Report flow «+» | 2 | `ui/report.js`; `/api/map/reports` with `category`, `work_id`, optional photo; plate blur; public location rounded ~10 m; points per SPEC rules | **running** |
+| B7 Points pill + panel | 2 | `ui/points.js`, pulse + «+N»; SPEC rewards; `/points/redeem` (Nice) | **running** |
+| B8 Stoa citations + flyTo | 2 | `/api/map/stoa_ask` with `citations[{label, lon, lat, kind}]`; `ui/stoa.js` | **running** |
+| B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | **running** |
 | B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | later |
 
 ### B0: Contracts + first mocks (phase 0)
@@ -180,3 +180,135 @@ SPEC F2 Θερμοκρασία/AQI, «Εξωτερικές πηγές», contrac
 | `test_cache_15min` | two calls 10 min apart | upstream called once per kind |
 | `test_station_overrides_model` | CKAN station 100 m from a grid point | that point uses the station's values, `station` set |
 | `test_open_meteo_down_snapshot` | upstream raises after one good call | last good grid, `source: "snapshot"` |
+
+### Common to B6–B9
+- New routes under `/api/map/` in `app/routers/<name>.py` (A-32, A-33), SPEC shapes exactly. Existing routes and
+  their tests don't change. Logic in its own `app/<name>.py`; small hooks into shared files only where the card says,
+  inside a `# --- B<n>: … ---` block.
+- UI modules follow A-35 (`export function mount(ctx)`), never call `fetch` (only `ctx.api`), touch no `document` or
+  `maplibregl` at import time, and keep their pure parts (labels, formatting, link building, queues) as exported
+  functions tested with `node --test` in `web/tests/B<n>_*.test.js`. Greek UI strings, WCAG AA (labels, keyboard,
+  `aria-live` for messages).
+- The code step of B6, B8, B9 runs on Claude (A-31).
+
+### B6: Report flow «+» (phase 2)
+SPEC F3, HUD «Κάτω αριστερά», «Privacy», «Κανόνες πόντων», contracts `POST /reports`, `GET /reports`.
+**Files:** `app/map_reports.py`, `app/routers/map_reports.py`, `app/privacy.py` (B6 block: plates),
+`app/points.py` (B6 block: A-36 actions and caps), `app/main.py` (B6 block inside approve: `city_confirmed` for map
+reports only), `web/js/ui/report.js`, `THIRD_PARTY.md`, `tests/test_B6_reports.py`, `web/tests/B6_report.test.js`.
+- `POST /api/map/reports` (multipart `category, lon, lat, note, work_id?, photo?`) → `{id, photo_url_blurred,
+  points_awarded, blur:{faces, plates}}`. Categories: `congestion` συμφόρηση, `incident` συμβάν, `obstacle` εμπόδιο,
+  `damage` ζημιά, `work_progress` πρόοδος έργου. Photo optional; when present it goes through
+  `privacy.process_photo()` (faces + plates blurred, EXIF stripped, original never on disk). Plates: OpenCV's bundled
+  plate cascade (BSD, ships with `opencv`), best effort; count reported as `blur.plates`.
+- Stored in our DB (table `map_reports`, own module); public coordinates rounded to 4 decimals (~10 m). `obstacle`
+  and `damage` are also created as City requests in the sandbox (as `/api/report` does), without the token.
+- `GET /api/map/reports?bbox=&since=` → GeoJSON points `category, created_at, confirmations` (+ `id`); `POST
+  /api/map/reports/{id}/confirm` → `confirmations + 1`, +2 to the confirmer (not to the author, once per account).
+- Points per A-36 via `points.grant`; daily cap 10; duplicate (same category, ≤ 50 m, ≤ 30 min) → `points_awarded 0`.
+- `ui/report.js`: «+» button → radial menu of the 5 categories → draggable pin at the map centre → optional photo →
+  send; «Θολώνουμε πρόσωπα και πινακίδες…» while uploading; shows the blurred photo from `photo_url_blurred`;
+  emits `points:earned`. Listens to `report:open` (from the works popup, with `work_id`). Offline: queued in
+  `localStorage`, sent on `online`.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_map_report_contract` | POST with photo | `id, photo_url_blurred, points_awarded, blur.faces, blur.plates` |
+| `test_map_report_without_photo` | POST, no photo | 200, `photo_url_blurred` null |
+| `test_map_report_bad_category_422` | category `foo` | 422 |
+| `test_photo_exif_stripped_original_not_on_disk` | JPEG with EXIF GPS | stored file has no EXIF; no other new file in `data/photos/` |
+| `test_plate_blur_counted` | fixture image with a plate | `blur.plates ≥ 1` |
+| `test_public_coords_rounded` | lon/lat with 7 decimals | `GET /api/map/reports` shows ≤ 4 decimals |
+| `test_points_map_report_5` | first `incident` today | `points_awarded` 5 |
+| `test_points_work_progress_photo_15` | `work_progress` with photo and `work_id` | 15 |
+| `test_duplicate_no_points` | same category 20 m away, 10 min later | `points_awarded` 0 |
+| `test_daily_cap_10` | 11 reports, one account, spread apart | 11th gets 0 |
+| `test_confirm_other_plus_2_once` | account B confirms A's report twice | one +2 for B, `confirmations` 1; A confirming own report gets 0 |
+| `test_obstacle_creates_city_request_without_token` | `obstacle` report with a cookie token | sandbox mock got a request; token not in anything it received |
+| `test_city_confirmed_bonus_20` | operator approves the city request of a map report | +20 to the reporter |
+| `test_get_reports_bbox_since` | reports in/out of bbox and before/after `since` | only the matching ones |
+| `test_existing_report_route_unchanged` | `POST /api/report` as in `test_smoke.py` | same response keys |
+| `test_js_categories_in_spec_order` (node) | `CATEGORIES` | 5 ids and Greek labels |
+| `test_js_build_form` (node) | category, lngLat, note, no photo, `work_id` | FormData fields `category, lon, lat, note, work_id`, no `photo` |
+| `test_js_offline_queue_flush` (node) | fake api throws, then works; fake `localStorage` | report queued, then sent once on flush, queue empty |
+
+### B7: Points pill + panel, redeem (phase 2)
+SPEC F7, HUD «Πάνω δεξιά», contracts `GET /points`, `POST /points/redeem`.
+**Files:** `app/rewards.py`, `app/routers/points_map.py`, `data/rewards.json`, `web/js/ui/points.js`,
+`tests/test_B7_points.py`, `web/tests/B7_points.test.js`.
+- `GET /api/map/points` (cookie, A-34) → `{balance, district:{name, progress_pct, goal}, history:[{ts, delta,
+  reason}], rewards:[{id, title, cost}]}`. `balance` = ledger sum (`points.wallet`) − redeemed. `district` = the
+  account's latest report district from `points.districts()`.
+- `data/rewards.json`: a few example rewards (δημοτικές εκδηλώσεις, στάθμευση, τοπικά καταστήματα), labelled in the
+  file and on screen as «πρόταση, ανοιχτό ερώτημα προς τον Δήμο».
+- `POST /api/map/points/redeem` `{reward_id}` → `{ok, balance, voucher_code}`; table `redemptions` in its own
+  module; not enough points → `ok: false`, nothing written; `voucher_code` random, not derived from the token.
+- `ui/points.js`: pill with balance + district bar; on `points:earned` a 600 ms pulse and a rising «+N»; click opens
+  a panel with history and rewards.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_points_contract` | an account with grants | all SPEC keys; `rewards` from `data/rewards.json` |
+| `test_balance_minus_redeemed` | 50 earned, redeem a 30 reward | `balance` 20 in both responses |
+| `test_redeem_not_enough` | 10 points, reward 30 | `ok: false`, balance unchanged, no row |
+| `test_redeem_unknown_reward_404` | `reward_id` missing | 404 |
+| `test_voucher_not_token` | redeem | `voucher_code` ≠ token and contains no part of it |
+| `test_no_cookie_new_account_zero` | no cookie | balance 0, cookie set |
+| `test_district_progress_pct_bounds` | district total above goal | `progress_pct` 100 |
+| `test_existing_points_routes_unchanged` | `/api/points/me`, `/api/points/districts` | same keys as before |
+| `test_js_format_delta` (node) | 5, −30 | «+5», «−30» |
+| `test_js_pulse_on_event` (node) | fake bus emits `points:earned` `{delta: 5}`, fake pill | pill gets the pulse class and «+5», balance +5 |
+
+### B8: Stoa AI with citations + flyTo (phase 2)
+SPEC F6, HUD «Κάτω δεξιά», contract `POST /stoa_ask`.
+**Files:** `app/stoa_map.py`, `app/routers/stoa_map.py`, `web/js/ui/stoa.js`, `tests/test_B8_stoa.py`,
+`web/tests/B8_stoa.test.js`.
+- `POST /api/map/stoa_ask` `{question, center:[lon,lat], history:[...]}` → `{answer_md, citations:[{label, lon, lat,
+  kind}]}`. General purpose, by a plain router (rules, not AI): works questions → `stoa_ask.ask()` (keeps its `[ΑΔΑ …]`
+  citations), with a citation per matched work at its line's midpoint, `kind: "work"`; on-duty pharmacy/hospital
+  questions → the on-duty provider (`app.onduty_src` when B4 is merged; until then the provider returns nothing and
+  the answer is the refusal), nearest to `center`, `kind: "pharmacy" | "hospital"`; anything else → the City
+  answer of `/api/ask` (sandbox sources as Markdown links), `citations` only for results with coordinates.
+- No source → «Δεν βρήκα τεκμηριωμένα στοιχεία…»; never an invented place. Every citation `label` occurs in
+  `answer_md`.
+- `ui/stoa.js`: bubble → panel 380×520 (transform + opacity, 250 ms); Markdown rendered safely (escaped, links
+  only); each citation label becomes a link that emits `map:flyto`.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_stoa_map_contract` | works question about «Δείγμα Οδός Α» | `answer_md` with `[ΑΔΑ …]`, a `work` citation with numeric lon/lat |
+| `test_citation_labels_in_answer` | any answered question | every `label` occurs in `answer_md` |
+| `test_pharmacy_question_uses_provider` | patched provider with 2 on-duty pharmacies, `center` near one | that one first, `kind: "pharmacy"` |
+| `test_pharmacy_no_provider_refuses` | provider returns nothing | refusal text, `citations` empty |
+| `test_city_question_has_source_links` | patched `/api/ask` answer with sources | `answer_md` contains the source URLs |
+| `test_unknown_refuses_no_invented_place` | question nothing matches | refusal, no citations |
+| `test_existing_stoa_route_unchanged` | `POST /api/stoa/ask` | same response keys |
+| `test_js_link_citations` (node) | `answer_md` + 2 citations | HTML with 2 links carrying `data-lon`/`data-lat`, text otherwise escaped |
+| `test_js_markdown_escapes_html` (node) | `answer_md` with `<script>` | no element created, shown as text |
+| `test_js_click_emits_flyto` (node) | fake bus, click handler on a citation link | `map:flyto` with that lon/lat/label |
+
+### B9: Route cost per profile (phase 2)
+SPEC F5, «Routing», contract `POST /routing`.
+**Files:** `app/route_cost.py`, `app/routers/routing_map.py`, `tests/test_B9_routing.py`.
+- `POST /api/map/routing` `{from:[lon,lat], to:[lon,lat], profile:"wheelchair"|"stroller"|"cool"}` →
+  `{geometry: LineString, distance_m, duration_s, legs:[{mode, line?}], reasons:[{text, layer, feature_id}]}`.
+- Builds on `routing.candidates()` and `env.score_line()` (as `/api/navigate` does), with the layers the map shows:
+  **wheelchair** excludes open obstacle reports and in-progress works (avoid polygons around the work lines), Valhalla
+  wheelchair costing, prefers lowered kerbs/ramps; **stroller** avoids works and congestion reports (soft), prefers
+  good AQI; **cool** weights shade and penalises hot/high-PM2.5 grid cells (`app.envgrid_src` when B5 is merged,
+  else the existing station/forecast heat logic).
+- `reasons` name what changed the route versus the plain shortest: each avoided work (`layer: "works"`,
+  `feature_id` = work id), report (`reports`, report id), heat/air (`env`), with Greek `text` («αποφεύγει 2 έργα»,
+  «−2°C σκιά»). Transit legs: `legs` is `[{mode: "walk"}]` for now (metro/bus legs are a later card).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_routing_contract` | Σύνταγμα → Μοναστηράκι, fallback router (no Valhalla) | all SPEC keys; geometry LineString; `legs` `[{mode:"walk"}]` |
+| `test_wheelchair_avoids_in_progress_work` | a SEED in-progress work on the direct path | candidate passing it not chosen; a `works` reason with that work id |
+| `test_wheelchair_avoids_obstacle_report` | open obstacle report on the direct path | avoided; a `reports` reason with its id |
+| `test_stroller_avoids_congestion_soft` | congestion report on the direct path, only alternative 3× longer | direct path kept (soft), no reason claimed |
+| `test_cool_prefers_shade` | two candidates, one shadier | the shadier chosen; an `env` reason |
+| `test_profiles_differ` | same from/to with a work on the direct path | wheelchair and cool return different geometries |
+| `test_bad_profile_422` | profile `car` | 422 |
+| `test_reasons_point_at_real_features` | any reasons | every `feature_id` exists in its layer's data |
+| `test_existing_navigate_unchanged` | `/api/navigate` as in existing tests | same keys |
