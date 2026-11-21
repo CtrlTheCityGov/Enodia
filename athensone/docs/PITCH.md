@@ -6,7 +6,7 @@ the problem, the solution as a live demo, and the next step after the hackathon.
 | Time | Slide | Say |
 |---|---|---|
 | 0:00–1:00 | **1. Maria** | "Maria is a retiree in Pangrati. It's 40 °C. She needs a cool place, a certificate, and a sidewalk she can actually walk on. Today that's several apps and a phone call, and when she reports a problem she never hears back." |
-| 1:00–4:00 | *(live demo)* | See DEMO_SCRIPT.md. Say "source shown", "face blurred", "a human decides" out loud. |
+| 1:00–4:00 | *(live demo)* | See the demo script in SPEC.md. Say "source shown", "face blurred", "a human decides" out loud. |
 | 4:00–4:45 | **2. Built on AthensGov** | Architecture diagram. "Search, services, POIs, requests: all the city's API. We added what it's missing: the map and accessible route, photo AI with privacy, and the operator screen. Public AI register." |
 | 4:45–5:30 | **3. Money** | "About €0.5M a year saved (€0.29–0.74M). Mostly crew trips that don't happen twice. Pays back in about 6 months." |
 | 5:30–6:00 | **4. Next 90 days** | "Pilot in one Municipal Community. We measure duplicate rate, triage time, time to fix, citizen satisfaction. Funded through Greece 2.0 / ESPA digital programmes." |

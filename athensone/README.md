@@ -17,14 +17,14 @@ Every feature is a layer, a place panel or a route on that one map:
 - **Reports**: one photo, faces blurred and EXIF removed before storage or AI; duplicates within 50 m merge; status
   timeline; "Is it fixed?" after the repair; the route redraws around open hazards.
 - **Stoa (public works)**: works on each street, guarantee clock, cited answers `[ΑΔΑ …]`, a draft claim for the
-  engineer. See [docs/STOA_MERGE.md](docs/STOA_MERGE.md).
+  engineer.
 - **City data layers**: air-quality stations, WiFi, districts (AthensGov CKAN); trees, benches, water, busy roads,
   accessible places (OpenStreetMap). Heat banner with the nearest cool place.
 - **Πόντοι Γειτονιάς**: points for verified civic actions, by district, never by person.
 - **Operator view**: the same map for City staff, with the triage list, approve and dispatch, Stoa radar and an
   equity table per district.
-- **Coming as modules** (cards in [docs/TASKS.md](docs/TASKS.md)): accessibility mappers, Your Voice, Give & Share,
-  What's On, points rewards, Smart Clean, Smart Parking, operator KPIs.
+- **Next: the 3D citizen map** of [docs/SPEC.md](docs/SPEC.md) (the project's spec), built by two tracks:
+  [docs/TASKS_A.md](docs/TASKS_A.md) (map & HUD) and [docs/TASKS_B.md](docs/TASKS_B.md) (data & backend).
 
 One loop shows it end to end in the demo: a resident asks a question and gets an answer with sources, walks a
 step-free route to a Friendship Club, the route changes around a blocked ramp someone just photographed, and a
@@ -102,7 +102,7 @@ Runs the whole 7-step loop offline: ask → cool place → route → report with
 | 7 | Maria's phone: "Crew on the way" timeline | `GET /api/reports/{id}` → `GET /v1/requests/{id}` (`history[]`) |
 | 8 | Operator opens the cracked-sidewalk report: **Stoa card**, "possibly under guarantee", quote + formula, draft dossier | `GET /api/reports/{id}` (`guarantee`) · `POST /api/reports/{id}/dossier` · `/api/works/radar` |
 
-Full script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
+Demo script for the new citizen map: [docs/SPEC.md](docs/SPEC.md#demo-script-3-λεπτά)
 
 ## Architecture
 
@@ -156,15 +156,12 @@ Novoville / 1595 / TaxisNet / Athens Civil Alert / Smart Sense integration, wast
 maintenance. The sandbox stands in for the real AthensGov services during the hackathon.
 
 ## Docs
-- [docs/BUILD_PLAN.pdf](docs/BUILD_PLAN.pdf): tonight's 5 features with specs and tests, open-source repo verdicts and licenses, team split
+- [docs/SPEC.md](docs/SPEC.md) ([PDF](docs/SPEC.pdf)): **the spec** — 3D citizen map, contracts, offline, privacy, work split, acceptance criteria, demo script
+- [docs/TASKS_A.md](docs/TASKS_A.md), [docs/TASKS_B.md](docs/TASKS_B.md): boards of the two tracks; [docs/DECISIONS.md](docs/DECISIONS.md), [docs/BACKLOG.md](docs/BACKLOG.md)
 - [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md): every API, open standard and toolkit item we use, and the themes covered
-- [docs/PROPOSAL.pdf](docs/PROPOSAL.pdf): full concept, all modules, Πόντοι Γειτονιάς loyalty, economics for the Δήμος, roadmap
-- [docs/economics_model.py](docs/economics_model.py): the savings / payback / NPV model behind the proposal
-- [docs/screenshots/](docs/screenshots): operator screen with Stoa, citizen map layers, navigation
 - [docs/NAVIGATION.md](docs/NAVIGATION.md): accessible + environmental route ranking
-- [docs/STOA_MERGE.md](docs/STOA_MERGE.md): AthensOne × Stoa × smart map, data contract, pitch changes, cuts
-- [docs/PLAN.md](docs/PLAN.md): team split, timeline, submission checklist
-- [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md): click-by-click demo
+- [docs/economics_model.py](docs/economics_model.py): the savings / payback / NPV model
+- [docs/screenshots/](docs/screenshots): operator screen with Stoa, citizen map layers, navigation
 - [docs/PITCH.md](docs/PITCH.md): 5 slides, timing, judge Q&A
 - [docs/SAVINGS.md](docs/SAVINGS.md): how much the city saves, with sources
 - [docs/BUSINESS_MODEL_CANVAS.md](docs/BUSINESS_MODEL_CANVAS.md)

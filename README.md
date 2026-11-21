@@ -32,9 +32,11 @@ location tracking, no login except the points wallet), and **a human decides** (
 | Path | What's there |
 |---|---|
 | [`athensone/`](athensone/README.md) | The app: FastAPI backend, map frontend, data scripts, tests |
-| [`athensone/docs/`](athensone/docs) | Board (`TASKS.md`), decisions (`DECISIONS.md`), backlog, demo script, pitch, economics |
+| [`athensone/docs/SPEC.md`](athensone/docs/SPEC.md) | **The spec** (canon): 3D citizen map, contracts, work split, acceptance criteria, demo script |
+| [`athensone/docs/`](athensone/docs) | Boards (`TASKS_A.md` map & HUD, `TASKS_B.md` data & backend), decisions, backlog, pitch, economics |
+| [`agents/`](agents) | `gen-prompts.sh` + `drive.sh`: the tests → code → review agent chain per task |
 | [`athensone/THIRD_PARTY.md`](athensone/THIRD_PARTY.md) | Every dependency, data source and model, with its licence |
-| [`CLAUDE.md`](CLAUDE.md) | How the team and its AI agents work: roles, the task loop, hard rules |
+| [`CLAUDE.md`](CLAUDE.md) | How the two devs and their AI agents work: tracks, the task loop, hard rules |
 
 ## Run it
 
@@ -48,14 +50,18 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Open http://localhost:8000/web/citizen.html (map app) and http://localhost:8000/web/operator.html (City staff).
-The React map app (`/app/`) and the Docker Compose stack with PostgreSQL/PostGIS arrive with T12 and T13; see
-[`athensone/README.md`](athensone/README.md) for the full guide, tests and data scripts.
+The citizen page is being rebuilt as the 3D map of [`SPEC.md`](athensone/docs/SPEC.md) (plain ES modules, no
+build step; frontend tests: `node --test web/tests/`). See [`athensone/README.md`](athensone/README.md) for the full
+guide, tests and data scripts.
 
 ## How it's built
 
-The team builds with several AI agents in parallel, one git worktree per task: one model writes the tests from an
-approved card, a second writes the code, a third reviews it, and a person approves every merge. The rules are in
-[`CLAUDE.md`](CLAUDE.md), the board in [`athensone/docs/TASKS.md`](athensone/docs/TASKS.md).
+Two developers, two tracks from the spec: **Dev A** (map & HUD, branch `dev-a`) and **Dev B** (data & backend,
+branch `dev-b`); they meet at the API contracts and the mock files, and merge into `main` at feature freeze. Inside
+each track, AI agents work in parallel, one git worktree per task: one model writes the tests from an approved card,
+a second writes the code, a third reviews it, and the track's owner approves every merge. Rules in
+[`CLAUDE.md`](CLAUDE.md); boards in [`TASKS_A.md`](athensone/docs/TASKS_A.md) and
+[`TASKS_B.md`](athensone/docs/TASKS_B.md).
 
 ## Licence and data
 

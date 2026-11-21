@@ -64,3 +64,12 @@
 - **A-29** (advisor default, T11 questions) `test_routes_unchanged` checks the live routes through `/openapi.json`
   plus direct requests for routes outside the schema (FastAPI 0.165 wraps included routers in `app.routes`); the
   test writer changes it. `psycopg[binary]` (LGPL-3.0, library use) is added with T13, not T11.
+- **A-30** (Sat 21 Nov, night) `docs/SPEC.md` («Προδιαγραφές Citizen Map», from `SPEC.pdf`) is the project's canon;
+  it wins over everything else. Two tracks: Dev A (Αναστάσης, map & HUD, branch `dev-a`, board `TASKS_A.md`) and
+  Dev B (Evgenii, data & backend, branch `dev-b`, board `TASKS_B.md`), each with its own agent loop (`CLAUDE.md`,
+  `agents/`). The frontend is plain ES modules + CDN with no build step (SPEC), which replaces the React/Vite plan
+  of A-22–A-25 and A-23's module discovery; T11–T23 cards are dropped. `PROPOSAL.pdf`, `BUILD_PLAN.pdf`, `PLAN.md`,
+  `TASKS.md`, `STOA_MERGE.md` and `DEMO_SCRIPT.md` were removed as superseded; code comments that cite them still
+  resolve in git history (`git show 18e6f2f:athensone/docs/TASKS.md`).
+- **Q-1** (open, both owners) Path for the SPEC's new `GET /health` (on-duty pharmacies/hospitals): `/api/health`
+  is already the server-status route used by tests. Proposal: `GET /api/onduty?date=`.

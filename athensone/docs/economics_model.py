@@ -1,4 +1,4 @@
-"""Savings model behind docs/PROPOSAL.pdf section 6. Run: python docs/economics_model.py
+"""Savings model (from the original proposal, section 6; see docs/SAVINGS.md). Run: python docs/economics_model.py
 All inputs are assumptions or sourced figures listed in the proposal; confirm with DAEM before quoting."""
 # AthensOne savings model (EUR/year at full adoption). low / base / high
 S = {}
