@@ -12,15 +12,15 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | Task | Phase | What | State |
 |---|---|---|---|
 | B0 Contracts + first mocks | 0 | Lock the SPEC contracts against the Παράρτημα; `web/mock/*` (env, access, works with 10–15 real works, transit, health, points, stoa) realistic enough for the demo; offline boundary + main roads for A1 | **merged** into `dev-b` |
-| B1 `api.js` | 1 | Only door to the backend; live → `localStorage` cache → `mock/`; `source: live\|cache\|mock`; maps the real routes to SPEC shapes; offline report queue sent on `online` | **running** |
-| B2 Works adapters | 2 | Διαύγεια + ΚΗΜΔΗΣ, join on ΑΔΑ/ΑΔΑΜ, curated geocoding; `/api/map/works` with every SPEC field | **running** |
-| B3 `/api/map/transit` | 2 | ΟΑΣΑ telematics (buses), GTFS/OSM metro + suburban lines and stations | **running** |
-| B4 On-duty pharmacies/hospitals | 2 | `/api/map/health` (A-33) | **running** |
+| B1 `api.js` | 1 | Only door to the backend; live → `localStorage` cache → `mock/`; `source: live\|cache\|mock`; maps the real routes to SPEC shapes; offline report queue sent on `online` | **merged** into `dev-b` |
+| B2 Works adapters | 2 | Διαύγεια + ΚΗΜΔΗΣ, join on ΑΔΑ/ΑΔΑΜ, curated geocoding; `/api/map/works` with every SPEC field | **merged** into `dev-b` |
+| B3 `/api/map/transit` | 2 | ΟΑΣΑ telematics (buses), GTFS/OSM metro + suburban lines and stations | **merged** into `dev-b` |
+| B4 On-duty pharmacies/hospitals | 2 | `/api/map/health` (A-33) | **merged** into `dev-b` |
 | B5 Env grid | 2 | Open-Meteo forecast + air-quality on a grid over the Δήμος, `temp_c`, `aqi`, `pm25` per point | **merged** into `dev-b` |
-| B6 Report flow «+» | 2 | `ui/report.js`; `/api/map/reports` with `category`, `work_id`, optional photo; plate blur; public location rounded ~10 m; points per SPEC rules | **running** |
-| B7 Points pill + panel | 2 | `ui/points.js`, pulse + «+N»; SPEC rewards; `/points/redeem` (Nice) | **running** |
-| B8 Stoa citations + flyTo | 2 | `/api/map/stoa_ask` with `citations[{label, lon, lat, kind}]`; `ui/stoa.js` | **running** |
-| B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | **running** |
+| B6 Report flow «+» | 2 | `ui/report.js`; `/api/map/reports` with `category`, `work_id`, optional photo; plate blur; public location rounded ~10 m; points per SPEC rules | **merged** into `dev-b` |
+| B7 Points pill + panel | 2 | `ui/points.js`, pulse + «+N»; SPEC rewards; `/points/redeem` (Nice) | **merged** into `dev-b` |
+| B8 Stoa citations + flyTo | 2 | `/api/map/stoa_ask` with `citations[{label, lon, lat, kind}]`; `ui/stoa.js` | **merged** into `dev-b` |
+| B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | **merged** into `dev-b` |
 | B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | later |
 
 ### B0: Contracts + first mocks (phase 0)
