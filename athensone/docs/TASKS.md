@@ -4,10 +4,10 @@ Board and cards. The main checkout's copy is current. Workflow and rules: `../..
 
 | Task | Owner | State |
 |---|---|---|
-| T1 "Is it fixed?" loop | A | approved, running |
-| T2 Points wallet, earn side | B | approved, running |
-| T3 Heat alert banner | C | approved, running |
-| T4 Ask Stoa, cited answers | D | approved, running |
+| T1 "Is it fixed?" loop | A | approved, on integrate |
+| T2 Points wallet, earn side | B | approved, on integrate |
+| T3 Heat alert banner | C | approved, on integrate |
+| T4 Ask Stoa, cited answers | D | approved, on integrate |
 | T5 Better face blur | B | waiting: deface dependency needs approval (Q-1) |
 
 Baseline before T1–T4: `8 passed` (Python 3.14, offline test command).
@@ -101,10 +101,10 @@ Our own retrieve-then-verify rule (citation-rag is proprietary).
 
 | Task | Owner | State |
 |---|---|---|
-| T6 T1 leftovers + "+5 for confirming the fix" (A-4) | A | running |
-| T7 T2 leftovers | B | running |
-| T8 T3 leftovers | C | running |
-| T9 T4 leftovers | D | running |
+| T6 T1 leftovers + "+5 for confirming the fix" (A-4) | A | approved, on integrate |
+| T7 T2 leftovers | B | approved, on integrate |
+| T8 T3 leftovers | C | approved, on integrate |
+| T9 T4 leftovers | D | approved with leftovers, on integrate |
 
 ### T6: Fix confirmation points and reopen history (owner A)
 From A-4, A-8 and the T1 review. **Files:** `app/main.py`, `web/operator.html`, `tests/test_T6_fix_t1.py`.
