@@ -81,7 +81,9 @@
   Tasks never edit `main.py` for a new endpoint, so B2–B5 can run in parallel. Shared helpers they need go in
   their own `app/<name>.py`, not in `main.py`.
 - **A-33** (advisor default, closes Q-1) Endpoints with the SPEC's shapes live under `/api/map/`: `/api/map/works`,
-  `/api/map/transit`, `/api/map/health` (on-duty pharmacies/hospitals), `/api/map/env`. `/api/health` stays the
+  `/api/map/transit`, `/api/map/health` (on-duty pharmacies/hospitals), `/api/map/env`, and (Evgenii, after B1)
+  `/api/map/reports` (GET, POST, `/{id}/confirm`), `/api/map/points`, `/api/map/points/redeem`, `/api/map/stoa_ask`,
+  `/api/map/routing` (POST). `/api/health` stays the
   server status. Existing routes keep their shapes; `api.js` (B1) picks the `/api/map/` route where one exists.
 - **A-34** (advisor default) The SPEC's `user_id` is the existing points token: a random pseudonym in the `ao_token`
   cookie (T2), never in a URL, never sent to the sandbox, never logged. `/api/map/points*` read it from the cookie;
@@ -99,3 +101,7 @@
   `city_1_6` (AthensGov station class 1–6). The scales are not converted; the heatmap (Dev A) and the cool route (B9)
   weigh air by `pm25` (µg/m³ on both sources). Report `category` ids and Stoa citation `kind`s are the B6/B8 ones,
   in the mocks too.
+- **A-38** (Evgenii, after the B1 review) `api.js`: Stoa answers and routes are never cached on the device (they hold
+  the user's position and question). A write the server rejects (4xx other than 404) is not "offline": `sendReport`
+  throws `RejectedError {status, detail}`, `redeem` returns `{ok: false, error: "rejected", …}`. The two static
+  mock files (`access`, `base`) don't turn on the «Offline λειτουργία» badge.

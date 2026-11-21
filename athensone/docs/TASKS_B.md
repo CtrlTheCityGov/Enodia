@@ -350,3 +350,21 @@ so the two tracks add an identical file), `web/tests/B1_api.test.js`.
 | `test_send_report_offline_throws` | fetch fails | rejects with `OfflineError` |
 | `test_status_events_and_is_offline` | one live call, one mock call | two `source` events; `isOffline()` true, then false after a live call for that key |
 | `test_import_has_no_dom` | import in Node | no error, no global touched |
+
+#### B1 fix round (Evgenii, after review)
+- **Privacy:** `stoaAsk` and `routing` are never cached (no `localStorage` write; offline → straight to `mock`). No
+  storage key or value may hold the user's question, `center`, `from` or `to`.
+- **Rejected ≠ offline (A-38):** for `sendReport` and `redeem`, only a network error, a timeout, a 404 or a 5xx count
+  as offline. Any other 4xx → `sendReport` rejects with `RejectedError` carrying `status` and the server's `detail`;
+  `redeem` resolves `{ok: false, error: "rejected", status, detail}`. B6 shows the reason instead of queueing.
+- Tests in a new file `web/tests/B1_api_fix.test.js`; the existing B1 tests stay as they are.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_stoa_not_cached` | one live `stoaAsk`, then fetch fails | second answer `source: "mock"`, not `cache` |
+| `test_routing_not_cached` | one live `routing`, then fetch fails | second answer `source: "mock"` (straight line) |
+| `test_no_user_location_or_question_in_storage` | every function called once live with distinctive coordinates and question text | no storage key or value contains those coordinates or the question |
+| `test_send_report_429_rejected` | fetch returns 429 `{detail: "όριο αναφορών"}` | rejects with `RejectedError`, `status` 429, `detail` set; not `OfflineError` |
+| `test_send_report_500_offline` | fetch returns 500 | rejects with `OfflineError` |
+| `test_send_report_404_offline` | fetch returns 404 | rejects with `OfflineError` (endpoint not merged yet) |
+| `test_redeem_400_rejected` | fetch returns 400 `{detail: "…"}` | `{ok: false, error: "rejected", status: 400, detail}` |
