@@ -248,14 +248,26 @@ function getMapBbox(map) {
 function lineColorExpression() {
   return [
     "match",
-    ["coalesce", ["get", "line"], ["get", "ref"], ["get", "route_short_name"], ""],
+    ["coalesce", ["get", "line"], ["get", "id"], ["get", "ref"], ["get", "route_short_name"], ""],
     ["M1", "1", "Γραμμή 1"],
     ATHENS_LINE_COLORS.M1,
     ["M2", "2", "Γραμμή 2"],
     ATHENS_LINE_COLORS.M2,
     ["M3", "3", "Γραμμή 3"],
     ATHENS_LINE_COLORS.M3,
-    ["Suburban", "suburban", "Proastiakos", "Προαστιακός", "P1", "P2", "P3", "Π1", "Π2", "Π3"],
+    [
+      "PROASTIAKOS",
+      "Suburban",
+      "suburban",
+      "Proastiakos",
+      "Προαστιακός",
+      "P1",
+      "P2",
+      "P3",
+      "Π1",
+      "Π2",
+      "Π3",
+    ],
     ATHENS_LINE_COLORS.Suburban,
     ["coalesce", ["get", "color"], ATHENS_LINE_COLORS.default],
   ];
@@ -277,7 +289,12 @@ async function loadTransitData(map, api, { updateRail = false, updateBuses = fal
   if (!map || !api || typeof api.transit !== "function") {
     return null;
   }
-  const busGen = updateBuses ? (busPollGenByMap.get(map) ?? 0) : null;
+  // Increment per-poll generation so an older slower bus poll can never overwrite a newer poll (TASKS_A.md A6).
+  let busGen = null;
+  if (updateBuses) {
+    busGen = (busPollGenByMap.get(map) ?? 0) + 1;
+    busPollGenByMap.set(map, busGen);
+  }
   try {
     const bbox = getMapBbox(map);
     const res = await api.transit(bbox ? { bbox } : undefined);

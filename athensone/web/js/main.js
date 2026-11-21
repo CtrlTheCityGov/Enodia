@@ -245,6 +245,23 @@ export async function bootstrap(
     },
   };
 
+  /* --- A6 --- */
+  function syncOfflineBadge() {
+    if (!offlineBadgeEl?.classList) {
+      return;
+    }
+    const isOffline = Boolean(
+      state.offline || (typeof api?.isOffline === "function" && api.isOffline()),
+    );
+    offlineBadgeEl.classList.toggle("hidden", !isOffline);
+  }
+
+  if (api?.status && typeof api.status.addEventListener === "function") {
+    api.status.addEventListener("source", syncOfflineBadge);
+    syncOfflineBadge();
+  }
+  /* --- /A6 --- */
+
   const mapContainer = root.getElementById("map");
   const map = mapContainer ? createMap(mapContainer, state) : null;
 
@@ -274,6 +291,15 @@ export async function bootstrap(
       }
       showFlyToHighlight(map, lon, lat, detail?.label, flyToHighlightState);
     });
+
+    /* --- A6 --- */
+    // Refresh live citizen report pins immediately after a newly submitted Waze report awards points (TASKS_A.md A6).
+    bus.addEventListener("points:earned", () => {
+      if (map) {
+        reportsLayer.refresh(map, api, state);
+      }
+    });
+    /* --- /A6 --- */
   }
 
   const themeBtn = root.getElementById("theme-toggle");

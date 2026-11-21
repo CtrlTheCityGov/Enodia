@@ -869,3 +869,1005 @@ body {
   }
 }
 /* --- /A5 --- */
+
+/* --- A6 --- */
+/* Integration polish & Dev B HUD glassmorphism styles (SPEC.md "HUD (glassmorphism)", F3, F6, F7, F8; TASKS_A.md A6). */
+
+/* Ensure native HTML [hidden] panels remain hidden even when styled with display: flex/block (TASKS_A.md A6). */
+[hidden] {
+  display: none !important;
+}
+
+/* SEED badge inside work map popup (DECISIONS.md A-14, TASKS_A.md A6). */
+.work-popup__seed-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--glass-radius-pill);
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .work-popup__seed-badge {
+  background: rgba(245, 158, 11, 0.28);
+  color: #fde68a;
+}
+
+/* --- Points (#hud-points, Dev B points.js) --- */
+/* Animation duration 600ms from SPEC.md "HUD (glassmorphism)" (certainty: verified). */
+@keyframes points-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: var(--glass-shadow);
+  }
+  40% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 6px rgba(29, 78, 216, 0.28), var(--glass-shadow);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: var(--glass-shadow);
+  }
+}
+
+@keyframes points-float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.92);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px) scale(1.04);
+  }
+}
+
+.points-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border-radius: var(--glass-radius-pill);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hud-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.points-pill:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+[data-theme="dark"] .points-pill:hover {
+  background: rgba(30, 36, 48, 0.74);
+}
+
+.points-pill:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.points-pill.pulse {
+  animation: points-pulse 600ms ease;
+}
+
+.points-label {
+  font-weight: 600;
+}
+
+.points-balance {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.points-bar {
+  display: inline-block;
+  width: 54px;
+  height: 7px;
+  border-radius: var(--glass-radius-pill);
+  background: rgba(17, 24, 39, 0.16);
+  overflow: hidden;
+  flex: none;
+}
+
+.points-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: var(--glass-radius-pill);
+  background: #059669;
+  transition: width 250ms ease;
+}
+
+.points-source {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--glass-radius-pill);
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.points-source:empty {
+  display: none;
+}
+
+.points-float {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  padding: 2px 8px;
+  border-radius: var(--glass-radius-pill);
+  background: #059669;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  pointer-events: none;
+  animation: points-float-up 600ms ease-out forwards;
+}
+
+.points-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(320px, calc(100vw - 24px));
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  z-index: 20;
+}
+
+.points-panel h2 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--hud-text);
+}
+
+.points-history,
+.points-rewards {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.points-history li,
+.points-rewards li {
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--hud-divider);
+  font-size: 0.8125rem;
+}
+
+.points-rewards li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.points-note {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.82;
+}
+
+.points-status {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.points-status:empty {
+  display: none;
+}
+
+.points-redeem {
+  appearance: none;
+  border: none;
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: none;
+  transition: opacity 150ms ease;
+}
+
+.points-redeem:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.points-redeem:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.points-redeem:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+/* --- Report (#hud-report, Dev B report.js) --- */
+/* 52x52 circular high-contrast Waze '+' button (TASKS_A.md A6, SPEC.md F3). */
+.report-fab {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--glass-shadow);
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+
+.report-fab:hover {
+  transform: scale(1.05);
+}
+
+.report-fab:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 3px;
+}
+
+.report-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  min-width: 196px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 20;
+}
+
+.report-menu button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease;
+}
+
+.report-menu button:hover {
+  background: var(--hud-hover-bg);
+}
+
+.report-menu button:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.report-panel {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  width: min(320px, calc(100vw - 24px));
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  z-index: 21;
+}
+
+.report-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--hud-text);
+}
+
+.report-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+
+.report-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--hud-text);
+}
+
+.report-panel textarea,
+.report-panel input[type="file"] {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--hud-divider);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.report-panel textarea:focus-visible,
+.report-panel input[type="file"]:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 1px;
+}
+
+.report-panel button[type="submit"],
+.report-panel button[type="button"] {
+  appearance: none;
+  border-radius: var(--glass-radius-pill);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.report-panel button[type="submit"] {
+  border: none;
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+}
+
+.report-panel button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.report-panel button[type="button"] {
+  border: 1px solid var(--hud-divider);
+  background: transparent;
+  color: var(--hud-text);
+}
+
+.report-panel button[type="button"]:hover {
+  background: var(--hud-hover-bg);
+}
+
+.report-panel button:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.report-status {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.report-status:empty {
+  display: none;
+}
+
+.report-preview {
+  max-width: 100%;
+  border-radius: 10px;
+  display: block;
+  border: 1px solid var(--hud-divider);
+}
+
+/* --- Stoa AI (#hud-stoa, Dev B stoa.js) --- */
+.stoa-bubble {
+  appearance: none;
+  min-height: 48px;
+  padding: 10px 18px;
+  border-radius: var(--glass-radius-pill);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.stoa-bubble:hover {
+  background: rgba(255, 255, 255, 0.74);
+  transform: translateY(-1px);
+}
+
+.stoa-bubble:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.stoa-panel {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-panel);
+  box-shadow: var(--glass-shadow);
+  color: var(--hud-text);
+  overflow: hidden;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* Re-enable pointer events only while Stoa panel is open so a closed/fading panel never blocks map clicks (TASKS_A.md A6). */
+#hud-stoa:has(.stoa-bubble[aria-expanded="true"]) .stoa-panel,
+.stoa-panel[style*="opacity: 1"] {
+  pointer-events: auto;
+}
+
+.stoa-log {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.stoa-msg {
+  max-width: 88%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  word-wrap: break-word;
+}
+
+.stoa-user {
+  align-self: flex-end;
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+  border-bottom-right-radius: 4px;
+}
+
+.stoa-bot {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--hud-text);
+  border: 1px solid var(--hud-divider);
+  border-bottom-left-radius: 4px;
+}
+
+.stoa-cite {
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.stoa-cite:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.stoa-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--hud-divider);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.stoa-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: var(--glass-radius-pill);
+  border: 1px solid var(--hud-divider);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.stoa-form input:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 1px;
+}
+
+.stoa-form button {
+  appearance: none;
+  border: none;
+  border-radius: var(--glass-radius-pill);
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stoa-form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.stoa-form button:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+/* --- Works tab (#hud-tabs, Dev B workstab.js) --- */
+.workstab-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  z-index: 20;
+}
+
+.workstab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workstab-heading {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--hud-text);
+}
+
+.workstab-source {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--glass-radius-pill);
+  background: #fef3c7;
+  color: #92400e;
+  white-space: nowrap;
+}
+
+.workstab-source:empty {
+  display: none;
+}
+
+.workstab-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workstab-filter {
+  appearance: none;
+  border: 1px solid var(--hud-divider);
+  background: transparent;
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: var(--glass-radius-pill);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.workstab-filter:hover {
+  background: var(--hud-hover-bg);
+}
+
+.workstab-filter:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.workstab-filter.is-active,
+.workstab-filter[aria-pressed="true"] {
+  background: var(--hud-active-bg);
+  border-color: var(--hud-active-bg);
+  color: var(--hud-active-text);
+}
+
+.workstab-search-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workstab-search-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--hud-text);
+}
+
+.workstab-search {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--hud-divider);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.workstab-search:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 1px;
+}
+
+.workstab-status {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.workstab-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workstab-card {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid var(--hud-divider);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workstab-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workstab-card-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--hud-text);
+}
+
+.workstab-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--glass-radius-pill);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex: none;
+}
+
+/* Status badge colors aligned with A3 work popup WCAG AA palette (certainty: design default). */
+.workstab-status-badge.status-planned,
+.status-planned {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.workstab-status-badge.status-in_progress,
+.status-in_progress {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.workstab-status-badge.status-completed,
+.status-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.workstab-status-badge.status-unknown,
+.status-unknown {
+  background: rgba(17, 24, 39, 0.1);
+  color: #374151;
+}
+
+.workstab-card-meta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  font-size: 0.8125rem;
+}
+
+.workstab-card-meta dt {
+  font-weight: 600;
+  opacity: 0.78;
+}
+
+.workstab-card-meta dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.workstab-ada-link {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.workstab-ada-link:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.workstab-ada-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.workstab-seed-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--glass-radius-pill);
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.workstab-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.workstab-focus,
+.workstab-report {
+  appearance: none;
+  border-radius: var(--glass-radius-pill);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  flex: 1 1 auto;
+  text-align: center;
+  transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.workstab-focus {
+  border: 1px solid var(--hud-divider);
+  background: transparent;
+  color: var(--hud-text);
+}
+
+.workstab-focus:hover:not(:disabled) {
+  background: var(--hud-hover-bg);
+}
+
+.workstab-focus:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.workstab-report {
+  border: none;
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+}
+
+.workstab-report:hover {
+  opacity: 0.92;
+}
+
+.workstab-focus:focus-visible,
+.workstab-report:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+/* --- Dark theme contrast tweaks for Dev B panels --- */
+[data-theme="dark"] .points-bar {
+  background: rgba(243, 244, 246, 0.22);
+}
+
+[data-theme="dark"] .points-bar-fill {
+  background: #34d399;
+}
+
+[data-theme="dark"] .points-source,
+[data-theme="dark"] .workstab-source,
+[data-theme="dark"] .workstab-seed-badge {
+  background: rgba(245, 158, 11, 0.26);
+  color: #fde68a;
+}
+
+[data-theme="dark"] .points-history li,
+[data-theme="dark"] .points-rewards li,
+[data-theme="dark"] .workstab-card {
+  background: rgba(15, 23, 42, 0.56);
+}
+
+[data-theme="dark"] .report-panel textarea,
+[data-theme="dark"] .report-panel input[type="file"],
+[data-theme="dark"] .stoa-form input,
+[data-theme="dark"] .workstab-search {
+  background: rgba(15, 23, 42, 0.68);
+  color: var(--hud-text);
+}
+
+[data-theme="dark"] .stoa-bubble:hover {
+  background: rgba(30, 36, 48, 0.76);
+}
+
+[data-theme="dark"] .stoa-bot {
+  background: rgba(15, 23, 42, 0.68);
+  color: var(--hud-text);
+}
+
+[data-theme="dark"] .stoa-cite,
+[data-theme="dark"] .workstab-ada-link {
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .stoa-form {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+[data-theme="dark"] .workstab-status-badge.status-planned,
+[data-theme="dark"] .status-planned {
+  background: rgba(59, 130, 246, 0.25);
+  color: #bfdbfe;
+}
+
+[data-theme="dark"] .workstab-status-badge.status-in_progress,
+[data-theme="dark"] .status-in_progress {
+  background: rgba(249, 115, 22, 0.25);
+  color: #fed7aa;
+}
+
+[data-theme="dark"] .workstab-status-badge.status-completed,
+[data-theme="dark"] .status-completed {
+  background: rgba(34, 197, 94, 0.25);
+  color: #bbf7d0;
+}
+
+[data-theme="dark"] .workstab-status-badge.status-unknown,
+[data-theme="dark"] .status-unknown {
+  background: rgba(243, 244, 246, 0.16);
+  color: #e5e7eb;
+}
+
+/* --- Mobile 390 px layout adjustments for Dev B panels (TASKS_A.md A6, SPEC.md Acceptance criteria) --- */
+@media (max-width: 600px) {
+  /* Allow absolutely positioned .workstab-panel inside #hud-tabs to extend below the top-left pill without clipping. */
+  #hud-tabs.hud-top-left {
+    overflow: visible;
+  }
+
+  .points-pill {
+    padding: 5px 8px;
+    gap: 5px;
+    min-height: 36px;
+    font-size: 0.75rem;
+  }
+
+  .points-label {
+    display: none;
+  }
+
+  .points-bar {
+    width: 36px;
+  }
+
+  .points-panel {
+    width: min(320px, calc(100vw - 2 * var(--hud-gap)));
+    max-height: calc(100vh - 150px);
+    padding: 12px;
+  }
+
+  .report-fab {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+
+  .report-panel {
+    width: calc(100vw - 2 * var(--hud-gap));
+    max-height: calc(100vh - 150px);
+    padding: 12px;
+  }
+
+  .stoa-bubble {
+    min-height: 44px;
+    padding: 8px 14px;
+    font-size: 0.8125rem;
+  }
+
+  .stoa-panel {
+    width: calc(100vw - 2 * var(--hud-gap));
+    max-height: calc(100vh - 150px);
+  }
+
+  .workstab-panel {
+    width: calc(100vw - 2 * var(--hud-gap));
+    max-height: calc(100vh - 150px);
+    padding: 12px;
+  }
+}
+
+/* Lift HUD containers with an open dropdown/panel above passive sibling pills (A6 review finding #1, certainty: verified). */
+#hud-tabs:has(.workstab-panel:not([hidden])),
+#hud-points:has(.points-panel:not([hidden])),
+#hud-report:has(.report-panel:not([hidden]), .report-menu:not([hidden])),
+#hud-stoa:has(.stoa-bubble[aria-expanded="true"]) {
+  z-index: 25;
+}
+/* --- /A6 --- */
