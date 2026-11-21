@@ -15,7 +15,7 @@
 
 ## Open
 
-- **A-18** (Sat 21 Nov, "do them") T5 approved: add `deface` 1.5.0 (MIT) with the OpenCV Haar fallback kept; it pulls onnxruntime.
+- **A-18** (Sat 21 Nov, "do them") T5 approved: add `deface` 1.5.0 (MIT) with the OpenCV Haar fallback kept. Its deps pull opencv-python 5 (no CascadeClassifier) next to our headless 4.x pin: install must keep OpenCV 4; onnxruntime is not pulled (CenterFace then runs on cv2.dnn).
 
 ## Sat 21 Nov, after the T1–T4 code ("continue" = advisor's recommendations accepted)
 
