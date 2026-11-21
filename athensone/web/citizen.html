@@ -11,6 +11,9 @@
 <header>
   <h1>Η Γειτονιά μου AI</h1>
   <span id="mode" class="pill">…</span>
+  <!-- --- T2: Points wallet, earn side --- -->
+  <a id="pointsChip" href="#pointsCard" class="pill" style="background:#e8f0fb;color:#0b5cad;text-decoration:none;font-weight:600;white-space:nowrap" aria-label="Πόντοι Γειτονιάς">⭐ 0 π.</a>
+  <!-- --- /T2 --- -->
   <button id="bigBtn" class="ghost" aria-pressed="false" title="Μεγάλα γράμματα και φωνή">Aa Μεγάλα</button>
 </header>
 
@@ -103,6 +106,16 @@
     </div>
     <!-- --- end T1 --- -->
   </section>
+
+  <!-- --- T2: Points wallet, earn side --- -->
+  <section class="card" id="pointsCard" aria-labelledby="ptsH">
+    <h2 id="ptsH">Πόντοι Γειτονιάς <span id="ptsTier" class="badge info">Γείτονας</span></h2>
+    <p id="ptsSummary" class="muted">0 πόντοι · Κερδίζετε πόντους όταν ο Δήμος εγκρίνει μια αναφορά (+10) ή ανοίξει φάκελο εγγύησης (+30).</p>
+    <div id="districtProgress" aria-live="polite"></div>
+    <ul class="timeline hidden" id="ptsEntries"></ul>
+    <p class="muted" style="margin:8px 0 0;font-size:.8em">Μόνο ανταμοιβές, ποτέ ποινές. Κατάταξη μόνο ανά Δημοτική Κοινότητα, ποτέ ανά πρόσωπο.</p>
+  </section>
+  <!-- --- /T2 --- -->
 </main>
 <footer><a href="ai-register.html">Πώς χρησιμοποιούμε την AI</a> · <a href="operator.html">Οθόνη Δήμου</a></footer>
 
@@ -441,6 +454,55 @@ $("#confirmPhoto").onchange = () => { const f = $("#confirmPhoto").files[0]; if 
 
 api("/api/health").then(h => { $("#mode").textContent = h.mock ? "MOCK δεδομένα" : "AthensGov Sandbox · " + h.persona;
   $("#mode").classList.toggle("mock", h.mock); });
+
+// --- T2: Points wallet, earn side ---
+const ACTION_EL = {
+  report_approved: "Έγκριση αναφοράς",
+  guarantee_claim: "Φάκελος εγγύησης Στοάς",
+  fix_confirmed: "Επιβεβαίωση αποκατάστασης",
+};
+async function loadPoints() {
+  try {
+    const [me, dist] = await Promise.all([api("/api/points/me"), api("/api/points/districts")]);
+    $("#pointsChip").textContent = `⭐ ${me.balance} π.`;
+    $("#pointsChip").setAttribute("aria-label", `Πόντοι Γειτονιάς: ${me.balance} πόντοι, επίπεδο ${me.tier}`);
+    $("#ptsTier").textContent = me.tier;
+    $("#ptsSummary").textContent = `${me.balance} πόντοι · Επίπεδο: ${me.tier} · Έγκριση αναφοράς +10 (έως 3/ημέρα), φάκελος εγγύησης +30.`;
+    const box = $("#districtProgress"); box.innerHTML = "";
+    const rows = dist.items.length ? dist.items : [{ district: "Συλλογικός στόχος γειτονιάς", points: 0 }];
+    for (const d of rows) {
+      const pct = Math.min(100, Math.round((d.points / dist.target) * 100));
+      const wrap = document.createElement("div"); wrap.style.marginTop = "8px";
+      const lbl = document.createElement("div"); lbl.style.cssText = "display:flex;justify-content:space-between;font-size:.88em";
+      const nameEl = document.createElement("span"); nameEl.textContent = d.district;
+      const valEl = document.createElement("span"); valEl.className = "muted";
+      valEl.textContent = `${d.points.toLocaleString("el-GR")} / ${dist.target.toLocaleString("el-GR")} π. (${pct}%)`;
+      lbl.append(nameEl, valEl);
+      const track = document.createElement("div");
+      track.setAttribute("role", "progressbar");
+      track.setAttribute("aria-label", `Πρόοδος ${d.district}`);
+      track.setAttribute("aria-valuemin", "0");
+      track.setAttribute("aria-valuemax", String(dist.target));
+      track.setAttribute("aria-valuenow", String(d.points));
+      track.style.cssText = "height:10px;background:#eef2f7;border-radius:99px;overflow:hidden;margin-top:4px";
+      const fill = document.createElement("div");
+      fill.style.cssText = `height:100%;width:${pct}%;background:var(--accent)`;
+      track.appendChild(fill);
+      wrap.append(lbl, track);
+      box.appendChild(wrap);
+    }
+    const list = $("#ptsEntries"); list.innerHTML = "";
+    list.classList.toggle("hidden", !me.entries.length);
+    for (const e of me.entries) {
+      const li = document.createElement("li");
+      li.textContent = `+${e.points} π. · ${ACTION_EL[e.action] || e.action}` + (e.district ? ` (${e.district})` : "");
+      list.appendChild(li);
+    }
+  } catch (_e) { /* non-blocking on citizen page */ }
+}
+loadPoints();
+setInterval(() => { if (document.visibilityState === "visible") loadPoints(); }, 10000);
+// --- /T2 ---
 </script>
 </body>
 </html>

@@ -18,6 +18,10 @@ import httpx
 from . import ckan, config, env, interop, privacy, routing, store, vision, works
 from .geo import cluster, haversine_km
 from .sandbox import Sandbox, SandboxError
+# --- T2: Points wallet, earn side ---
+from fastapi import Response
+from . import points
+# --- /T2 ---
 
 app = FastAPI(title="AthensOne AI", version="0.1")
 sb = Sandbox()
@@ -335,7 +339,7 @@ def dcat(request: Request):
 
 # ------------------------------------------------------------------ reports
 @app.post("/api/report")
-async def report(request: Request, photo: UploadFile = File(...), lat: float | None = Form(None),
+async def report(request: Request, response: Response, photo: UploadFile = File(...), lat: float | None = Form(None),
                  lng: float | None = Form(None), address: str = Form(""), note: str = Form("")):
     raw = await photo.read()
     if len(raw) > 15 * 1024 * 1024:
@@ -369,6 +373,10 @@ async def report(request: Request, photo: UploadFile = File(...), lat: float | N
     req = sb.create_request(category=ai["category"], title=ai["title_el"],
                             address=address or f"{lat:.5f}, {lng:.5f}", description=desc, lat=lat, lng=lng)
     store.save(req["id"], name, lat, lng, ai, p["faces"])
+    # --- T2: Points wallet, earn side ---
+    token = points.ensure_token(request, response)
+    points.link_report(req["id"], token)
+    # --- /T2 ---
     return {"duplicate_of": None, "request": req, "ai": ai, "photo_url": photo_url,
             "faces_blurred": p["faces"], "gps_from_photo": bool(p["gps"])}
 
@@ -401,7 +409,11 @@ class Decision(BaseModel):
 @app.post("/api/reports/{rid}/approve")
 def approve(rid: str, d: Decision | None = None):
     note = (d.note if d and d.note else "Εγκρίθηκε από υπάλληλο του Δήμου · το συνεργείο ειδοποιήθηκε")
-    return _merge(sb.update_request(rid, status="in_progress", note=note))
+    out = _merge(sb.update_request(rid, status="in_progress", note=note))
+    # --- T2: Points wallet, earn side ---
+    points.grant_for_report(rid, action="report_approved", verified_by="operator", district=out.get("district_name"))
+    # --- /T2 ---
+    return out
 
 
 @app.post("/api/reports/{rid}/resolve")
@@ -541,6 +553,9 @@ def dossier(rid: str):
     r = _merge(sb.get_request(rid))
     if not r.get("guarantee"):
         raise HTTPException(404, "no works record linked to this report")
+    # --- T2: Points wallet, earn side ---
+    points.grant_for_report(rid, action="guarantee_claim", verified_by="engineer", district=r.get("district_name"))
+    # --- /T2 ---
     return {"text": works.dossier(r, r["guarantee"]), "sent": False}
 
 
@@ -560,6 +575,19 @@ def layers():
         {"id": "clean", "name_el": "Αποκομιδή", "status": "roadmap", "needs": "δρομολόγια και GPS απορριμματοφόρων"},
         {"id": "events", "name_el": "Εκδηλώσεις", "status": "roadmap", "needs": "βάση εκδηλώσεων του Δήμου"},
     ]}
+
+
+# --- T2: Points wallet, earn side ---
+@app.get("/api/points/me")
+def points_me(request: Request, response: Response):
+    token = points.ensure_token(request, response)
+    return points.wallet(token)
+
+
+@app.get("/api/points/districts")
+def points_districts():
+    return points.districts()
+# --- /T2 ---
 
 
 # ------------------------------------------------------------------ admin
