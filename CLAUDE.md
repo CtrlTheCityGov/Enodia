@@ -117,7 +117,11 @@ answer in `docs/DECISIONS.md` as `A-n`; open questions are `Q-n`. If you would h
 - Every new dependency needs Evgenii's approval and a line in `THIRD_PARTY.md`.
 
 **Code**
-- Python 3.11+, FastAPI, plain HTML/JS. No new framework, no build step.
+- Stack (A-22, Sat 21 Nov evening): Python 3.11+, FastAPI routers, SQLAlchemy 2 + Alembic (`DATABASE_URL`; SQLite in
+  tests, PostgreSQL 16 + PostGIS in Docker Compose), React 18 + Vite + TypeScript + MapLibre in `frontend/`.
+  New modules are self-contained (A-23): backend `app/modules/<name>/{models,service,router}.py`, frontend
+  `frontend/src/modules/<name>/index.tsx`; both are discovered automatically, so no shared file needs editing.
+  No other framework without Evgenii's approval. Agents never run `docker`; Compose files are written and read only.
 - Type hints on new functions. Pure functions where possible (like `works.clock()`); keep I/O thin around them.
 - Every constant and claim gets a comment saying where it comes from and how sure you are; "unverified" if guessing.
 - Greek UI strings stay Greek; code, comments and docs in English.

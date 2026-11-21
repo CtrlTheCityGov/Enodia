@@ -253,3 +253,154 @@ and must keep passing as they are.
 | `frontend: no axe violations` | each page, mocked API | 0 violations |
 | `test_frontend_mounted_when_built` (pytest) | a fake `frontend/dist/index.html` | `GET /app/` returns it |
 | `test_frontend_absent_ok` (pytest) | no `dist` | app starts; `/app/` 404; old `/web/` still works |
+
+## Full app, wave 1 and 2 (start after T11 and T12 are merged)
+
+Every module (A-23): backend `app/modules/<name>/` (models on `Base`, pure `service.py`, `router.py` under
+`/api/<name>`), Alembic migration `alembic/versions/<name>_*.py`, frontend `frontend/src/modules/<name>/`, tests
+`tests/test_T<n>_<name>.py` + Vitest beside the module, a `README.md` in the module folder. Points are granted
+only through the points service, only after a human or a second resident verifies (Proposal §4). No location
+tracking; locations only on things people post on purpose. Data that doesn't exist yet shows "σύντομα" (coming),
+never invented values.
+
+| Task | Module | State |
+|---|---|---|
+| T13 | Docker Compose deploy | waits for T11 |
+| T14 | Χαρτογράφοι Προσβασιμότητας | waits for T11, T12 |
+| T15 | Your Voice (proposals and votes) | waits for T11, T12 |
+| T16 | Give & Share | waits for T11, T12 |
+| T17 | What's On | waits for T11, T12 |
+| T18 | Points, spend side | waits for T11, T12 |
+| T19 | Smart Clean | waits for T11, T12 |
+| T20 | Smart Parking | waits for T11, T12 |
+| T21 | Operator console + "what was spent on my street" | waits for T11, T12 |
+
+### T13: Docker Compose deploy
+**Files:** `docker-compose.yml`, `backend.Dockerfile`, `frontend/Dockerfile`, `frontend/nginx.conf`, `.env.example`,
+`deploy/README.md`, `tests/test_T13_deploy.py`. Services: `db` (postgis/postgis:16-3.4, volume, healthcheck),
+`api` (uvicorn, runs `alembic upgrade head` first, `DATABASE_URL` to db), `web` (nginx serving `frontend/dist`,
+proxying `/api`, `/open311`, `/ngsi-ld`, `/dcat`, `/photos` to api). Secrets only from `.env`.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_compose_parses` | `docker-compose.yml` loaded as YAML | services db, api, web; api depends on db healthy |
+| `test_no_secret_in_compose` | the file | no literal key/password values, only `${VAR}` |
+| `test_api_image_runs_migrations` | `backend.Dockerfile` + entry command | `alembic upgrade head` before uvicorn |
+| `test_nginx_proxies_api_paths` | `nginx.conf` | `/api/`, `/open311/`, `/ngsi-ld/`, `/dcat/`, `/photos/` proxied |
+| `test_postgres_smoke` (skipped unless `TEST_DATABASE_URL`) | a Postgres URL | smoke loop passes on Postgres |
+
+### T14: Χαρτογράφοι Προσβασιμότητας (accessibility mappers)
+Residents mark ramps, benches, tactile paving, obstacles; a second resident verifies (Project Sidewalk label
+types, MIT: taxonomy only). Verified points feed Navigate (obstacles excluded, benches as rest stops).
+- `POST /api/mappers/points` {kind, lat, lng, note?, photo?} (photo through `privacy.py`); `POST …/{id}/confirm`
+  {agree: bool} by a different token; verified at 2 agreeing answers, rejected at 2 disagreeing.
+- `GET /api/mappers/points?bbox&status` GeoJSON. Verified obstacles join `active_hazards()` exclusions; verified
+  benches join env rest points. +3 points to the mapper on verification (daily cap 10).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_add_point_pending` | a ramp point | status pending, no points yet |
+| `test_same_token_cannot_confirm` | mapper confirms own point | 403 |
+| `test_two_agree_verifies_and_pays` | 2 other tokens agree | verified; mapper +3 once |
+| `test_two_disagree_rejects` | 2 disagree | rejected, no points |
+| `test_verified_obstacle_excluded_in_route` | verified obstacle on route | in Valhalla exclude list |
+| `test_photo_blurred` | point with EXIF photo | stored copy has no EXIF |
+| `test_daily_cap_10` | 11 verifications in a day | 30 points |
+
+### T15: Your Voice (proposals and votes)
+Proposals pinned on the map, time-boxed votes, official status. Decidim (AGPL) is not copied; a link-out field
+`decidim_url` is allowed.
+- `POST /api/voice/proposals` {title, body, lat?, lng?, district}; operator `PATCH …/{id}` status
+  (submitted|under_review|accepted|rejected|done) with a public note; `POST …/{id}/vote` once per token, only while
+  `open_until` is in the future; `GET` list with counts. +5 points per vote (cap 1/day), never for proposing.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_vote_once_per_token` | same token votes twice | one vote |
+| `test_vote_after_close_rejected` | `open_until` past | 409 |
+| `test_status_change_needs_operator` | citizen PATCH | 403 |
+| `test_counts_by_district` | votes in 2 districts | per-district counts, no tokens |
+| `test_vote_points_capped` | 3 votes a day | 5 points |
+
+### T16: Give & Share
+Post an item with a photo; hand-over only at partner points (Friendship Club, library), never a home address.
+- `POST /api/share/items` {title, category, photo, partner_point_id}; `POST …/{id}/request`; both sides confirm
+  hand-over → +15 each (cap 2/day). Partner points: Friendship Clubs from the sandbox POIs + `data/share_partners.json`.
+- Social-services role can request items first (flag `priority`).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_item_needs_partner_point` | no partner point | 422 |
+| `test_no_address_fields_accepted` | body with `address` | 422 or ignored, never stored |
+| `test_handover_both_confirm_pays_both` | both confirm | +15 each, once |
+| `test_one_side_confirm_pays_nothing` | one confirms | no points |
+| `test_photo_blurred` | EXIF photo | stored without EXIF |
+
+### T17: What's On
+Municipal and partner events on map and calendar with verified accessibility info and reminders.
+- `GET /api/events?from&to&bbox&accessible=1`; source: CKAN if an events dataset exists (search `package_search?q=εκδηλώσεις`),
+  else `data/events_seed.json` labelled SEED. Accessibility fields (`step_free`, `toilet_wheelchair`, `seats`) shown
+  only when verified (by T14 data or source), else UNKNOWN. iCal export `GET /api/events/{id}.ics`.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_seed_events_labelled` | no CKAN | `source` SEED on every event |
+| `test_filter_accessible` | `accessible=1` | only events with verified `step_free` true |
+| `test_unknown_accessibility` | no data | fields "UNKNOWN", not false |
+| `test_ics_export_valid` | one event | valid VCALENDAR with DTSTART/LOCATION |
+
+### T18: Points, spend side
+Rewards from the Proposal: City perks in kind, partner rewards, donations, tiers, 12-month expiry.
+- `GET /api/points/rewards` (from `data/rewards.json`, partner-funded flagged); `POST /api/points/redeem`
+  {reward_id} → a negative ledger row and a one-time code; `POST /api/points/donate` {target: club|grocery|pb_project};
+  balance now excludes rows older than 12 months (A-10 revisited); account delete `DELETE /api/points/me` removes
+  history (Proposal: delete any time).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_redeem_reduces_balance` | 100 points, reward 50 | balance 50, code returned |
+| `test_redeem_insufficient` | 10 points, reward 50 | 409, no row |
+| `test_donate_moves_points` | donate 20 | −20 row, target total +20 |
+| `test_points_expire_after_12_months` | a row 13 months old | not in balance |
+| `test_delete_account_removes_history` | DELETE me | no rows for that token |
+
+### T19: Smart Clean
+Collection day and time by address, bulky pickup booking, bin problems, recycling map.
+- Schedules from CKAN if a dataset exists (search "απορρίμματα", "ανακύκλωση"), else the layer says "σύντομα".
+  Recycling points from OSM (`amenity=recycling`, add to `fetch_env.py`). `POST /api/clean/bulky` booking request
+  (date window, item type, partner pickup point or kerb, no free-text address stored beyond the street);
+  `POST /api/clean/bins` report → goes through the existing report flow (category `bin`).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_schedule_unknown_says_coming` | no dataset | `status` "coming", no invented times |
+| `test_recycling_points_from_osm` | features with recycling | GeoJSON points |
+| `test_bulky_booking_created` | valid request | 201, status requested |
+| `test_bin_report_uses_report_flow` | bin photo | sandbox request created, photo blurred |
+
+### T20: Smart Parking
+Municipal garages, disabled spaces, controlled-parking zones, one-tap "car on ramp" report. Street availability
+only where sensors exist, never guessed.
+- Garages and disabled spaces from CKAN if present, else OSM (`amenity=parking`, `parking_space=disabled`,
+  add to `fetch_env.py`); `available` only from a live source, else null + "σύντομα". `POST /api/parking/ramp-block`
+  → report flow with category `illegal_parking_ramp` and the hazard into routing.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_availability_null_without_sensor` | OSM garage | `available` null |
+| `test_disabled_spaces_layer` | OSM data | GeoJSON points |
+| `test_ramp_block_creates_hazard` | one-tap report | hazard in `/api/hazards` |
+
+### T21: Operator console + "what was spent on my street"
+- `GET /api/console/kpis?district&from&to`: reports, median hours to triage, duplicates caught, reopen rate,
+  guarantee claims drafted, verified points actions, mapped points (all computed by code from the DB).
+- `GET /api/works/street?name=` public page data: every works card on that street with euros, contractor,
+  guarantee clock, ΑΔΑ links (SEED labelled). Frontend: operator dashboard page + public street page.
+- Weekly district brief stays "next" (Proposal); no LLM here.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_kpis_counts` | seeded reports | numbers equal a hand count |
+| `test_kpis_district_filter` | district param | only that district |
+| `test_street_page_cites_ada` | SEED street | every card has its ΑΔΑ, SEED label |
+| `test_street_unknown_empty` | unknown street | empty list, no error |
