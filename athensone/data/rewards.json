@@ -1,0 +1,9 @@
+{
+  "note": "πρόταση, ανοιχτό ερώτημα προς τον Δήμο",
+  "_comment": "Example rewards only (B7 card). Nothing here is agreed with the Municipality of Athens; titles and costs are proposals to discuss. Certainty: unverified.",
+  "rewards": [
+    {"id": "event-ticket", "title": "Είσοδος σε δημοτική εκδήλωση", "cost": 30},
+    {"id": "parking-1h", "title": "1 ώρα δωρεάν στάθμευση σε δημοτικό χώρο", "cost": 50},
+    {"id": "local-shop-10", "title": "Έκπτωση 10% σε τοπικό κατάστημα της γειτονιάς", "cost": 80}
+  ]
+}
