@@ -180,12 +180,13 @@ export function mount({ map, api, root, container, bus }) {
   panel.addEventListener("submit", async (e) => {
     e.preventDefault();
     const file = photo.files?.[0] || null;
-    const lngLat = state.marker.getLngLat();
+    const { lng: lon, lat } = state.marker.getLngLat();
+    const input = { category: state.category, lngLat: { lng: lon, lat }, note: note.value,
+      photo: file, work_id: state.work_id };
     sendBtn.disabled = true;
     status.textContent = file ? BLUR_MESSAGE : "Αποστολή…";
     try {
-      const out = await submitReport(
-        { category: state.category, lngLat, note: note.value, photo: file, work_id: state.work_id }, api, storage);
+      const out = await submitReport(input, api, storage);
       if (out.queued) {
         status.textContent = out.photoDropped
           ? "Χωρίς σύνδεση: η αναφορά θα σταλεί μόλις επανέλθει το δίκτυο, χωρίς τη φωτογραφία."
@@ -203,6 +204,10 @@ export function mount({ map, api, root, container, bus }) {
       state.marker?.remove();
       state.marker = null;
       earned(r);
+      // Shared report refresh event and payload: TASKS_B.md B11 (verified).
+      bus.dispatchEvent(new CustomEvent("report:created", {
+        detail: { id: r.id, category: input.category, lon, lat },
+      }));
     } catch {
       status.textContent = "Η αναφορά δεν έγινε δεκτή. Ελέγξτε τα στοιχεία και δοκιμάστε ξανά.";
       sendBtn.disabled = false;
