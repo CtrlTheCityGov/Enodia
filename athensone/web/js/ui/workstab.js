@@ -470,10 +470,23 @@ export async function mount({ map, api, root, container, bus }) {
     worksTab.classList.toggle("is-active", state.open);
   }
 
-  mapTab.addEventListener("click", () => setOpen(false));
-  worksTab.addEventListener("click", () => {
+  function open() {
     setOpen(true);
-    refresh();
+    return refresh();
+  }
+
+  function openFromTab() {
+    // B11 card (verified): one click can also emit tab:change via main.js.
+    if (!state.open || !state.loading) open();
+  }
+
+  mapTab.addEventListener("click", () => setOpen(false));
+  worksTab.addEventListener("click", openFromTab);
+
+  // Shared tab names and event payload: TASKS_B.md B11 (verified).
+  bus?.addEventListener("tab:change", (e) => {
+    if (e.detail?.tab === "works") openFromTab();
+    if (e.detail?.tab === "map") setOpen(false);
   });
 
   tablist.addEventListener("keydown", (e) => {
@@ -483,9 +496,8 @@ export async function mount({ map, api, root, container, bus }) {
         setOpen(false);
         mapTab.focus();
       } else {
-        setOpen(true);
+        open();
         worksTab.focus();
-        refresh();
       }
     }
   });
@@ -498,10 +510,7 @@ export async function mount({ map, api, root, container, bus }) {
   });
 
   return {
-    open: async () => {
-      setOpen(true);
-      await refresh();
-    },
+    open,
     close: () => setOpen(false),
     refresh,
   };
