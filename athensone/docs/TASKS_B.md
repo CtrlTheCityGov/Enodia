@@ -21,7 +21,7 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B7 Points pill + panel | 2 | `ui/points.js`, pulse + «+N»; SPEC rewards; `/points/redeem` (Nice) | **merged** into `dev-b` |
 | B8 Stoa citations + flyTo | 2 | `/api/map/stoa_ask` with `citations[{label, lon, lat, kind}]`; `ui/stoa.js` | **merged** into `dev-b` |
 | B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | **merged** into `dev-b` |
-| B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | later |
+| B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | **running** |
 
 ### B0: Contracts + first mocks (phase 0)
 SPEC «Backend contracts», «Εξωτερικές πηγές» (Fallback column), «Offline fallback», «Demo script». Every file in
@@ -396,3 +396,30 @@ so the two tracks add an identical file), `web/tests/B1_api.test.js`.
 | `test_send_report_500_offline` | fetch returns 500 | rejects with `OfflineError` |
 | `test_send_report_404_offline` | fetch returns 404 | rejects with `OfflineError` (endpoint not merged yet) |
 | `test_redeem_400_rejected` | fetch returns 400 `{detail: "…"}` | `{ok: false, error: "rejected", status: 400, detail}` |
+
+### B10: Works tab (F8) — list, filters, crowdsourced progress (phase 3)
+SPEC F8, HUD «Πάνω αριστερά», «Demo script» step 6; A-35.
+**Files:** `web/js/ui/workstab.js`, `web/tests/B10_workstab.test.js`.
+- Top-left HUD pill bar (`mount({map, api, root, bus})`, A-35): tabs «Χάρτης» / «Έργα» (`role="tab"`, `aria-selected`).
+  Clicking «Έργα» opens a `.glass` panel listing the works from `api.works()`; clicking «Χάρτης» (or pressing `Escape`)
+  closes the panel.
+- Status filter chips (`all` Όλα, `in_progress` Σε εξέλιξη, `planned` Προγραμματισμένα, `completed` Ολοκληρωμένα) and a
+  text query box (accent- and case-insensitive match on `title`, `contractor`, `ada`).
+- Each work card shows `title`, Greek status label (`Προγραμματισμένο` / `Σε εξέλιξη` / `Ολοκληρωμένο` / `άγνωστο`),
+  `contractor` (or `«άγνωστο»`), formatted `amount_paid_eur` / `amount_contract_eur` (`«άγνωστο»` when `null`, never 0),
+  ΑΔΑ link (`https://diavgeia.gov.gr/decision/view/<ada>` only for real ΑΔΑ where `!seed` and `!ada.startsWith("SEED-")`,
+  otherwise a `SEED` / `δοκιμαστικό` badge), `reports_count`, a button to focus on the map (`bus` event `map:flyto`
+  `{lon, lat, label}` at the work LineString's midpoint), and a button «Ανέφερε πρόοδο» (`bus` event `report:open`
+  `{work_id, lngLat}` so `ui/report.js` opens pre-filled for that work).
+- Pure exported helpers for Node tests: `STATUS_FILTERS`, `filterWorks(features, {status, query})`, `workMidpoint(geometry)`,
+  `diavgeiaLink(props)`, `formatWorkCard(feature)`. No `fetch`, no DOM or `maplibregl` touched at import time.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_js_status_filters_in_order` (node) | `STATUS_FILTERS` | 4 filters (`all`, `in_progress`, `planned`, `completed`) with Greek labels |
+| `test_js_filter_works_by_status_and_query` (node) | works features; filter `status: "in_progress"` and accent-insensitive query `"ερμου"` | only matching in-progress works on Ερμού returned |
+| `test_js_unknown_values_never_zero` (node) | a work with `contractor: null`, `amount_contract_eur: null`, `amount_paid_eur: null` | formatted card shows `«άγνωστο»` for missing fields, never `0` |
+| `test_js_seed_ada_not_linked_to_diavgeia` (node) | one real work (`ada: "Ψ0ΣΝΩ6Μ-5ΙΖ"`, `seed: false`) and one SEED work (`ada: "SEED-ΑΔΑ-001"`, `seed: true`) | real work gets `https://diavgeia.gov.gr/decision/view/Ψ0ΣΝΩ6Μ-5ΙΖ`; SEED work gets `null` URL and is labelled SEED |
+| `test_js_work_midpoint` (node) | LineString `[[23.72, 37.97], [23.74, 37.99]]` | `[23.73, 37.98]` |
+| `test_js_mount_emits_report_open_and_flyto` (node) | fake DOM/bus/api, open «Έργα» tab, click «Ανέφερε πρόοδο» and map-focus button on a work | `report:open` emitted with `{work_id, lngLat}` and `map:flyto` emitted with `{lon, lat, label}` |
+| `test_js_import_has_no_dom` (node) | import `ui/workstab.js` in Node | no error, no globals touched |
