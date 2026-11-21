@@ -54,6 +54,26 @@ DAILY_CAPS: dict[str, int | None] = {
     "fix_confirmed": 3,
 }
 
+# --- B6: Report flow + (A-36 actions and caps) ---
+# Map-flow actions (POST /api/map/reports, /confirm, operator approve of a map report's City request).
+# Source: docs/SPEC.md «Κανόνες πόντων» and docs/DECISIONS.md A-36. Certainty: verified (SPEC calls them a proposal).
+ACTION_POINTS.update({
+    "map_report": 5,            # Αναφορά συμβάντος / συμφόρησης (any map category)
+    "work_progress_photo": 15,  # Αναφορά προόδου έργου με φωτογραφία
+    "confirm_other": 2,         # Επιβεβαίωση αναφοράς άλλου
+    "city_confirmed": 20,       # Αναφορά που επιβεβαιώνει ο Δήμος (+20 bonus)
+})
+# Per-action backstop caps. The SPEC's "10 reports a day" counts map_report + work_progress_photo together;
+# app/map_reports.py enforces that combined cap (MAP_REPORTS_DAILY_CAP). confirm_other / city_confirmed: the SPEC
+# sets no cap (once per account per report through the ledger's UNIQUE). Source: SPEC «Κανόνες πόντων», A-36.
+DAILY_CAPS.update({
+    "map_report": 10,
+    "work_progress_photo": 10,
+    "confirm_other": None,
+    "city_confirmed": None,
+})
+# --- /B6 ---
+
 # Citizen tiers based on 12-month points, checked highest threshold first.
 # Source: athensone/docs/TASKS.md (T2 card) and athensone/docs/PROPOSAL.pdf p. 6. Certainty: verified.
 TIERS: tuple[tuple[int, str], ...] = (

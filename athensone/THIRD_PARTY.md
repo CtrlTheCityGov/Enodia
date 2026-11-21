@@ -29,6 +29,12 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 > (from memory, not re-checked tonight: open its LICENSE before the final push). `onnxruntime` (MIT) is not installed;
 > the model runs on OpenCV `cv2.dnn`.
 
+### B6: Licence-plate blur
+
+| Asset | Version | Licence | Role | Source |
+|---|---|---|---|---|
+| `haarcascade_russian_plate_number.xml` (bundled in `opencv-python-headless`, `cv2.data.haarcascades`) | ships with the pinned `>=4.9,<5` (checked in 4.14.0) | Apache-2.0 (OpenCV ≥ 4.5; the XML has no header of its own) | Best-effort plate detection before blur in `app/privacy.py` (`blur.plates` in `POST /api/map/reports`). No new dependency. | https://github.com/opencv/opencv/tree/4.x/data/haarcascades |
+
 ## Frontend & accessibility (`web/`, `package.json`)
 
 | Package / Asset | Version | Licence | Role | Source |
