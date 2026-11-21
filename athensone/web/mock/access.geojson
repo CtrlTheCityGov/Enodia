@@ -1,0 +1,1744 @@
+{
+  "type": "FeatureCollection",
+  "snapshot": "2026-11-21",
+  "note": "Real OpenStreetMap accessibility features (kerb=lowered, ramp=yes, tactile_paving=yes, named wheelchair=yes/limited POIs) extracted via OSM API 0.6 around Σύνταγμα–Μοναστηράκι–Πλάκα on 2026-11-21. Data © OpenStreetMap contributors (ODbL 1.0). Nothing invented.",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.72862,
+          37.980837
+        ]
+      },
+      "properties": {
+        "osm_id": "node/97846028",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.727055,
+          37.979889
+        ]
+      },
+      "properties": {
+        "osm_id": "node/807999482",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726176,
+          37.976829
+        ]
+      },
+      "properties": {
+        "osm_id": "node/807999508",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726461,
+          37.977923
+        ]
+      },
+      "properties": {
+        "osm_id": "node/807999687",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726315,
+          37.977363
+        ]
+      },
+      "properties": {
+        "osm_id": "node/807999883",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.743011,
+          37.975445
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3744901413",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.734485,
+          37.976103
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3894328946",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733681,
+          37.973428
+        ]
+      },
+      "properties": {
+        "osm_id": "node/4056069520",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.73388,
+          37.973475
+        ]
+      },
+      "properties": {
+        "osm_id": "node/4056069521",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733694,
+          37.973492
+        ]
+      },
+      "properties": {
+        "osm_id": "node/4056069522",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733853,
+          37.974289
+        ]
+      },
+      "properties": {
+        "osm_id": "node/4056069533",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.727349,
+          37.981046
+        ]
+      },
+      "properties": {
+        "osm_id": "node/6116281076",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733226,
+          37.975194
+        ]
+      },
+      "properties": {
+        "osm_id": "node/7489194792",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.731827,
+          37.97751
+        ]
+      },
+      "properties": {
+        "osm_id": "node/7489194814",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732205,
+          37.97746
+        ]
+      },
+      "properties": {
+        "osm_id": "node/7489194815",
+        "kind": "kerb_lowered",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733869,
+          37.973427
+        ]
+      },
+      "properties": {
+        "osm_id": "node/12949287519",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733719,
+          37.9735
+        ]
+      },
+      "properties": {
+        "osm_id": "node/12949287525",
+        "kind": "kerb_lowered"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726026,
+          37.976499
+        ]
+      },
+      "properties": {
+        "osm_id": "way/1270729383",
+        "kind": "ramp",
+        "highway": "steps"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.72725,
+          37.969678
+        ]
+      },
+      "properties": {
+        "osm_id": "way/1482421261",
+        "kind": "ramp",
+        "highway": "steps",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.737649,
+          37.976132
+        ]
+      },
+      "properties": {
+        "osm_id": "node/250691787",
+        "kind": "tactile_paving",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.725689,
+            37.976258
+          ],
+          [
+            23.725634,
+            37.976254
+          ],
+          [
+            23.724743,
+            37.976177
+          ],
+          [
+            23.724588,
+            37.976178
+          ],
+          [
+            23.7243,
+            37.97621
+          ],
+          [
+            23.72406,
+            37.976235
+          ],
+          [
+            23.723872,
+            37.976283
+          ],
+          [
+            23.723764,
+            37.97631
+          ],
+          [
+            23.723536,
+            37.976366
+          ],
+          [
+            23.723189,
+            37.976394
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/32227430",
+        "kind": "tactile_paving",
+        "name": "Ηφαίστου",
+        "highway": "pedestrian",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.729294,
+            37.977742
+          ],
+          [
+            23.729295,
+            37.977725
+          ],
+          [
+            23.729289,
+            37.977714
+          ],
+          [
+            23.729274,
+            37.977686
+          ],
+          [
+            23.729274,
+            37.977606
+          ],
+          [
+            23.729275,
+            37.97757
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/86351755",
+        "kind": "tactile_paving",
+        "name": "Ευαγγελιστρίας",
+        "highway": "pedestrian",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.72748,
+            37.976115
+          ],
+          [
+            23.727451,
+            37.976122
+          ],
+          [
+            23.726805,
+            37.976271
+          ],
+          [
+            23.726565,
+            37.976303
+          ],
+          [
+            23.726243,
+            37.976346
+          ],
+          [
+            23.726223,
+            37.976349
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/86438971",
+        "kind": "tactile_paving",
+        "name": "Μητροπόλεως",
+        "highway": "pedestrian",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.724909,
+          37.975927
+        ]
+      },
+      "properties": {
+        "osm_id": "way/194199092",
+        "kind": "tactile_paving",
+        "name": "Μοναστηράκι",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.735561,
+            37.974799
+          ],
+          [
+            23.735463,
+            37.974812
+          ],
+          [
+            23.735388,
+            37.974822
+          ],
+          [
+            23.735302,
+            37.974834
+          ],
+          [
+            23.735068,
+            37.974866
+          ],
+          [
+            23.734232,
+            37.97498
+          ],
+          [
+            23.734104,
+            37.974997
+          ],
+          [
+            23.734011,
+            37.97501
+          ],
+          [
+            23.733817,
+            37.975036
+          ],
+          [
+            23.733302,
+            37.975106
+          ],
+          [
+            23.733308,
+            37.975134
+          ],
+          [
+            23.733315,
+            37.975164
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/401291560",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.72744,
+            37.975951
+          ],
+          [
+            23.727417,
+            37.975957
+          ],
+          [
+            23.7272,
+            37.97601
+          ],
+          [
+            23.726749,
+            37.97612
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/671121200",
+        "kind": "tactile_paving",
+        "name": "Μητροπόλεως",
+        "highway": "pedestrian",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.728149,
+            37.978809
+          ],
+          [
+            23.728374,
+            37.978433
+          ],
+          [
+            23.72861,
+            37.977977
+          ],
+          [
+            23.728669,
+            37.977821
+          ],
+          [
+            23.728672,
+            37.977812
+          ],
+          [
+            23.728681,
+            37.977787
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/680969138",
+        "kind": "tactile_paving",
+        "name": "Νικίου",
+        "highway": "pedestrian",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.734396,
+            37.975972
+          ],
+          [
+            23.734504,
+            37.975957
+          ],
+          [
+            23.734965,
+            37.975893
+          ],
+          [
+            23.735254,
+            37.975853
+          ],
+          [
+            23.735202,
+            37.97562
+          ],
+          [
+            23.735194,
+            37.975582
+          ],
+          [
+            23.73518,
+            37.975523
+          ],
+          [
+            23.735167,
+            37.975461
+          ],
+          [
+            23.735144,
+            37.975362
+          ],
+          [
+            23.735094,
+            37.975133
+          ],
+          [
+            23.734817,
+            37.975172
+          ],
+          [
+            23.734369,
+            37.975234
+          ],
+          [
+            23.734236,
+            37.975252
+          ],
+          [
+            23.734308,
+            37.975574
+          ],
+          [
+            23.734335,
+            37.975696
+          ],
+          [
+            23.734396,
+            37.975972
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704541",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.735144,
+            37.975362
+          ],
+          [
+            23.73527,
+            37.975346
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704542",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.734152,
+            37.975721
+          ],
+          [
+            23.734335,
+            37.975696
+          ],
+          [
+            23.7349,
+            37.975621
+          ],
+          [
+            23.735194,
+            37.975582
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704543",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.735167,
+            37.975461
+          ],
+          [
+            23.734876,
+            37.975499
+          ],
+          [
+            23.734308,
+            37.975574
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704544",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.734485,
+            37.976103
+          ],
+          [
+            23.734478,
+            37.976067
+          ],
+          [
+            23.734528,
+            37.976061
+          ],
+          [
+            23.734985,
+            37.976005
+          ],
+          [
+            23.735498,
+            37.975945
+          ],
+          [
+            23.735503,
+            37.975964
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704545",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.734528,
+            37.976061
+          ],
+          [
+            23.734504,
+            37.975957
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704546",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.735302,
+            37.974834
+          ],
+          [
+            23.735315,
+            37.974892
+          ],
+          [
+            23.735327,
+            37.974947
+          ],
+          [
+            23.735337,
+            37.974996
+          ],
+          [
+            23.735121,
+            37.975019
+          ],
+          [
+            23.734796,
+            37.975051
+          ],
+          [
+            23.734575,
+            37.975073
+          ],
+          [
+            23.734344,
+            37.975128
+          ],
+          [
+            23.734265,
+            37.975138
+          ],
+          [
+            23.734251,
+            37.975072
+          ],
+          [
+            23.734245,
+            37.97503
+          ],
+          [
+            23.734232,
+            37.97498
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704548",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.734344,
+            37.975128
+          ],
+          [
+            23.734369,
+            37.975234
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704549",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.730837,
+            37.975387
+          ],
+          [
+            23.73055,
+            37.975417
+          ],
+          [
+            23.730477,
+            37.975426
+          ],
+          [
+            23.730423,
+            37.975434
+          ],
+          [
+            23.729767,
+            37.975544
+          ],
+          [
+            23.729197,
+            37.97566
+          ],
+          [
+            23.728846,
+            37.975738
+          ],
+          [
+            23.728395,
+            37.975833
+          ],
+          [
+            23.728284,
+            37.975865
+          ],
+          [
+            23.727476,
+            37.976097
+          ],
+          [
+            23.727447,
+            37.976105
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704551",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.726805,
+            37.976271
+          ],
+          [
+            23.726749,
+            37.97612
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704553",
+        "kind": "tactile_paving",
+        "name": "Κηρυκείου",
+        "highway": "pedestrian",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.727451,
+            37.976122
+          ],
+          [
+            23.727447,
+            37.976105
+          ],
+          [
+            23.727417,
+            37.975957
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704554",
+        "kind": "tactile_paving",
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.727944,
+            37.977874
+          ],
+          [
+            23.728672,
+            37.977812
+          ],
+          [
+            23.729295,
+            37.977759
+          ],
+          [
+            23.729628,
+            37.97773
+          ],
+          [
+            23.729847,
+            37.977712
+          ],
+          [
+            23.730527,
+            37.977654
+          ],
+          [
+            23.731127,
+            37.977602
+          ],
+          [
+            23.731827,
+            37.97751
+          ],
+          [
+            23.732205,
+            37.97746
+          ],
+          [
+            23.732777,
+            37.977384
+          ],
+          [
+            23.733148,
+            37.977336
+          ],
+          [
+            23.733146,
+            37.97732
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/800704558",
+        "kind": "tactile_paving",
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.729275,
+            37.97757
+          ],
+          [
+            23.729221,
+            37.9775
+          ],
+          [
+            23.72902,
+            37.977219
+          ],
+          [
+            23.72899,
+            37.977177
+          ],
+          [
+            23.728953,
+            37.977124
+          ],
+          [
+            23.728908,
+            37.977013
+          ],
+          [
+            23.728867,
+            37.976862
+          ],
+          [
+            23.728864,
+            37.976852
+          ],
+          [
+            23.72886,
+            37.976838
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/909185685",
+        "kind": "tactile_paving",
+        "name": "Καλαμιώτου",
+        "highway": "pedestrian",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.735253,
+            37.975263
+          ],
+          [
+            23.735306,
+            37.975256
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/995124479",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.735284,
+            37.975369
+          ],
+          [
+            23.735275,
+            37.97537
+          ],
+          [
+            23.73527,
+            37.975346
+          ],
+          [
+            23.735253,
+            37.975263
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "way/995124480",
+        "kind": "tactile_paving",
+        "highway": "footway",
+        "surface": "paving_stones"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.724959,
+          37.975837
+        ]
+      },
+      "properties": {
+        "osm_id": "way/1051860389",
+        "kind": "tactile_paving",
+        "name": "Μοναστηράκι",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.725065,
+          37.976863
+        ]
+      },
+      "properties": {
+        "osm_id": "way/1051860390",
+        "kind": "tactile_paving",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.724931,
+          37.975888
+        ]
+      },
+      "properties": {
+        "osm_id": "node/97819323",
+        "kind": "wheelchair",
+        "name": "Μοναστηράκι",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.735358,
+          37.97536
+        ]
+      },
+      "properties": {
+        "osm_id": "node/250694945",
+        "kind": "wheelchair",
+        "name": "Πλατεία Συντάγματος",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.7354,
+          37.975596
+        ]
+      },
+      "properties": {
+        "osm_id": "node/250696108",
+        "kind": "wheelchair",
+        "name": "Πλατεία Συντάγματος",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733609,
+          37.97526
+        ]
+      },
+      "properties": {
+        "osm_id": "node/790316414",
+        "kind": "wheelchair",
+        "name": "ΕΛΤΑ",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732015,
+          37.973776
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2183646617",
+        "kind": "wheelchair",
+        "name": "Evgenia",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.729169,
+          37.975096
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2386604995",
+        "kind": "wheelchair",
+        "name": "Μετροπόλ",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732283,
+          37.975812
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2466683454",
+        "kind": "wheelchair",
+        "name": "H&M",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732044,
+          37.975863
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2466683456",
+        "kind": "wheelchair",
+        "name": "Γρηγόρης",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.730065,
+          37.975934
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2466683484",
+        "kind": "wheelchair",
+        "name": "HONDOS CENTER",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733853,
+          37.974996
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2475212195",
+        "kind": "wheelchair",
+        "name": "Γρηγόρης",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.73245,
+          37.975194
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2475212203",
+        "kind": "wheelchair",
+        "name": "Kori",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.731497,
+          37.975411
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2475212228",
+        "kind": "wheelchair",
+        "name": "Αθηναϊκόν",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726356,
+          37.976264
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2475212272",
+        "kind": "wheelchair",
+        "name": "Ο Θανάσης",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726389,
+          37.976373
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2475212277",
+        "kind": "wheelchair",
+        "name": "Μπαϊρακτάρης",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.734031,
+          37.976045
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2509191428",
+        "kind": "wheelchair",
+        "name": "ΣΥΝΤΑΓΜΑ",
+        "wheelchair": "limited",
+        "highway": "bus_stop"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726658,
+          37.973551
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2630505296",
+        "kind": "wheelchair",
+        "name": "Κλεψύδρα",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.730344,
+          37.975462
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2786686546",
+        "kind": "wheelchair",
+        "name": "ΜΗΤΡΟΠΟΛΗ",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.726816,
+          37.976624
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2786686626",
+        "kind": "wheelchair",
+        "name": "ΜΟΝΑΣΤΗΡΑΚΙ",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.727813,
+          37.974885
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2836966899",
+        "kind": "wheelchair",
+        "name": "Karyatis",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.727881,
+          37.975086
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2836994804",
+        "kind": "wheelchair",
+        "name": "Κιτρο",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.729988,
+          37.975676
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2836994806",
+        "kind": "wheelchair",
+        "name": "Centrale",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.725215,
+          37.97577
+        ]
+      },
+      "properties": {
+        "osm_id": "node/2836994808",
+        "kind": "wheelchair",
+        "name": "Κοτύλη",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733012,
+          37.975639
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3002091926",
+        "kind": "wheelchair",
+        "name": "Electra Hotel",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.731811,
+          37.976969
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3057598370",
+        "kind": "wheelchair",
+        "name": "Αχιλλέας",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.735347,
+          37.97757
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3339820843",
+        "kind": "wheelchair",
+        "name": "ΝΟΜΙΣΜΑΤΙΚΟ ΜΟΥΣΕΙΟ",
+        "wheelchair": "limited",
+        "highway": "bus_stop"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732682,
+          37.975332
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3351767296",
+        "kind": "wheelchair",
+        "name": "Ο Τζίτζικας κι ο Μέρµηγκας",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.733512,
+          37.975042
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3452932712",
+        "kind": "wheelchair",
+        "name": "Mikel",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732983,
+          37.975311
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3452943524",
+        "kind": "wheelchair",
+        "name": "PasMal",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732612,
+          37.975305
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3452956049",
+        "kind": "wheelchair",
+        "name": "Le Greche",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732563,
+          37.975303
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3452961316",
+        "kind": "wheelchair",
+        "name": "One",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732593,
+          37.975172
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3452962943",
+        "kind": "wheelchair",
+        "name": "Pan",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.731938,
+          37.975418
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3452969295",
+        "kind": "wheelchair",
+        "name": "In Town",
+        "wheelchair": "limited"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.725394,
+          37.975648
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3464860910",
+        "kind": "wheelchair",
+        "name": "Eurobank",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.725362,
+          37.975656
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3464860912",
+        "kind": "wheelchair",
+        "name": "Εθνική Τράπεζα",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.732418,
+          37.976593
+        ]
+      },
+      "properties": {
+        "osm_id": "node/3744448975",
+        "kind": "wheelchair",
+        "name": "Hotel Astor",
+        "wheelchair": "limited"
+      }
+    }
+  ]
+}

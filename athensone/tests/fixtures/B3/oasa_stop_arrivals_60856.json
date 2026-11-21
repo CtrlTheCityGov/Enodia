@@ -1,0 +1,32 @@
+[
+  {
+    "route_code": 3922,
+    "veh_code": 44542,
+    "btime2": 2
+  },
+  {
+    "route_code": 1991,
+    "veh_code": 88045,
+    "btime2": 12
+  },
+  {
+    "route_code": 2019,
+    "veh_code": 7011,
+    "btime2": 15
+  },
+  {
+    "route_code": 5566,
+    "veh_code": 44572,
+    "btime2": 18
+  },
+  {
+    "route_code": 3922,
+    "veh_code": 44538,
+    "btime2": 43
+  },
+  {
+    "route_code": 5566,
+    "veh_code": 44567,
+    "btime2": 43
+  }
+]

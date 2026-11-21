@@ -22,6 +22,9 @@ from .sandbox import Sandbox, SandboxError
 from fastapi import Response
 from . import points
 # --- /T2 ---
+# --- B6: Report flow + ---
+from . import map_reports
+# --- /B6 ---
 
 app = FastAPI(title="AthensOne AI", version="0.1")
 sb = Sandbox()
@@ -499,6 +502,9 @@ def approve(rid: str, d: Decision | None = None):
     # --- T2: Points wallet, earn side ---
     points.grant_for_report(rid, action="report_approved", verified_by="operator", district=out.get("district_name"))
     # --- /T2 ---
+    # --- B6: Report flow + (city_confirmed, map reports only) ---
+    map_reports.on_city_approved(rid, district=out.get("district_name"))
+    # --- /B6 ---
     return out
 
 
@@ -732,6 +738,9 @@ def points_districts():
 @app.post("/api/admin/reset")
 def reset():
     store.clear()
+    # --- B6: Report flow + ---
+    map_reports.clear()
+    # --- /B6 ---
     return sb.reset()
 
 
@@ -743,3 +752,14 @@ app.mount("/web", StaticFiles(directory=config.ROOT / "web", html=True), name="w
 @app.get("/")
 def root():
     return RedirectResponse("/web/citizen.html")
+
+
+# --- B: routers discovered from app/routers/ (A-32) ---
+import importlib as _importlib
+import pkgutil as _pkgutil
+
+from . import routers as _routers
+
+for _m in sorted(_pkgutil.iter_modules(_routers.__path__), key=lambda m: m.name):
+    app.include_router(_importlib.import_module(f"{_routers.__name__}.{_m.name}").router)
+# --- /B ---

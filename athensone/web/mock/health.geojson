@@ -1,0 +1,284 @@
+{
+  "type": "FeatureCollection",
+  "snapshot": "2026-11-21",
+  "note": "Real central Athens hospitals and pharmacy locations from OpenStreetMap (ODbL 1.0, verified 2026-11-21; phones from OSM tags or 'άγνωστο' when absent). Pharmacy and hospital on_duty flags, duty hours and specialties are INVENTED for offline demo (ΦΣΑ / Ministry of Health daily duty lists are not fetched live in mock mode).",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.74775,
+          37.97785
+        ]
+      },
+      "properties": {
+        "kind": "νοσοκομείο",
+        "name": "Γ.Ν.Α. «Ο Ευαγγελισμός»",
+        "address": "Υψηλάντου 45-47, Κολωνάκι",
+        "phone": "+30 213 2041000",
+        "hours": "24ωρη εφημερία (08:00–08:00)",
+        "specialties": [
+          "Παθολογική",
+          "Χειρουργική",
+          "Καρδιολογική",
+          "Ορθοπεδική",
+          "Νευρολογική"
+        ],
+        "on_duty": true,
+        "osm_id": "way/132620005"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.7597,
+          37.98373
+        ]
+      },
+      "properties": {
+        "kind": "νοσοκομείο",
+        "name": "Γ.Ν.Α. «Ιπποκράτειο»",
+        "address": "Λεωφ. Βασιλίσσης Σοφίας 114, Αμπελόκηποι",
+        "phone": "+30 213 2088000",
+        "hours": "Εφημερία 08:00–20:00",
+        "specialties": [
+          "Καρδιολογική",
+          "Παθολογική",
+          "ΩΡΛ"
+        ],
+        "on_duty": true,
+        "osm_id": "way/132795203"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.76518,
+          37.98408
+        ]
+      },
+      "properties": {
+        "kind": "νοσοκομείο",
+        "name": "Γ.Ν.Α. «Λαϊκό»",
+        "address": "Αγίου Θωμά 17, Γουδή",
+        "phone": "+30 213 2060800",
+        "hours": "Κανονική λειτουργία (δεν εφημερεύει σήμερα)",
+        "specialties": [
+          "Παθολογική",
+          "Χειρουργική",
+          "Ουρολογική"
+        ],
+        "on_duty": false,
+        "osm_id": "way/169296315"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.75539,
+          37.98013
+        ]
+      },
+      "properties": {
+        "kind": "νοσοκομείο",
+        "name": "Γ.Ν.Α. «Αλεξάνδρα»",
+        "address": "Λεωφ. Βασιλίσσης Σοφίας 80, Ιλίσια",
+        "phone": "+30 213 2162000",
+        "hours": "Κανονική λειτουργία (δεν εφημερεύει σήμερα)",
+        "specialties": [
+          "Μαιευτική-Γυναικολογική",
+          "Καρδιολογική",
+          "Παθολογική"
+        ],
+        "on_duty": false,
+        "osm_id": "way/132748278"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.75544,
+          37.99023
+        ]
+      },
+      "properties": {
+        "kind": "νοσοκομείο",
+        "name": "Γ.Ν.Α. «Η Ελπίς»",
+        "address": "Δημητσάνας 7, Αμπελόκηποι",
+        "phone": "+30 21 3203 9000",
+        "hours": "Εφημερία 08:00–20:00",
+        "specialties": [
+          "Παθολογική",
+          "Χειρουργική",
+          "Καρδιολογική"
+        ],
+        "on_duty": true,
+        "osm_id": "way/140757110"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.7548,
+          37.97952
+        ]
+      },
+      "properties": {
+        "kind": "νοσοκομείο",
+        "name": "Αρεταίειο Νοσοκομείο",
+        "address": "Λεωφ. Βασιλίσσης Σοφίας 76, Ιλίσια",
+        "phone": "+30 210 7286000",
+        "hours": "Κανονική λειτουργία (δεν εφημερεύει σήμερα)",
+        "specialties": [
+          "Χειρουργική",
+          "Μαιευτική-Γυναικολογική"
+        ],
+        "on_duty": false,
+        "osm_id": "way/132748295"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.734,
+          37.97638
+        ]
+      },
+      "properties": {
+        "kind": "φαρμακείο",
+        "name": "Φαρμακείο Καραγιώργη Σερβίας 4",
+        "address": "Καραγιώργη Σερβίας 4, Σύνταγμα",
+        "phone": "άγνωστο",
+        "hours": "Εφημερεύει 08:00–23:00 (δοκιμαστική εφημερία)",
+        "specialties": [
+          "Εφημερεύον φαρμακείο"
+        ],
+        "on_duty": true,
+        "osm_id": "node/4040067164"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.73118,
+          37.97527
+        ]
+      },
+      "properties": {
+        "kind": "φαρμακείο",
+        "name": "Φαρμακείο Πινοτσή",
+        "address": "Μητροπόλεως 27, Σύνταγμα",
+        "phone": "άγνωστο",
+        "hours": "Διανυκτερεύει 08:00–08:00 (δοκιμαστική εφημερία)",
+        "specialties": [
+          "Διανυκτερεύον φαρμακείο"
+        ],
+        "on_duty": true,
+        "osm_id": "node/3998346581"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.72954,
+          37.97565
+        ]
+      },
+      "properties": {
+        "kind": "φαρμακείο",
+        "name": "Metropolis Pharmacy",
+        "address": "Μητροπόλεως 52, Μοναστηράκι",
+        "phone": "+30 210 3310052",
+        "hours": "Εφημερεύει 08:00–23:00 (δοκιμαστική εφημερία)",
+        "specialties": [
+          "Εφημερεύον φαρμακείο"
+        ],
+        "on_duty": true,
+        "osm_id": "node/9121224837"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.73379,
+          37.97674
+        ]
+      },
+      "properties": {
+        "kind": "φαρμακείο",
+        "name": "Φαρμακείο Σταδίου 5",
+        "address": "Σταδίου 5, Σύνταγμα",
+        "phone": "άγνωστο",
+        "hours": "08:30–14:30 (κλειστό εκτός ωραρίου)",
+        "specialties": [
+          "Φαρμακείο"
+        ],
+        "on_duty": false,
+        "osm_id": "node/12486804563"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.7319,
+          37.97632
+        ]
+      },
+      "properties": {
+        "kind": "φαρμακείο",
+        "name": "Φαρμακείο Ζάγκος – Βαιδάκη",
+        "address": "Διομείας 10-12, Σύνταγμα",
+        "phone": "άγνωστο",
+        "hours": "08:30–14:30",
+        "specialties": [
+          "Φαρμακείο"
+        ],
+        "on_duty": false,
+        "osm_id": "node/4041656119"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.73172,
+          37.9729
+        ]
+      },
+      "properties": {
+        "kind": "φαρμακείο",
+        "name": "Φαρμακείο Σωτήρος 5",
+        "address": "Σωτήρος 5, Πλάκα",
+        "phone": "άγνωστο",
+        "hours": "08:30–14:30",
+        "specialties": [
+          "Φαρμακείο"
+        ],
+        "on_duty": false,
+        "osm_id": "node/2696698086"
+      }
+    }
+  ]
+}

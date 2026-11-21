@@ -1,0 +1,146 @@
+{
+  "note": "Curated list of central-Athens public hospitals under the 1st Health Region of Attica (1η ΥΠΕ). Coordinates verified against OpenStreetMap Nominatim on 2026-11-21 (ODbL 1.0); addresses and switchboard phones from official hospital websites and 1dype.gov.gr.",
+  "verified_at": "2026-11-21",
+  "hospitals": [
+    {
+      "id": "evangelismos",
+      "name": "Γ.Ν.Α. «Ο Ευαγγελισμός»",
+      "aliases": ["ΕΥΑΓΓΕΛΙΣΜΟΣ"],
+      "address": "Υψηλάντου 45-47, Αθήνα 106 76",
+      "phone": "213 2041000",
+      "lat": 37.977848,
+      "lon": 23.747746,
+      "source": "OpenStreetMap way/132620005; evangelismos-hosp.gr"
+    },
+    {
+      "id": "alexandra",
+      "name": "Γ.Ν.Α. «Αλεξάνδρα»",
+      "aliases": ["ΑΛΕΞΑΝΔΡΑ"],
+      "address": "Λεωφ. Βασιλίσσης Σοφίας 80, Αθήνα 115 28",
+      "phone": "213 2162000",
+      "lat": 37.980369,
+      "lon": 23.754933,
+      "source": "OpenStreetMap node/4578216736; hosp-alexandra.gr"
+    },
+    {
+      "id": "gennimatas",
+      "name": "Γ.Ν.Α. «Γ. Γεννηματάς»",
+      "aliases": ["Γ. ΓΕΝΝΗΜΑΤΑΣ", "ΓΕΝΝΗΜΑΤΑΣ"],
+      "address": "Λεωφ. Μεσογείων 154, Αθήνα 115 27",
+      "phone": "213 2032000",
+      "lat": 37.996833,
+      "lon": 23.783687,
+      "source": "OpenStreetMap way/208978514; gna-gennimatas.gr"
+    },
+    {
+      "id": "sotiria",
+      "name": "Γ.Ν.Ν.Θ.Α. «Η Σωτηρία»",
+      "aliases": ["ΣΩΤΗΡΙΑ"],
+      "address": "Λεωφ. Μεσογείων 152, Αθήνα 115 27",
+      "phone": "210 7763100",
+      "lat": 37.994203,
+      "lon": 23.784800,
+      "source": "OpenStreetMap node/13446627445; sotiria.gr"
+    },
+    {
+      "id": "laiko",
+      "name": "Γ.Ν.Α. «Λαϊκό»",
+      "aliases": ["ΛΑΙΚΟ", "ΛΑΪΚΟ"],
+      "address": "Αγίου Θωμά 17, Γουδή, Αθήνα 115 27",
+      "phone": "213 2060800",
+      "lat": 37.983881,
+      "lon": 23.765783,
+      "source": "OpenStreetMap relation/2805329; laiko.gr"
+    },
+    {
+      "id": "hippocratio",
+      "name": "Γ.Ν.Α. «Ιπποκράτειο»",
+      "aliases": ["ΙΠΠΟΚΡΑΤΕΙΟ"],
+      "address": "Λεωφ. Βασιλίσσης Σοφίας 114, Αθήνα 115 27",
+      "phone": "213 2088000",
+      "lat": 37.983933,
+      "lon": 23.759512,
+      "source": "OpenStreetMap relation/1783459; hippocratio.gr"
+    },
+    {
+      "id": "elpis",
+      "name": "Γ.Ν.Α. «Η Ελπίς»",
+      "aliases": ["ΕΛΠΙΣ"],
+      "address": "Δημητσάνας 7, Αμπελόκηποι, Αθήνα 115 22",
+      "phone": "213 2039000",
+      "lat": 37.990233,
+      "lon": 23.755435,
+      "source": "OpenStreetMap way/140757110; elpis.gr"
+    },
+    {
+      "id": "erythros",
+      "name": "Γ.Ν.Α. «Κοργιαλένειο-Μπενάκειο» (Ερυθρός Σταυρός)",
+      "aliases": ["ΚΟΡΓΙΑΛΕΝΕΙΟ", "ΜΠΕΝΑΚΕΙΟ", "ΕΡΥΘΡΟΣ ΣΤΑΥΡΟΣ", "Ε.Ε.Σ."],
+      "address": "Αθανασάκη 2, Αμπελόκηποι, Αθήνα 115 26",
+      "phone": "213 2068000",
+      "lat": 37.992049,
+      "lon": 23.769265,
+      "source": "OpenStreetMap relation/3419290; korgialenio-benakio.gr"
+    },
+    {
+      "id": "syngros",
+      "name": "Ν.Δ.Ν.Α. «Ανδρέας Συγγρός»",
+      "aliases": ["Α. ΣΥΓΓΡΟΣ", "ΣΥΓΓΡΟΣ"],
+      "address": "Ίωνος Δραγούμη 5, Αθήνα 161 21",
+      "phone": "210 7265100",
+      "lat": 37.973422,
+      "lon": 23.752354,
+      "source": "OpenStreetMap way/132756187; syngros-hosp.gr"
+    },
+    {
+      "id": "agios_savvas",
+      "name": "Γ.Α.Ο.Ν.Α. «Ο Άγιος Σάββας»",
+      "aliases": ["ΑΓΙΟΣ ΣΑΒΒΑΣ", "ΑΓ. ΣΑΒΒΑΣ"],
+      "address": "Λεωφ. Αλεξάνδρας 171, Αθήνα 115 22",
+      "phone": "210 6409000",
+      "lat": 37.987805,
+      "lon": 23.755051,
+      "source": "OpenStreetMap node/3196614355; agsavvas-hosp.gr"
+    },
+    {
+      "id": "ophthalmiatreio",
+      "name": "Ν.Α. «Οφθαλμιατρείο Αθηνών»",
+      "aliases": ["ΟΦΘΑΛΜΙΑΤΡΕΙΟ"],
+      "address": "Πανεπιστημίου 26, Αθήνα 106 72",
+      "phone": "213 2052701",
+      "lat": 37.979327,
+      "lon": 23.734205,
+      "source": "OpenStreetMap way/223918720; ophthalmiatreio.gr"
+    },
+    {
+      "id": "elena_venizelou",
+      "name": "Γ.Ν.Α. Μαιευτήριο «Έλενα Βενιζέλου»",
+      "aliases": ["ΕΛ. ΒΕΝΙΖΕΛΟΥ", "ΕΛΕΝΑ ΒΕΝΙΖΕΛΟΥ"],
+      "address": "Πλατεία Έλενας Βενιζέλου 2, Αθήνα 115 21",
+      "phone": "213 2051000",
+      "lat": 37.984860,
+      "lon": 23.755946,
+      "source": "OpenStreetMap way/132777126; hospital-elena.gr"
+    },
+    {
+      "id": "agia_sofia",
+      "name": "Γ.Ν. Παίδων «Η Αγία Σοφία»",
+      "aliases": ["ΑΓ. ΣΟΦΙΑ", "ΑΓΙΑ ΣΟΦΙΑ"],
+      "address": "Θηβών & Παπαδιαμαντοπούλου, Γουδή, Αθήνα 115 27",
+      "phone": "213 2013000",
+      "lat": 37.985475,
+      "lon": 23.769485,
+      "source": "OpenStreetMap way/208617848; paidon-agiasofia.gr"
+    },
+    {
+      "id": "kyriakou",
+      "name": "Γ.Ν. Παίδων «Π. & Α. Κυριακού»",
+      "aliases": ["Π. & Α. ΚΥΡΙΑΚΟΥ", "ΚΥΡΙΑΚΟΥ"],
+      "address": "Θηβών & Λεβαδείας, Γουδή, Αθήνα 115 27",
+      "phone": "213 2009000",
+      "lat": 37.985271,
+      "lon": 23.767655,
+      "source": "OpenStreetMap way/208617853; aglaiakyriakou.gr"
+    }
+  ]
+}

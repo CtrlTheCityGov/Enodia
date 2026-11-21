@@ -1,0 +1,443 @@
+{
+  "type": "FeatureCollection",
+  "snapshot": "2026-11-21",
+  "note": "10 real Municipality of Athens (org 6013) public-works decisions verified live on diavgeia.gov.gr on 2026-11-21 (real ADA, source_url, contractor, payment amount, ADAM and contract date where published; district-wide framework contracts are mapped to representative street segments, and fields absent from Diavgeia metadata remain null) plus 2 clearly marked SEED works (ada='SEED-*', seed=true) with complete contract/guarantee figures for UI demo testing.",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7341,
+            37.9756
+          ],
+          [
+            23.7322,
+            37.9758
+          ],
+          [
+            23.7302,
+            37.976
+          ],
+          [
+            23.7283,
+            37.9762
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-001",
+        "title": "Ενεργειακή αναβάθμιση και βελτίωση προσβασιμότητας πεζοδρομίων στην 1η, 2η & 3η Δ.Κ. (τμήμα Ερμού)",
+        "status": "in_progress",
+        "contractor": "ΩΡΙΩΝ Α.Τ.Ε.",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 200023.43,
+        "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+        "adam": "25SYMV018045625",
+        "start_date": "2025-11-28",
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 4,
+        "source_url": "https://diavgeia.gov.gr/decision/view/Ψ0ΣΝΩ6Μ-5ΙΖ",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.733,
+            37.9776
+          ],
+          [
+            23.7311,
+            37.9775
+          ],
+          [
+            23.7294,
+            37.9774
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-002",
+        "title": "Ολοκληρωμένο σύστημα ελέγχου πρόσβασης οχημάτων στο Εμπορικό Τρίγωνο και σε πεζοδρόμους (Υποέργο 8)",
+        "status": "in_progress",
+        "contractor": "ΓΚΛΟΜΠΙΣΜΑΡΤ Α.Ε.",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 1439806.2,
+        "ada": "9ΤΠΜΩ6Μ-ΩΥΚ",
+        "adam": null,
+        "start_date": null,
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 2,
+        "source_url": "https://diavgeia.gov.gr/decision/view/9ΤΠΜΩ6Μ-ΩΥΚ",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7351,
+            37.9773
+          ],
+          [
+            23.7336,
+            37.9794
+          ],
+          [
+            23.7322,
+            37.9814
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-003",
+        "title": "Άρση επικινδυνότητας σε οδοστρώματα, πεζοδρόμια και κοινόχρηστους χώρους του Δ.Α. (τμήμα Πανεπιστημίου)",
+        "status": "in_progress",
+        "contractor": "ΔΟΜΙΚΗ ΑΘΗΝΩΝ Α.Τ.Ε.",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 51835.5,
+        "ada": "65ΨΟΩ6Μ-675",
+        "adam": "26SYMV019449260",
+        "start_date": "2026-07-14",
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 3,
+        "source_url": "https://diavgeia.gov.gr/decision/view/65ΨΟΩ6Μ-675",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7337,
+            37.9768
+          ],
+          [
+            23.7318,
+            37.9792
+          ],
+          [
+            23.7297,
+            37.9818
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-004",
+        "title": "Λειτουργική και ενεργειακή αναβάθμιση πεζοδρομίων σε όλες τις Δ.Κ. του Δ.Α. (τμήμα Σταδίου)",
+        "status": "in_progress",
+        "contractor": "ΟΔΟΣ Α.Τ.Ε.",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 985371.42,
+        "ada": "91Π7Ω6Μ-ΠΕ8",
+        "adam": "23SYMV013654256",
+        "start_date": "2023-10-25",
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 5,
+        "source_url": "https://diavgeia.gov.gr/decision/view/91Π7Ω6Μ-ΠΕ8",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7327,
+            37.9975
+          ],
+          [
+            23.7336,
+            38.002
+          ],
+          [
+            23.7347,
+            38.0068
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-005",
+        "title": "Ενεργειακή αναβάθμιση και βελτίωση προσβασιμότητας πεζοδρομίων στην 4η και 5η Δ.Κ. (τμήμα Πατησίων)",
+        "status": "in_progress",
+        "contractor": "ΕΡΓΟΡΟΗ Α.Τ.Ε.",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 155332.03,
+        "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+        "adam": "25SYMV018041517",
+        "start_date": "2025-11-28",
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 2,
+        "source_url": "https://diavgeia.gov.gr/decision/view/ΡΠΟ8Ω6Μ-ΟΥΟ",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7261,
+            37.977
+          ],
+          [
+            23.7269,
+            37.9798
+          ],
+          [
+            23.7276,
+            37.9826
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-006",
+        "title": "Ανακατασκευή οδοστρωμάτων με αντιολισθηρό σκυρόδεμα και εγκάρσιων ρείθρων (τμήμα Αθηνάς)",
+        "status": "in_progress",
+        "contractor": "ΜΑΖΑΡΑΚΗΣ ΗΛΙΑΣ",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 228763.79,
+        "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+        "adam": "24SYMV015992336",
+        "start_date": "2024-12-12",
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 1,
+        "source_url": "https://diavgeia.gov.gr/decision/view/6ΔΩ6Ω6Μ-2ΘΖ",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7398,
+            37.9906
+          ],
+          [
+            23.7475,
+            37.9896
+          ],
+          [
+            23.7556,
+            37.988
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-007",
+        "title": "Ενεργειακή αναβάθμιση & αυτοματοποίηση του συστήματος οδοφωτισμού του Δ.Α. (τμήμα Λεωφ. Αλεξάνδρας)",
+        "status": "in_progress",
+        "contractor": "METLEN ENERGY & METALS ΜΟΝΟΠΡΟΣΩΠΗ Α.Ε.",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 370026.02,
+        "ada": "Ψ15ΕΩ6Μ-4Γ0",
+        "adam": "22SYMV010935743",
+        "start_date": "2022-07-14",
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 1,
+        "source_url": "https://diavgeia.gov.gr/decision/view/Ψ15ΕΩ6Μ-4Γ0",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.688,
+            37.9825
+          ],
+          [
+            23.6945,
+            37.9815
+          ],
+          [
+            23.701,
+            37.9804
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-008",
+        "title": "Έργα οδοποιίας και κατασκευή δικτύων ομβρίων και αποχέτευσης στην περιοχή του Ελαιώνα (Υποέργο 1)",
+        "status": "in_progress",
+        "contractor": "ΖΙΤΑΚΑΤ Α.Τ.Ε.",
+        "amount_contract_eur": null,
+        "amount_paid_eur": 1769478.05,
+        "ada": "ΡΔΦΨΩ6Μ-ΥΘ4",
+        "adam": null,
+        "start_date": null,
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 0,
+        "source_url": "https://diavgeia.gov.gr/decision/view/ΡΔΦΨΩ6Μ-ΥΘ4",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7346,
+            37.9746
+          ],
+          [
+            23.7339,
+            37.9729
+          ],
+          [
+            23.7333,
+            37.9712
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-009",
+        "title": "Ενεργειακή αναβάθμιση μέσω της αναβάθμισης βατότητας πεζοδρομίων και οδών (επιστροφή εγγυήσεων)",
+        "status": "completed",
+        "contractor": null,
+        "amount_contract_eur": null,
+        "amount_paid_eur": null,
+        "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+        "adam": null,
+        "start_date": null,
+        "end_date": "2026-11-17",
+        "guarantee_end": null,
+        "reports_count": 0,
+        "source_url": "https://diavgeia.gov.gr/decision/view/ΨΓΟ3Ω6Μ-ΔΚ6",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.764,
+            37.989
+          ],
+          [
+            23.7656,
+            37.9896
+          ],
+          [
+            23.7672,
+            37.9901
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-DIAV-010",
+        "title": "Έγκριση τοπικής διαπλάτυνσης πεζοδρομίων στις διαβάσεις επί της οδού Παπανικολάου (Ο.Τ. 471)",
+        "status": "planned",
+        "contractor": null,
+        "amount_contract_eur": null,
+        "amount_paid_eur": null,
+        "ada": "ΨΣ9ΧΩ6Μ-6ΚΨ",
+        "adam": null,
+        "start_date": null,
+        "end_date": null,
+        "guarantee_end": null,
+        "reports_count": 0,
+        "source_url": "https://diavgeia.gov.gr/decision/view/ΨΣ9ΧΩ6Μ-6ΚΨ",
+        "seed": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7336,
+            37.9752
+          ],
+          [
+            23.7312,
+            37.9753
+          ],
+          [
+            23.7289,
+            37.9755
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-SEED-001",
+        "title": "Ανακατασκευή πεζοδρομίων και ραμπών ΑμεΑ οδού Μητροπόλεως (δείγμα SEED)",
+        "status": "in_progress",
+        "contractor": "Ανάδοχος Δείγματος Α (SEED)",
+        "amount_contract_eur": 185000.0,
+        "amount_paid_eur": 118400.0,
+        "ada": "SEED-ΑΔΑ-001",
+        "adam": "SEED-26SYMV-001",
+        "start_date": "2026-06-01",
+        "end_date": "2026-12-20",
+        "guarantee_end": "2028-03-20",
+        "reports_count": 3,
+        "source_url": null,
+        "seed": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7438,
+            37.9688
+          ],
+          [
+            23.7462,
+            37.9693
+          ],
+          [
+            23.7486,
+            37.9698
+          ]
+        ]
+      },
+      "properties": {
+        "id": "W-SEED-002",
+        "title": "Ασφαλτόστρωση και αποκατάσταση πεζοδρομίων οδού Υμηττού (δείγμα SEED)",
+        "status": "completed",
+        "contractor": "Ανάδοχος Δείγματος Β (SEED)",
+        "amount_contract_eur": 96000.0,
+        "amount_paid_eur": 92400.0,
+        "ada": "SEED-ΑΔΑ-002",
+        "adam": "SEED-25SYMV-002",
+        "start_date": "2025-05-10",
+        "end_date": "2026-02-15",
+        "guarantee_end": "2027-05-15",
+        "reports_count": 2,
+        "source_url": null,
+        "seed": true
+      }
+    }
+  ]
+}

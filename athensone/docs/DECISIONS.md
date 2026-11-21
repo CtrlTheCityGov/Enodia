@@ -71,8 +71,37 @@
   of A-22–A-25 and A-23's module discovery; T11–T23 cards are dropped. `PROPOSAL.pdf`, `BUILD_PLAN.pdf`, `PLAN.md`,
   `TASKS.md`, `STOA_MERGE.md` and `DEMO_SCRIPT.md` were removed as superseded; code comments that cite them still
   resolve in git history (`git show 18e6f2f:athensone/docs/TASKS.md`).
-- **Q-1** (open, both owners) Path for the SPEC's new `GET /health` (on-duty pharmacies/hospitals): `/api/health`
+- **Q-1** (closed by A-33) Path for the SPEC's new `GET /health` (on-duty pharmacies/hospitals): `/api/health`
   is already the server-status route used by tests. Proposal: `GET /api/onduty?date=`.
 - **A-31** (Sat 21 Nov, night) Track B may use Claude (Claude Code CLI, Opus) for the **code** step of some tasks:
   `CLAUDE_STEPS=code agents/drive.sh B<n>`. Tests and review stay on Gemini in Antigravity. Default picks: B1 `api.js`,
   B6 report flow (privacy), B8 Stoa citations, B9 route cost per profile; the rest run fully in Antigravity.
+- **A-32** (Sat 21 Nov, night) New track-B endpoints live in their own module `app/routers/<name>.py` with
+  `router = APIRouter()`; `app/main.py` includes every module there automatically (block `# --- B: routers`).
+  Tasks never edit `main.py` for a new endpoint, so B2–B5 can run in parallel. Shared helpers they need go in
+  their own `app/<name>.py`, not in `main.py`.
+- **A-33** (advisor default, closes Q-1) Endpoints with the SPEC's shapes live under `/api/map/`: `/api/map/works`,
+  `/api/map/transit`, `/api/map/health` (on-duty pharmacies/hospitals), `/api/map/env`, and (Evgenii, after B1)
+  `/api/map/reports` (GET, POST, `/{id}/confirm`), `/api/map/points`, `/api/map/points/redeem`, `/api/map/stoa_ask`,
+  `/api/map/routing` (POST). `/api/health` stays the
+  server status. Existing routes keep their shapes; `api.js` (B1) picks the `/api/map/` route where one exists.
+- **A-34** (advisor default) The SPEC's `user_id` is the existing points token: a random pseudonym in the `ao_token`
+  cookie (T2), never in a URL, never sent to the sandbox, never logged. `/api/map/points*` read it from the cookie;
+  `api.js` sends `credentials: "same-origin"` and ignores `user_id`.
+- **A-35** (proposal, needs Αναστάσης) Dev B's UI modules (`ui/report.js`, `ui/points.js`, `ui/stoa.js`,
+  `ui/workstab.js`) each export `mount(ctx)` with `ctx = {map, api, root, bus}`: the MapLibre map, the `api.js`
+  module, the HUD container element for that module (from `main.js`), and an `EventTarget` shared by all modules.
+  Events on `bus`: `points:earned` `{delta, reason}`, `report:open` `{work_id?, lngLat?}`, `map:flyto`
+  `{lon, lat, label}`, `route:request` `{to:[lon,lat]}`. `main.js` (Dev A) creates `bus` and calls `mount()`.
+- **A-36** (advisor default) SPEC points rules apply to the new map flow as new actions next to the T2 ones:
+  `map_report` 5, `confirm_other` 2, `work_progress_photo` 15, `city_confirmed` +20; cap 10 map reports/day; no
+  points for a report within 50 m and 30 min of another of the same category. The T2 actions (operator approve 10,
+  dossier 30, fix confirmed 5) stay for the existing routes, so their tests keep passing.
+- **A-37** (Evgenii, Sat 21 Nov) Every env point carries `aqi_scale`: `eaqi` (Open-Meteo European AQI 0–100+) or
+  `city_1_6` (AthensGov station class 1–6). The scales are not converted; the heatmap (Dev A) and the cool route (B9)
+  weigh air by `pm25` (µg/m³ on both sources). Report `category` ids and Stoa citation `kind`s are the B6/B8 ones,
+  in the mocks too.
+- **A-38** (Evgenii, after the B1 review) `api.js`: Stoa answers and routes are never cached on the device (they hold
+  the user's position and question). A write the server rejects (4xx other than 404) is not "offline": `sendReport`
+  throws `RejectedError {status, detail}`, `redeem` returns `{ok: false, error: "rejected", …}`. The two static
+  mock files (`access`, `base`) don't turn on the «Offline λειτουργία» badge.
