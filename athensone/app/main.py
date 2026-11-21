@@ -223,15 +223,27 @@ def env_geojson(min_lng: float = 23.69, min_lat: float = 37.955, max_lng: float 
 
 
 # --- T3: Heat alert banner ---
+import math
+
 # Source for UNKNOWN fallback: CLAUDE.md hard rules & TASKS.md T3 test_heat_no_data (certainty: sure).
 HEAT_UNKNOWN_SOURCE = "UNKNOWN"
+# Fallback station source label when name and station_id are absent: TASKS.md T8 card (certainty: sure).
+HEAT_STATION_FALLBACK_SOURCE = "AthensGov σταθμός"
 
 
 def _heat_reading(lat: float, lng: float) -> tuple[float | None, str]:
     """Current temperature (°C) and source: City's nearest CKAN sensor first, then Open-Meteo, else UNKNOWN."""
     air_q = ckan.nearest_air(lat, lng)
     if air_q and air_q.get("temp_c") is not None:
-        return air_q["temp_c"], f"AthensGov σταθμός {air_q.get('name') or air_q['station_id']}"
+        # T8: tolerate station dicts missing both name and station_id (TASKS.md T8; certainty: sure).
+        raw_name = air_q.get("name")
+        label = raw_name.strip() if isinstance(raw_name, str) else raw_name
+        if not label:
+            sid = air_q.get("station_id")
+            label = sid.strip() if isinstance(sid, str) else sid
+        if label is not None and label != "":
+            return air_q["temp_c"], f"{HEAT_STATION_FALLBACK_SOURCE} {label}"
+        return air_q["temp_c"], HEAT_STATION_FALLBACK_SOURCE
     w = weather(lat, lng)
     if w and w.get("temp_c") is not None:
         return w["temp_c"], w.get("source") or "Open-Meteo"
@@ -265,6 +277,10 @@ def _shaded_minutes(lat: float, lng: float, to_lat: float, to_lng: float) -> flo
 @app.get("/api/heat")
 def heat(lat: float, lng: float) -> dict:
     """Heat alert check: temperature, source, nearest cool place, and shaded walking minutes to it."""
+    # T8: reject non-finite coordinates (inf, -inf, nan) before geo/routing math (TASKS.md T8; certainty: sure).
+    if not (math.isfinite(lat) and math.isfinite(lng)):
+        raise HTTPException(status_code=422, detail="lat and lng must be finite numbers")
+
     temp_c, source = _heat_reading(lat, lng)
     forced = bool(config.HEAT_FORCE)
     # Threshold config.HEAT_C = 33 °C (source: app/config.py:44 and TASKS.md T3 card; certainty: sure).
@@ -277,7 +293,8 @@ def heat(lat: float, lng: float) -> dict:
     place = items[0] if items else None
 
     minutes: float | None = None
-    if place is not None and place.get("lat") is not None and place.get("lng") is not None:
+    # T8 / A-12: skip routing and leave minutes null when not hot (DECISIONS.md A-12; certainty: sure).
+    if hot and place is not None and place.get("lat") is not None and place.get("lng") is not None:
         minutes = _shaded_minutes(lat, lng, place["lat"], place["lng"])
 
     return {
