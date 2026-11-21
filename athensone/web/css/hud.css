@@ -345,11 +345,15 @@ body {
   outline-offset: 2px;
 }
 
-.maplibregl-popup-anchor-bottom.work-popup .maplibregl-popup-tip {
+.maplibregl-popup-anchor-bottom.work-popup .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left.work-popup .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right.work-popup .maplibregl-popup-tip {
   border-top-color: var(--glass-bg);
 }
 
-.maplibregl-popup-anchor-top.work-popup .maplibregl-popup-tip {
+.maplibregl-popup-anchor-top.work-popup .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left.work-popup .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right.work-popup .maplibregl-popup-tip {
   border-bottom-color: var(--glass-bg);
 }
 
@@ -732,3 +736,136 @@ body {
   display: none;
 }
 /* --- /A4 --- */
+
+/* --- A5 --- */
+/* Mobile 390 px HUD layout with zero overlap across all 7 HUD slots (SPEC.md Acceptance criteria, TASKS_A.md A5). */
+@media (max-width: 600px) {
+  :root {
+    --hud-gap: 8px; /* Tighter edge inset on narrow mobile viewports (certainty: design default). */
+    --hud-top-row-height: 40px;
+  }
+
+  /* Row 1 left: compact tabs + theme toggle leaving an 8 px gap before #hud-points (124 px max) at 390 px. */
+  #hud-tabs.hud-top-left {
+    top: var(--hud-gap);
+    left: var(--hud-gap);
+    max-width: calc(100vw - 148px);
+    padding: 3px;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  #hud-tabs.hud-top-left::-webkit-scrollbar {
+    display: none;
+  }
+
+  #hud-tabs .hud-btn {
+    font-size: 0.75rem;
+    padding: 7px 8px;
+  }
+
+  #hud-tabs .hud-divider {
+    height: 14px;
+    margin: 0 1px;
+  }
+
+  /* Row 1 right: points pill constrained so it never collides with #hud-tabs at 390 px. */
+  #hud-points.hud-top-right {
+    top: var(--hud-gap);
+    right: var(--hud-gap);
+    max-width: 124px;
+    z-index: 12;
+  }
+
+  /* Row 2: horizontally scrollable layer chip bar spanning the viewport width. */
+  #hud-layerbar.hud-top-center {
+    top: calc(var(--hud-gap) * 2 + var(--hud-top-row-height));
+    left: var(--hud-gap);
+    right: var(--hud-gap);
+    transform: none;
+    max-width: calc(100vw - 2 * var(--hud-gap));
+    padding: 3px;
+    gap: 4px;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    z-index: 11;
+  }
+
+  #hud-layerbar .layer-chip {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+
+  /* Row 3: offline badge below the layer bar, never overlapping top controls. */
+  #hud-offline {
+    top: calc(var(--hud-gap) * 3 + var(--hud-top-row-height) * 2);
+    left: var(--hud-gap);
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
+
+  /* Bottom corners: Waze '+' button (left) and Stoa AI bubble (right) stay unobstructed. */
+  #hud-report.hud-bottom-left {
+    left: var(--hud-gap);
+    bottom: var(--hud-gap);
+    z-index: 13;
+  }
+
+  #hud-stoa.hud-bottom-right {
+    right: var(--hud-gap);
+    bottom: var(--hud-gap);
+    max-width: calc(100vw - 2 * var(--hud-gap));
+    z-index: 14;
+  }
+
+  /* Bottom center: collapsed routing handle sits between '+' and Stoa; expanded drawer lifts above both FABs. */
+  #hud-routing.hud-bottom-center {
+    bottom: var(--hud-gap);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+  }
+
+  #hud-routing.is-routing-expanded,
+  #hud-routing:has(.routing-drawer:not(.is-collapsed)) {
+    bottom: calc(var(--hud-gap) * 2 + 56px); /* Clears 56 px bottom FAB row for '+' and Stoa (certainty: design default). */
+    z-index: 15;
+  }
+
+  .routing-drawer {
+    width: calc(100vw - 2 * var(--hud-gap));
+    max-height: calc(100vh - 184px);
+    overflow-y: auto;
+    padding: 4px 10px 10px;
+    gap: 6px;
+  }
+
+  .routing-drawer.is-collapsed {
+    width: min(200px, calc(100vw - 148px)); /* Leaves >= 74 px on each side for bottom-left '+' and bottom-right Stoa at 390 px. */
+    padding: 4px 10px;
+    overflow: hidden;
+  }
+
+  .routing-form {
+    gap: 6px;
+  }
+
+  .routing-input {
+    font-size: 0.8125rem;
+    padding: 6px 8px;
+  }
+
+  .routing-pick-btn,
+  .routing-profile-btn,
+  .routing-submit-btn {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+
+  .routing-summary {
+    font-size: 0.75rem;
+  }
+}
+/* --- /A5 --- */

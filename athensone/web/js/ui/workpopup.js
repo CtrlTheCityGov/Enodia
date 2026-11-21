@@ -237,7 +237,8 @@ export function popupHtml(props, today = new Date(), options = {}) {
     adaContentHtml = `<span class="work-popup__unknown">${UNKNOWN_LABEL}</span>`;
   }
 
-  const hasReportFlow = getReportOpener(options?.reportModule) !== null;
+  const hasBus = Boolean(options?.bus && typeof options.bus.dispatchEvent === "function");
+  const hasReportFlow = hasBus || getReportOpener(options?.reportModule) !== null;
   const workId = data.id != null ? String(data.id).trim() : "";
   const reportBtnHtml =
     hasReportFlow && workId !== ""
@@ -318,7 +319,11 @@ export function initWorkPopup(map, options = {}) {
         ? options.getToday()
         : (options?.today ?? new Date());
 
-    const html = popupHtml(props, today, { reportModule: options?.reportModule });
+    const bus = options?.bus && typeof options.bus.dispatchEvent === "function" ? options.bus : null;
+    const html = popupHtml(props, today, {
+      reportModule: options?.reportModule,
+      bus,
+    });
 
     if (activePopup && typeof activePopup.remove === "function") {
       activePopup.remove();
@@ -329,13 +334,24 @@ export function initWorkPopup(map, options = {}) {
     activePopup = popup;
 
     const reportOpener = getReportOpener(options?.reportModule);
-    if (reportOpener && typeof popup.getElement === "function") {
+    const reportHasMount = Boolean(
+      options?.reportModule &&
+        typeof options.reportModule === "object" &&
+        typeof options.reportModule.mount === "function",
+    );
+    if ((bus || reportOpener) && typeof popup.getElement === "function") {
       const rootEl = popup.getElement();
       const reportBtn = rootEl?.querySelector?.(".work-popup__report-btn");
       if (reportBtn && typeof reportBtn.addEventListener === "function") {
         reportBtn.addEventListener("click", () => {
           const workId = props.id != null ? String(props.id).trim() : null;
-          if (workId) {
+          if (!workId) {
+            return;
+          }
+          if (bus) {
+            bus.dispatchEvent(new CustomEvent("report:open", { detail: { work_id: workId } }));
+          }
+          if (reportOpener && !reportHasMount) {
             reportOpener({ work_id: workId });
           }
         });

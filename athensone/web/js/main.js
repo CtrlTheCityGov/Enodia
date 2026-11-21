@@ -39,6 +39,21 @@ export const LAYERS = [
 const THEME_LABEL_TO_DARK = "Σκοτεινό";
 const THEME_LABEL_TO_LIGHT = "Φωτεινό";
 
+// Stoa AI citation flyTo camera and temporary highlight settings (zoom/pitch from SPEC.md "HUD (glassmorphism)"; highlight duration design default).
+const FLYTO_ZOOM = 17;
+const FLYTO_PITCH = 60;
+const FLYTO_HIGHLIGHT_SOURCE_ID = "flyto-highlight-source";
+const FLYTO_HIGHLIGHT_LAYER_ID = "flyto-highlight";
+const FLYTO_HIGHLIGHT_DURATION_MS = 6000;
+
+// Dev B UI modules and their HUD mount slots (source: SPEC.md "Αρχιτεκτονική" & TASKS_A.md A5 / A-35; certainty: verified).
+const DEV_B_UI_MOUNTS = [
+  { specifier: "./ui/points.js", containerIds: ["hud-points"] },
+  { specifier: "./ui/report.js", containerIds: ["hud-report"] },
+  { specifier: "./ui/stoa.js", containerIds: ["hud-stoa"] },
+  { specifier: "./ui/workstab.js", containerIds: ["hud-workstab", "hud-tabs"] },
+];
+
 function isMissingModuleError(err) {
   if (!err) {
     return false;
@@ -109,14 +124,102 @@ function registerA2Overlays(api) {
 }
 /* --- /A2 --- */
 
-export async function bootstrap(root = typeof document !== "undefined" ? document : null) {
+async function loadOfflineBase(api) {
+  const loader =
+    typeof api?.offlineBase === "function"
+      ? () => api.offlineBase()
+      : typeof api?.base === "function"
+        ? () => api.base()
+        : null;
+  if (!loader) {
+    return null;
+  }
+  try {
+    const res = await loader();
+    if (res && res.type === "FeatureCollection") {
+      return res;
+    }
+    if (res && res.data && res.data.type === "FeatureCollection") {
+      return res.data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function showFlyToHighlight(map, lon, lat, label, stateRef) {
+  if (!map || typeof map.getSource !== "function") {
+    return;
+  }
+  const featureCollection = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { label: typeof label === "string" ? label : "" },
+        geometry: { type: "Point", coordinates: [lon, lat] },
+      },
+    ],
+  };
+
+  const existing = map.getSource(FLYTO_HIGHLIGHT_SOURCE_ID);
+  if (existing && typeof existing.setData === "function") {
+    existing.setData(featureCollection);
+  } else if (typeof map.addSource === "function") {
+    map.addSource(FLYTO_HIGHLIGHT_SOURCE_ID, {
+      type: "geojson",
+      data: featureCollection,
+    });
+  }
+
+  const hasLayer =
+    typeof map.getLayer === "function" ? Boolean(map.getLayer(FLYTO_HIGHLIGHT_LAYER_ID)) : false;
+  if (!hasLayer && typeof map.addLayer === "function") {
+    map.addLayer({
+      id: FLYTO_HIGHLIGHT_LAYER_ID,
+      type: "circle",
+      source: FLYTO_HIGHLIGHT_SOURCE_ID,
+      paint: {
+        "circle-radius": 14,
+        "circle-color": "#facc15",
+        "circle-opacity": 0.45,
+        "circle-stroke-color": "#d97706",
+        "circle-stroke-width": 3,
+      },
+    });
+  }
+
+  if (stateRef.timerId !== null) {
+    clearTimeout(stateRef.timerId);
+  }
+  stateRef.timerId = setTimeout(() => {
+    stateRef.timerId = null;
+    const src = typeof map.getSource === "function" ? map.getSource(FLYTO_HIGHLIGHT_SOURCE_ID) : null;
+    if (src && typeof src.setData === "function") {
+      src.setData({ type: "FeatureCollection", features: [] });
+    }
+  }, FLYTO_HIGHLIGHT_DURATION_MS);
+}
+
+export async function bootstrap(
+  root = typeof document !== "undefined" ? document : null,
+  options = {},
+) {
   if (!root || typeof root.getElementById !== "function") {
     return null;
   }
 
+  const bus = options?.bus ?? new EventTarget();
+  const optionalOverrides =
+    options?.optional && typeof options.optional === "object" ? options.optional : null;
   const optional = {};
   for (const specifier of OPTIONAL_DEV_B_MODULES) {
-    optional[specifier] = await tryImport(specifier);
+    if (optionalOverrides && Object.hasOwn(optionalOverrides, specifier)) {
+      optional[specifier] = optionalOverrides[specifier];
+    } else {
+      optional[specifier] = await tryImport(specifier);
+    }
   }
 
   const api = optional["./api.js"] ?? null;
@@ -129,12 +232,14 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
     }
   }
 
+  const offlineGeo = await loadOfflineBase(api);
+
   const state = {
     visible: {},
     theme: initialTheme,
     activeTab: "map",
     offline: false,
-    offlineGeo: null,
+    offlineGeo,
     onOffline: () => {
       showOfflineBadge();
     },
@@ -142,6 +247,34 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
 
   const mapContainer = root.getElementById("map");
   const map = mapContainer ? createMap(mapContainer, state) : null;
+
+  const flyToHighlightState = { timerId: null };
+  if (typeof bus.addEventListener === "function") {
+    bus.addEventListener("map:flyto", (event) => {
+      const detail = event?.detail;
+      if (
+        detail?.lon == null ||
+        detail?.lat == null ||
+        detail.lon === "" ||
+        detail.lat === ""
+      ) {
+        return;
+      }
+      const lon = Number(detail.lon);
+      const lat = Number(detail.lat);
+      if (!map || !Number.isFinite(lon) || !Number.isFinite(lat)) {
+        return;
+      }
+      if (typeof map.flyTo === "function") {
+        map.flyTo({
+          center: [lon, lat],
+          zoom: FLYTO_ZOOM,
+          pitch: FLYTO_PITCH,
+        });
+      }
+      showFlyToHighlight(map, lon, lat, detail?.label, flyToHighlightState);
+    });
+  }
 
   const themeBtn = root.getElementById("theme-toggle");
   function applyTheme(nextTheme) {
@@ -192,6 +325,9 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
     if (typeof state.onTabChange === "function") {
       state.onTabChange(nextTab);
     }
+    if (typeof bus.dispatchEvent === "function") {
+      bus.dispatchEvent(new CustomEvent("tab:change", { detail: { tab: nextTab } }));
+    }
   }
 
   if (tabMapBtn && typeof tabMapBtn.addEventListener === "function") {
@@ -213,19 +349,41 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
   /* --- /A2 --- */
 
   if (map) {
-    initWorkPopup(map, { reportModule: optional["./ui/report.js"] });
+    initWorkPopup(map, { reportModule: optional["./ui/report.js"], bus });
   }
 
   /* --- A4 --- */
   const routingEl = root.getElementById("hud-routing");
   const routing = routingEl
-    ? initRouting(routingEl, map, api, { onNonLiveSource: showOfflineBadge })
+    ? initRouting(routingEl, map, api, { onNonLiveSource: showOfflineBadge, bus })
     : null;
   /* --- /A4 --- */
+
+  /* --- A5 --- */
+  for (const { specifier, containerIds } of DEV_B_UI_MOUNTS) {
+    const mod = optional[specifier];
+    if (typeof mod?.mount !== "function") {
+      continue;
+    }
+    let mountEl = null;
+    for (const id of containerIds) {
+      mountEl = root.getElementById(id);
+      if (mountEl) {
+        break;
+      }
+    }
+    try {
+      mod.mount({ map, api, root, container: mountEl, bus });
+    } catch (err) {
+      console.error(`Failed to mount optional module ${specifier}:`, err);
+    }
+  }
+  /* --- /A5 --- */
 
   return {
     map,
     api,
+    bus,
     state,
     layers: LAYERS,
     optional,
