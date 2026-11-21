@@ -218,6 +218,75 @@ def env_geojson(min_lng: float = 23.69, min_lat: float = 37.955, max_lng: float 
     return env.geojson((min_lng, min_lat, max_lng, max_lat))
 
 
+# --- T3: Heat alert banner ---
+# Source for UNKNOWN fallback: CLAUDE.md hard rules & TASKS.md T3 test_heat_no_data (certainty: sure).
+HEAT_UNKNOWN_SOURCE = "UNKNOWN"
+
+
+def _heat_reading(lat: float, lng: float) -> tuple[float | None, str]:
+    """Current temperature (°C) and source: City's nearest CKAN sensor first, then Open-Meteo, else UNKNOWN."""
+    air_q = ckan.nearest_air(lat, lng)
+    if air_q and air_q.get("temp_c") is not None:
+        return air_q["temp_c"], f"AthensGov σταθμός {air_q.get('name') or air_q['station_id']}"
+    w = weather(lat, lng)
+    if w and w.get("temp_c") is not None:
+        return w["temp_c"], w.get("source") or "Open-Meteo"
+    return None, HEAT_UNKNOWN_SOURCE
+
+
+def _shaded_minutes(lat: float, lng: float, to_lat: float, to_lng: float) -> float | None:
+    """Duration in minutes of the best shaded step-free route to a cool place (mirrors navigate() heat mode)."""
+    frm, to = {"lat": lat, "lng": lng}, {"lat": to_lat, "lng": to_lng}
+    try:
+        hz = active_hazards()
+    except SandboxError:
+        hz = []
+    # Padding 0.004 deg (~400 m), heat shade weight 1.2, hazard penalty 100, max detour 1.4x:
+    # all copied from navigate() (app/main.py:141,146,168,178; certainty: sure).
+    pad = 0.004
+    bbox = (min(lng, to_lng) - pad, min(lat, to_lat) - pad, max(lng, to_lng) + pad, max(lat, to_lat) + pad)
+    cands = routing.candidates(frm, to, hz, "wheelchair", env.busy_polygons(bbox))
+    if not cands:
+        return None
+    fastest = min(c["duration_min"] for c in cands)
+    scored = []
+    for c in cands:
+        m = env.score_line(c["geojson"]["coordinates"], [], hz)
+        score = c["duration_min"] * (1 + 1.2 * (1 - m["shade_pct"] / 100)) + 100 * m["hazards_on_route"]
+        scored.append((c["duration_min"] > fastest * 1.4, score, c["duration_min"]))
+    ok = [s for s in scored if not s[0]] or scored
+    return min(ok, key=lambda s: s[1])[2]
+
+
+@app.get("/api/heat")
+def heat(lat: float, lng: float) -> dict:
+    """Heat alert check: temperature, source, nearest cool place, and shaded walking minutes to it."""
+    temp_c, source = _heat_reading(lat, lng)
+    forced = bool(config.HEAT_FORCE)
+    # Threshold config.HEAT_C = 33 °C (source: app/config.py:44 and TASKS.md T3 card; certainty: sure).
+    hot = forced or (temp_c is not None and temp_c >= config.HEAT_C)
+
+    try:
+        items = cool_places(lat, lng)["items"]
+    except SandboxError:
+        items = []
+    place = items[0] if items else None
+
+    minutes: float | None = None
+    if place is not None and place.get("lat") is not None and place.get("lng") is not None:
+        minutes = _shaded_minutes(lat, lng, place["lat"], place["lng"])
+
+    return {
+        "hot": hot,
+        "temp_c": temp_c,
+        "source": source,
+        "forced": forced,
+        "cool_place": place,
+        "minutes": minutes,
+    }
+# --- /T3 ---
+
+
 # ------------------------------------------------------------------ AthensGov open data (CKAN)
 def _ckan(fn):
     try:
