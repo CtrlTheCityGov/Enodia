@@ -36,3 +36,11 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `maplibre-gl` | `4.7.1` | BSD-3-Clause | Interactive map rendering (`web/citizen.html`, `web/operator.html`) | https://github.com/maplibre/maplibre-gl-js |
 | OpenStreetMap tiles | — | ODbL 1.0 | Basemap tiles (`© OpenStreetMap` attribution shown) | https://www.openstreetmap.org/copyright |
 | `axe-core` | `^4.10.0` | MPL-2.0 | Accessibility check dev dependency (`scripts/a11y_check.py`) | https://github.com/dequelabs/axe-core |
+
+## External data sources (Track B)
+
+| Source | Endpoint / Dataset | Licence | Role | URL |
+|---|---|---|---|---|
+| Open-Meteo Forecast API | `/v1/forecast` (`temperature_2m`) | CC BY 4.0 (free tier: non-commercial use; attribution: *Weather data by Open-Meteo.com*) | Temperature grid in `app/envgrid_src.py` (`GET /api/map/env`) and weather in `app/main.py` | https://open-meteo.com/en/terms |
+| Open-Meteo Air Quality API | `/v1/air-quality` (`european_aqi`, `pm2_5`) | CC BY 4.0 (free tier: non-commercial use; attribution: *Weather data by Open-Meteo.com*) | European AQI and PM2.5 grid in `app/envgrid_src.py` (`GET /api/map/env`) | https://open-meteo.com/en/docs/air-quality-api |
+| AthensGov Open Data (CKAN) | `env-stations-registry`, `env-all-stations` | CC BY 4.0 | Municipal environmental sensor overrides within 300 m in `app/envgrid_src.py` via `app/ckan.py` | https://opendata.cityofathens.gr |

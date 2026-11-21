@@ -53,3 +53,24 @@ CKAN_MODE = os.getenv("CKAN_MODE", "live").lower()
 # Source: TASKS.md T3 card (approved A-1); parsing matches MOCK above (line 22). Certainty: sure.
 HEAT_FORCE = os.getenv("HEAT_FORCE", "").lower() in ("1", "true", "yes")
 # --- /T3 ---
+
+# --- B5: Env grid ---
+# Grid spacing in metres over the Municipality of Athens (source: docs/TASKS_B.md B5 card; certainty: sure).
+ENV_GRID_M = float(os.getenv("ENV_GRID_M", "600"))
+# Municipality of Athens bbox: minLon, minLat, maxLon, maxLat
+# (source: docs/TASKS_B.md B0 card & tests/test_B5_envgrid.py; certainty: sure).
+ENV_BBOX: tuple[float, float, float, float] = tuple(  # type: ignore[assignment]
+    float(x) for x in os.getenv("ENV_BBOX", "23.68,37.95,23.80,38.03").split(",")
+)
+# In-memory cache TTL in seconds: 15 minutes (source: docs/TASKS_B.md B5 card; certainty: sure).
+ENV_CACHE_TTL_S = int(os.getenv("ENV_CACHE_TTL_S", "900"))
+# Radius in metres within which a City CKAN station overrides the Open-Meteo model
+# (source: docs/TASKS_B.md B5 card; certainty: sure).
+ENV_STATION_MAX_M = float(os.getenv("ENV_STATION_MAX_M", "300"))
+# Open-Meteo v1 Forecast & Air Quality multi-coordinate endpoints
+# (verified online 2026-11-21 returning HTTP 200 JSON arrays; source: Open-Meteo API & app/main.py:131; certainty: verified).
+ENV_FORECAST_URL = os.getenv("ENV_FORECAST_URL", "https://api.open-meteo.com/v1/forecast")
+ENV_AIR_QUALITY_URL = os.getenv("ENV_AIR_QUALITY_URL", "https://air-quality-api.open-meteo.com/v1/air-quality")
+# Upstream HTTP timeout in seconds (source: docs/TASKS_B.md Common to B2–B5; certainty: sure).
+ENV_HTTP_TIMEOUT_S = float(os.getenv("ENV_HTTP_TIMEOUT_S", "10"))
+# --- /B5 ---
