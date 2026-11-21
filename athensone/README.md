@@ -1,37 +1,29 @@
-# AthensOne · «Η Γειτονιά μου AI»
+# Enodia · Η Ζωντανή Ψηφιακή Λογοδοσία & Πλοήγηση της Αθήνας
 
-**A map app for Athens: an open alternative to Google Maps, built on the City's own data.**
+**Enodia — The living digital accountability and navigation layer of Athens.**
 
 Apps4Athens 3.0 Gov Hackathon · 21–22 Nov 2026 · Serafio · Track: AthensGov AI Transformation (Η)
 
-The map is the app. Search for a street, an address, a place or a City service and the map takes you there; open
-anything on it to see what the City knows about that spot; ask for a route and get one that fits how you walk.
-Every feature is a layer, a place panel or a route on that one map:
+Enodia connects public-works accountability, inclusive urban routing, and a closed citizen-to-operator municipal loop on one 3D map of Athens:
 
-- **Search and places**: Greek, Greeklish and English, accent-insensitive; opening hours, wheelchair access,
-  contact details from OpenStreetMap; plus the City's own layers (T22).
-- **Directions**: step-free routes per profile (wheelchair, walker, stroller, visually impaired), ranked on shade,
-  distance from traffic and places to rest; heat-aware; they avoid obstacles residents just reported.
-  See [docs/NAVIGATION.md](docs/NAVIGATION.md).
-- **Ask the City**: answers with official sources from the AthensGov Sandbox, pinned on the map.
-- **Reports**: one photo, faces blurred and EXIF removed before storage or AI; duplicates within 50 m merge; status
-  timeline; "Is it fixed?" after the repair; the route redraws around open hazards.
-- **Stoa (public works)**: works on each street, guarantee clock, cited answers `[ΑΔΑ …]`, a draft claim for the
-  engineer.
-- **City data layers**: air-quality stations, WiFi, districts (AthensGov CKAN); trees, benches, water, busy roads,
-  accessible places (OpenStreetMap). Heat banner with the nearest cool place.
-- **Πόντοι Γειτονιάς**: points for verified civic actions, by district, never by person.
-- **Operator view**: the same map for City staff, with the triage list, approve and dispatch, Stoa radar and an
-  equity table per district.
-- **Next: the 3D citizen map** of [docs/SPEC.md](docs/SPEC.md) (the project's spec), built by two tracks:
-  [docs/TASKS_A.md](docs/TASKS_A.md) (map & HUD) and [docs/TASKS_B.md](docs/TASKS_B.md) (data & backend).
+- **Stoa (Public Works Accountability)**: Verified municipal works on each street (Diavgeia org 6013 + clearly marked `DEMO` seed records), 15-month guarantee clock (ν. 4412/2016 art. 171), cited answers `[ΑΔΑ …]`, live ΑΔΑ lookup, and one-click contractor defect dossiers.
+- **Accessible & Heat-Aware Navigation**: `wheelchair`, `stroller`, and `cool` profiles (Valhalla + OSM shade/traffic/rest scoring), ghost baseline comparison, why-this-route scoreboard, live GPS route-snapping, and hazard avoidance around open reports and active works. See [docs/NAVIGATION.md](docs/NAVIGATION.md).
+- **Closed Citizen ↔ Operator Loop**: Citizens submit blurred-photo reports (faces blurred + EXIF stripped in memory before storage); duplicates within 50 m merge; municipal operators triage, approve/dispatch, or resolve in `operator.html`; citizen pins reflect live status updates (`Νέα` → `Σε εξέλιξη` → `Επιλύθηκε`).
+- **City & Mobility Layers**: Live Open-Meteo temperature/AQI/PM2.5/UV grid, OASA bus positions & stop arrivals, static Metro/Proastiakos lines & stations, on-duty pharmacies & hospitals, and AthensGov CKAN air-quality & WiFi layers.
+- **Πόντοι Γειτονιάς**: Points for verified civic actions, tracked by municipal district (never by personal identity), with district leaderboard.
+- **Operator Control Room & AI Register**: Dedicated `operator.html` triage workspace with Stoa Guarantee Claim alerts, service equity table, CSV export, and `ai-register.html` transparency log.
 
-One loop shows it end to end in the demo: a resident asks a question and gets an answer with sources, walks a
-step-free route to a Friendship Club, the route changes around a blocked ramp someone just photographed, and a
-municipal officer approves the fix, which the resident sees live.
+### Data Provenance (Live / Cached / Demo)
 
-> AthensGov answers questions. We put the whole city on one map and close the loop, from a photo on the sidewalk
-> to a crew on the way, with a source on every answer, faces blurred, and a human deciding.
+| Layer | Live Source | Cached / Snapshot Fallback | Demo / Seed |
+|---|---|---|---|
+| Public works | Diavgeia OpenData API (`/api/map/works/lookup`) | `data/stoa/works.json` (`LIVE-CACHE` / `DIAVGEIA+SEED`) | `data/works_seed.json` (`DEMO` / `SEED`) |
+| Environment grid | Open-Meteo Forecast + Air Quality + CKAN stations | `data/envgrid/last.json` (`CACHED`) | `web/mock/env.json` (`DEMO`) |
+| Transit | OASA Telematics (`getBusLocation`, `getStopArrivals`) | `data/transit/static.json` + `data/transit/last.json` (`CACHED`) | `web/mock/transit.geojson` (`DEMO`) |
+| On-duty health | Pharmacy associations + Ministry of Health | `data/onduty/last.json` (`CACHED`) | `web/mock/health.geojson` (`DEMO`) |
+| City requests / Ask | AthensGov Sandbox (when `SANDBOX_KEY` is set) | Local SQLite (`map_reports`, `athensone.db`) | Mock Sandbox (`DEMO` when `SANDBOX_KEY` unset) |
+
+> Enodia puts the whole city on one accountable map and closes the loop — from a citizen's photo on the sidewalk to a crew dispatched by an operator, with a source on every answer, faces blurred, and a human deciding.
 
 ## Quick start (5 minutes)
 

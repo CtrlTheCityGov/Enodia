@@ -1299,10 +1299,8 @@ export function initRouting(container, map, api, options = {}) {
   }
 
   let activeProfile = loadSavedProfile();
-  const isNarrowViewport =
-    typeof globalThis.innerWidth === "number" && globalThis.innerWidth <= MOBILE_BREAKPOINT_PX;
   let collapsed =
-    typeof options?.initialCollapsed === "boolean" ? options.initialCollapsed : isNarrowViewport;
+    typeof options?.initialCollapsed === "boolean" ? options.initialCollapsed : true;
   let pickMode = null;
   let cancelAnimation = null;
   let lastRoute = null;

@@ -45,10 +45,19 @@ const REPORT_STROKE_WIDTH = 2.5;
 const PULSE_DURATION_MS = 1200;
 const PULSE_RIPPLES = 2;
 
+const STATUS_LABELS = Object.freeze({
+  submitted: "Νέα αναφορά",
+  received: "Σε εξέλιξη",
+  in_progress: "Συνεργείο καθ' οδόν",
+  resolved: "Επιλύθηκε",
+  rejected: "Απορρίφθηκε",
+});
+
 // Per-map store of locally created reports so optimistic pins survive refresh() and style.load.
 const localReportsByMap = new WeakMap();
 const remoteReportsByMap = new WeakMap();
 const pulseCancelByMap = new WeakMap();
+const apiByMap = new WeakMap();
 const popupBoundMaps = new WeakSet();
 
 function emptyFeatureCollection() {
@@ -200,19 +209,40 @@ function bindReportPopup(map) {
     }
     const p = feature.properties || {};
     const catLabel = CATEGORY_LABELS[p.category] || p.category || "Αναφορά";
+    const statusLabel = STATUS_LABELS[p.status] || STATUS_LABELS.submitted;
     const note = p.note || p.description || "";
     const conf = Number(p.confirmations);
-    const meta = Number.isFinite(conf) && conf > 0 ? `${conf} επιβεβαιώσεις` : "Νέα αναφορά";
+    const meta = Number.isFinite(conf) && conf > 0 ? `${conf} επιβεβαιώσεις` : "Χωρίς επιβεβαιώσεις ακόμη";
+    const canConfirm = Boolean(p.id && apiByMap.get(map)?.api?.confirmReport);
     const html =
       `<div class="report-pin-popup">` +
-      `<strong class="report-pin-popup__title">${escapeHtml(catLabel)}</strong>` +
+      `<strong class="report-pin-popup__title">${escapeHtml(catLabel)}</strong> ` +
+      `<span class="report-pin-popup__status">${escapeHtml(statusLabel)}</span>` +
       (note ? `<p class="report-pin-popup__note">${escapeHtml(note)}</p>` : "") +
       `<span class="report-pin-popup__meta">${escapeHtml(meta)}</span>` +
+      (canConfirm ? `<div><button type="button" class="report-pin-popup__confirm">+1 Επιβεβαίωση</button></div>` : "") +
       `</div>`;
-    new PopupCtor({ className: "glass work-popup" })
+    const popup = new PopupCtor({ className: "glass work-popup" })
       .setLngLat(event.lngLat)
       .setHTML(html)
       .addTo(map);
+    const ctx = apiByMap.get(map);
+    const btn = popup.getElement?.()?.querySelector?.(".report-pin-popup__confirm");
+    if (btn && ctx?.api?.confirmReport && p.id) {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          const res = await ctx.api.confirmReport(p.id);
+          const metaEl = popup.getElement?.()?.querySelector?.(".report-pin-popup__meta");
+          if (metaEl && typeof res?.confirmations === "number") {
+            metaEl.textContent = `${res.confirmations} επιβεβαιώσεις`;
+          }
+          await refresh(map, ctx.api, ctx.state);
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    }
   });
 }
 
@@ -379,6 +409,7 @@ export async function register(map, api, state = {}) {
     return { id, layerIds };
   }
 
+  apiByMap.set(map, { api, state });
   ensureReportsSourceAndLayer(map);
   bindReportPopup(map);
 

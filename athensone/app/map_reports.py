@@ -196,24 +196,31 @@ def on_city_approved(city_request_id: str, district: str | None = None) -> bool:
                         district=district)
 
 
-def geojson(bbox: tuple[float, float, float, float] | None = None, since: datetime | None = None) -> dict:
-    """Public FeatureCollection of map reports: id, category, created_at, confirmations (no note, no account)."""
+def geojson(
+    bbox: tuple[float, float, float, float] | None = None,
+    since: datetime | None = None,
+    status_by_request: dict[str, str] | None = None,
+) -> dict:
+    """Public FeatureCollection of map reports: id, category, created_at, confirmations, status (no note, no account)."""
     rows = _rows(
-        "SELECT m.id, m.category, m.lon, m.lat, m.created_at, COUNT(c.account) AS confirmations"
+        "SELECT m.id, m.category, m.lon, m.lat, m.created_at, m.city_request_id, COUNT(c.account) AS confirmations"
         " FROM map_reports m LEFT JOIN map_report_confirmations c ON c.report_id = m.id"
         " GROUP BY m.id ORDER BY m.created_at DESC"
     )
     features = []
+    statuses = status_by_request or {}
     for r in rows:
         if bbox and not (bbox[0] <= r["lon"] <= bbox[2] and bbox[1] <= r["lat"] <= bbox[3]):
             continue
         if since and _parse_ts(r["created_at"]) < since:
             continue
+        req_id = r.get("city_request_id")
+        status = statuses.get(req_id, "submitted") if req_id else "submitted"
         features.append({
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
             "properties": {"id": r["id"], "category": r["category"], "created_at": r["created_at"],
-                           "confirmations": int(r["confirmations"])},
+                           "confirmations": int(r["confirmations"]), "status": status},
         })
     return {"type": "FeatureCollection", "features": features}
 

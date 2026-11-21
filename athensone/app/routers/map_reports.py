@@ -12,6 +12,7 @@ import uuid
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
 
 from .. import ckan, config, map_reports, points, privacy
+from ..sandbox import SandboxError
 
 router = APIRouter()
 
@@ -92,7 +93,14 @@ def list_map_reports(bbox: str | None = None, since: str | None = None):
             ts = map_reports.parse_since(since)
         except ValueError:
             raise HTTPException(422, "since must be an ISO 8601 timestamp")
-    return map_reports.geojson(box, ts)
+    status_by_request: dict[str, str] = {}
+    try:
+        for req in _sandbox().list_requests(mine=True).get("items", []):
+            if req.get("id") and req.get("status"):
+                status_by_request[str(req["id"])] = str(req["status"])
+    except SandboxError:
+        pass
+    return map_reports.geojson(box, ts, status_by_request=status_by_request)
 
 
 @router.post("/api/map/reports/{rid}/confirm")

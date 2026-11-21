@@ -380,6 +380,18 @@ export async function bootstrap(
     bus.addEventListener("toast:show", (event) => {
       showToast(event?.detail);
     });
+    if (typeof globalThis.addEventListener === "function") {
+      globalThis.addEventListener("focus", () => {
+        if (map) reportsLayer.refresh(map, api, state);
+      });
+    }
+    if (root && typeof root.addEventListener === "function") {
+      root.addEventListener("visibilitychange", () => {
+        if (map && root.visibilityState === "visible") {
+          reportsLayer.refresh(map, api, state);
+        }
+      });
+    }
     /* --- /A6 --- */
   }
 

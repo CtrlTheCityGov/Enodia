@@ -108,3 +108,21 @@ def test_reports_export_csv(monkeypatch):
     assert r.headers["content-type"].startswith("text/csv")
     assert "id,status,category" in r.text
     assert "REQ-1,submitted,pothole" in r.text
+
+
+def test_map_reports_syncs_city_request_status(monkeypatch):
+    from app import main as app_main, map_reports
+
+    map_reports.clear()
+    saved = map_reports.create("acct-1", "obstacle", 23.734, 37.975, "blocked ramp", None, None)
+    map_reports.link_city_request(saved["id"], "CITY-99")
+    monkeypatch.setattr(
+        app_main.sb,
+        "list_requests",
+        lambda mine=True: {"items": [{"id": "CITY-99", "status": "in_progress"}]},
+    )
+    client = TestClient(app)
+    r = client.get("/api/map/reports")
+    assert r.status_code == 200
+    feats = r.json()["features"]
+    assert feats[0]["properties"]["status"] == "in_progress"
