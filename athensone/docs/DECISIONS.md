@@ -88,9 +88,10 @@
 - **A-34** (advisor default) The SPEC's `user_id` is the existing points token: a random pseudonym in the `ao_token`
   cookie (T2), never in a URL, never sent to the sandbox, never logged. `/api/map/points*` read it from the cookie;
   `api.js` sends `credentials: "same-origin"` and ignores `user_id`.
-- **A-35** (proposal, needs Αναστάσης) Dev B's UI modules (`ui/report.js`, `ui/points.js`, `ui/stoa.js`,
-  `ui/workstab.js`) each export `mount(ctx)` with `ctx = {map, api, root, bus}`: the MapLibre map, the `api.js`
-  module, the HUD container element for that module (from `main.js`), and an `EventTarget` shared by all modules.
+- **A-35** (approved by Αναστάσης & Evgenii) Dev B's UI modules (`ui/report.js`, `ui/points.js`, `ui/stoa.js`,
+  `ui/workstab.js`) each export `mount(ctx)` with `ctx = {map, api, root, container, bus}`: the MapLibre map, the
+  `api.js` module, `document` (`root`), the HUD container element for that module (`container`, with Dev B modules
+  accepting `container || root`), and an `EventTarget` shared by all modules.
   Events on `bus`: `points:earned` `{delta, reason}`, `report:open` `{work_id?, lngLat?}`, `map:flyto`
   `{lon, lat, label}`, `route:request` `{to:[lon,lat]}`. `main.js` (Dev A) creates `bus` and calls `mount()`.
 - **A-36** (advisor default) SPEC points rules apply to the new map flow as new actions next to the T2 ones:

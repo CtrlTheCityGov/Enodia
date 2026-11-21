@@ -39,7 +39,8 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 
 | Package / Asset | Version | Licence | Role | Source |
 |---|---|---|---|---|
-| `maplibre-gl` | `4.7.1` | BSD-3-Clause | Interactive map rendering (`web/citizen.html`, `web/operator.html`) | https://github.com/maplibre/maplibre-gl-js |
+| `maplibre-gl` | `5.3.0` (jsDelivr CDN) / `4.7.1` (legacy & operator) | BSD-3-Clause | Interactive 3D map rendering (`web/citizen.html` uses `5.3.0`; `web/operator.html` and `web/citizen-legacy.html` use `4.7.1`) | https://github.com/maplibre/maplibre-gl-js |
+| OpenFreeMap (`Liberty` / `Fiord` vector styles) | — | OpenStreetMap data © ODbL 1.0; OpenFreeMap public tiles (no API key) | 3D Light/Dark vector basemap styles in `web/js/map.js` (`tiles.openfreemap.org`) | https://openfreemap.org |
 | OpenStreetMap tiles | — | ODbL 1.0 | Basemap tiles (`© OpenStreetMap` attribution shown) | https://www.openstreetmap.org/copyright |
 | `axe-core` | `^4.10.0` | MPL-2.0 | Accessibility check dev dependency (`scripts/a11y_check.py`) | https://github.com/dequelabs/axe-core |
 
