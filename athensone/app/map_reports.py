@@ -105,6 +105,11 @@ def _rows(sql: str, args: tuple = ()) -> list[dict]:
         return [dict(r) for r in _conn.execute(sql, args).fetchall()]
 
 
+def all_reports() -> list[dict]:
+    """Return the B12 fields used for works counts and routing."""
+    return _rows("SELECT id, category, lon, lat, work_id, city_request_id, created_at FROM map_reports")
+
+
 def _rewarded_today(account: str, now: datetime) -> int:
     with _lock:
         row = _conn.execute(

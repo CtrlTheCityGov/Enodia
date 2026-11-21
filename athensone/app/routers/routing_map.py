@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import ckan, env, route_cost, routing, store, works
+from .. import ckan, env, map_reports, route_cost, routing, store, works
 from ..sandbox import SandboxError
 
 router = APIRouter()
@@ -27,18 +27,25 @@ class RoutingRequest(BaseModel):
 
 
 def _open_reports() -> list[dict]:
-    """Open citizen reports with a location: {id, lat, lng, category, blocker}. Status comes from the sandbox
-    exactly as main.active_hazards() reads it (unknown ids count as "submitted", i.e. open)."""
+    """Read route hazards from legacy reports and map reports, using sandbox status for City requests."""
     from .. import main  # lazy: main imports this module at the end of its own import
 
     try:
         status = {r["id"]: r["status"] for r in main.sb.list_requests(mine=True).get("items", [])}
     except SandboxError:
         status = {}
-    return [{"id": r["request_id"], "lat": r["lat"], "lng": r["lng"], "category": r["category"],
-             "blocker": r["accessibility_blocker"]}
-            for r in store.all_reports()
-            if r["lat"] is not None and r["lng"] is not None and status.get(r["request_id"], "submitted") in main.OPEN]
+    # Legacy reports keep main.active_hazards()'s default for unknown City request statuses.
+    reports = [{"id": r["request_id"], "lat": r["lat"], "lng": r["lng"], "category": r["category"],
+                "blocker": r["accessibility_blocker"]}
+               for r in store.all_reports()
+               if r["lat"] is not None and r["lng"] is not None and status.get(r["request_id"], "submitted") in main.OPEN]
+    for row in map_reports.all_reports():
+        if row["city_request_id"] is not None and status.get(row["city_request_id"]) not in main.OPEN:
+            continue
+        # B12 defines obstacle as a blocker and congestion as soft (see SOFT_REPORT_CATEGORIES).
+        reports.append({"id": row["id"], "lat": row["lat"], "lng": row["lon"], "category": row["category"],
+                        "blocker": row["category"] == "obstacle"})
+    return reports
 
 
 def _in_bbox(line: list, bbox: tuple) -> bool:

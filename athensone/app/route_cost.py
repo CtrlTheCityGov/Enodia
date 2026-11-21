@@ -17,7 +17,7 @@ from __future__ import annotations
 import math
 from datetime import date
 
-from . import env
+from . import env, works_src
 
 # Same metres-per-degree constant as app/env.py and app/works.py (equirectangular, fine at city scale; sure).
 K = 111_320.0
@@ -37,8 +37,7 @@ POOR_AQI = 4  # same threshold as /api/navigate (app/main.py: aqi >= 4 on the 1-
 # Stroller soft penalty: +30% of the duration per work/report touched (guess, unverified; small enough that a
 # 3x detour never wins, large enough to beat a few minutes' detour).
 SOFT_PENALTY = 0.3
-# Report categories the stroller treats as soft obstacles. SPEC F3 lists «συμφόρηση» as a report type; the stored
-# category name "congestion" is what the B9 tests use (B6 not merged yet; unverified against B6).
+# SPEC Routing treats congestion as a stroller penalty; B12 and map_reports.CATEGORIES confirm the stored key.
 SOFT_REPORT_CATEGORIES = {"congestion"}
 
 PROFILES = ("wheelchair", "stroller", "cool")
@@ -101,11 +100,13 @@ def work_point(line: list) -> dict:
 
 # ------------------------------------------------------------------ layer filters
 def in_progress(work: dict, today: date) -> bool:
-    """A work counts as in progress when its record says status "in_progress" and today is not past its
-    end_date (if it has one). Stoa works records without a status are finished works: not obstacles."""
+    """Use B2 status for evidence-wrapped works and the legacy status and end date for flat records."""
+    end = work.get("end_date")
+    if isinstance(work.get("start_date"), dict) or isinstance(end, dict):
+        # B12 delegates to B2's status_of so routing and the works layer agree.
+        return works_src.status_of(work, today.isoformat()) == "in_progress"
     if work.get("status") != "in_progress":
         return False
-    end = work.get("end_date")
     try:
         return not end or date.fromisoformat(end) >= today
     except ValueError:

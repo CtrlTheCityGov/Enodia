@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from .. import works, works_src
+from .. import map_reports, works, works_src
 
 router = APIRouter()
 
@@ -28,15 +28,18 @@ def _bbox(raw: str | None) -> tuple[float, float, float, float] | None:
 
 
 def _open_reports() -> list[tuple[float, float]] | None:
-    """(lat, lng) of open reports, from the same sandbox list as /api/reports; None when the sandbox fails."""
+    """Coordinates from open sandbox requests and unlinked map reports; None if the sandbox fails."""
     from .. import main  # imported here: app.main includes this router while it is still loading
 
     try:
         items = main.sb.list_requests(mine=True).get("items", [])
     except main.SandboxError:
         return None
-    return [(r["lat"], r["lng"]) for r in items
-            if r.get("status") in main.OPEN and r.get("lat") is not None and r.get("lng") is not None]
+    reports = [(r["lat"], r["lng"]) for r in items
+               if r.get("status") in main.OPEN and r.get("lat") is not None and r.get("lng") is not None]
+    # B12 counts linked reports through the sandbox only; the link identifies the same submission.
+    reports.extend((r["lat"], r["lon"]) for r in map_reports.all_reports() if r["city_request_id"] is None)
+    return reports
 
 
 @router.get("/api/map/works")
