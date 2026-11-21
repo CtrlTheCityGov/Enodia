@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Δήμος Αθηναίων · Αναφορές πολιτών</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <h1>Δήμος Αθηναίων · Αναφορές πολιτών</h1>
+  <span id="mode" class="pill">…</span>
+  <span id="count" class="pill"></span>
+</header>
+<div class="ops">
+  <div class="list">
+    <section class="radar" aria-labelledby="radarH">
+      <h2 id="radarH">🏗 Stoa · Εγγυήσεις που λήγουν <select id="radarDays" aria-label="Παράθυρο"><option>30</option><option selected>90</option><option>180</option></select> ημ.</h2>
+      <div id="radarHead" class="muted"></div>
+      <div id="radarList"></div>
+    </section>
+    <section class="radar equity" aria-labelledby="eqH">
+      <h2 id="eqH">Ισότητα εξυπηρέτησης ανά Δημοτική Κοινότητα</h2>
+      <div id="equity" class="muted">…</div>
+    </section>
+    <div id="list" aria-label="Λίστα αναφορών"></div>
+  </div>
+  <div class="detail">
+    <div id="opmap"></div>
+    <div id="empty" class="card muted">Επιλέξτε αναφορά από τη λίστα.</div>
+    <div id="detail" class="card hidden">
+      <h2 id="dTitle"></h2>
+      <div id="dBadges"></div>
+      <p id="dDesc" class="muted" style="white-space:pre-line"></p>
+      <img id="dImg" class="photo hidden" alt="Φωτογραφία με θολωμένα πρόσωπα">
+      <div id="dAi" class="card" style="background:#f8fafc"></div>
+      <div id="dWorks" class="card works hidden" aria-live="polite"></div>
+      <label for="dReply"><b>Απάντηση προς τον πολίτη</b> <span class="muted">(πρόταση AI, μπορείτε να την αλλάξετε)</span></label>
+      <textarea id="dReply"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button id="approve" class="good">✔ Έγκριση & αποστολή συνεργείου</button>
+        <button id="resolve" class="ghost">Επιλύθηκε</button>
+        <button id="reject" class="bad">Απόρριψη</button>
+      </div>
+      <p class="muted">Η AI προτείνει μόνο. Καμία αποστολή συνεργείου δεν γίνεται χωρίς έγκριση υπαλλήλου.</p>
+      <ul class="timeline" id="dHist"></ul>
+    </div>
+  </div>
+</div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+// a11y: MapLibre markers carry aria-label on a plain div; give them a role (axe: aria-prohibited-attr)
+new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes)
+  if (n.classList && n.classList.contains("maplibregl-marker") && !n.getAttribute("role")) n.setAttribute("role", "img");
+}).observe(document.body, { childList: true, subtree: true });
+
+const STATUS_EL = { submitted: "Νέα", received: "Παραλήφθηκε", in_progress: "Σε εξέλιξη", resolved: "Επιλύθηκε", rejected: "Απορρίφθηκε" };
+const STATUS_CLS = { submitted: "warn", received: "", in_progress: "info", resolved: "good", rejected: "bad" };
+let items = [], sel = null, markers = [], threshold = 0.85;
+const TIER_CLS = { A: "good", B: "warn", "?": "" };
+const fmtDate = iso => iso ? new Date(iso).toLocaleDateString("el-GR") : "—";
+const eur = v => v == null ? "—" : "€" + Number(v).toLocaleString("el-GR", { maximumFractionDigits: 0 });
+
+const map = new maplibregl.Map({ container: "opmap", center: [23.7437, 37.9667], zoom: 14,
+  style: { version: 8, sources: { osm: { type: "raster", tileSize: 256,
+    tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: "© OpenStreetMap" } },
+    layers: [{ id: "osm", type: "raster", source: "osm" }] } });
+
+async function api(path, opts = {}) { const r = await fetch(path, opts); const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || j.error?.message || r.statusText); return j; }
+
+function badge(text, cls = "") { const b = document.createElement("span"); b.className = "badge " + cls; b.textContent = text;
+  b.style.marginRight = "6px"; return b; }
+
+async function load() {
+  const r = await api("/api/reports"); items = r.items; threshold = r.confidence_threshold;
+  $("#count").textContent = `${items.filter(i => ["submitted", "received"].includes(i.status)).length} προς έλεγχο`;
+  const list = $("#list"); list.innerHTML = "";
+  for (const it of items) {
+    const d = document.createElement("div"); d.className = "ticket" + (sel === it.id ? " sel" : "");
+    const t = document.createElement("div"); t.className = "t"; t.textContent = it.title; d.appendChild(t);
+    const m = document.createElement("div"); m.className = "muted"; m.textContent = `${it.id} · ${it.address}`; d.appendChild(m);
+    const bs = document.createElement("div"); bs.style.marginTop = "6px";
+    bs.appendChild(badge(STATUS_EL[it.status] || it.status, STATUS_CLS[it.status]));
+    if (it.local) { bs.appendChild(badge(`σοβαρότητα ${it.local.severity}/5`, it.local.severity >= 4 ? "bad" : ""));
+      if (it.local.accessibility_blocker) bs.appendChild(badge("♿ εμπόδιο", "bad"));
+      if (it.local.needs_check) bs.appendChild(badge("ελέγξτε κατηγορία", "warn")); }
+    if (it.cluster_size > 1) bs.appendChild(badge(`${it.cluster_size} κοντινές αναφορές`, "info"));
+    if (it.district_name) bs.appendChild(badge(it.district_name));
+    if (it.guarantee && it.guarantee.clock.status === "ACTIVE") bs.appendChild(badge("🏗 εγγύηση;", "good"));
+    if (it.upvotes) bs.appendChild(badge(`+${it.upvotes} πολίτες`, "info"));
+    d.appendChild(bs); d.onclick = () => select(it.id); list.appendChild(d);
+  }
+  markers.forEach(m => m.remove()); markers = [];
+  for (const it of items.filter(i => i.lat != null)) {
+    const color = { in_progress: "#0b5cad", resolved: "#1a7f37", rejected: "#888" }[it.status] || "#b42318";
+    const mk = new maplibregl.Marker({ color }).setLngLat([it.lng, it.lat]).addTo(map);
+    const me = mk.getElement(); me.onclick = () => select(it.id);
+    me.setAttribute("role", "button"); me.tabIndex = 0; me.setAttribute("aria-label", `Αναφορά ${it.id}: ${it.title}`);
+    me.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(it.id); } };
+    markers.push(mk);
+  }
+  if (sel) render(items.find(i => i.id === sel), false);
+}
+
+function select(id) { sel = id; render(items.find(i => i.id === id), true);
+  document.querySelectorAll(".ticket").forEach((el, i) => el.classList.toggle("sel", items[i].id === id)); }
+
+function render(it, fresh) {
+  if (!it) return;
+  $("#empty").classList.add("hidden"); $("#detail").classList.remove("hidden");
+  $("#dTitle").textContent = `${it.title} · ${it.id}`;
+  const bs = $("#dBadges"); bs.innerHTML = ""; bs.appendChild(badge(STATUS_EL[it.status] || it.status, STATUS_CLS[it.status]));
+  if (it.cluster_size > 1) bs.appendChild(badge(`Ομάδα: ${it.cluster_size} αναφορές σε 100 m → ένα δρομολόγιο`, "info"));
+  $("#dDesc").textContent = it.description || "";
+  const L = it.local, ai = $("#dAi");
+  if (L) {
+    $("#dImg").src = L.photo_url; $("#dImg").classList.remove("hidden");
+    ai.innerHTML = "";
+    const h = document.createElement("b"); h.textContent = "Πρόταση AI"; ai.appendChild(h);
+    const p = document.createElement("p");
+    p.textContent = `Κατηγορία: ${L.category} · σοβαρότητα ${L.severity}/5 · βεβαιότητα ${(L.confidence * 100).toFixed(0)}% ` +
+      `· πρόσωπα θολωμένα: ${L.faces_blurred} · μοντέλο: ${L.ai.provider || "?"}`;
+    ai.appendChild(p);
+    if (L.needs_check) ai.appendChild(badge(`Κάτω από ${threshold * 100}%: επιβεβαιώστε την κατηγορία πριν την έγκριση`, "warn"));
+    if (fresh) $("#dReply").value = L.ai.draft_reply_el || "";
+  } else { $("#dImg").classList.add("hidden"); ai.textContent = "Χωρίς φωτογραφία/AI (αναφορά από άλλο κανάλι)."; }
+  renderWorks(it, fresh);
+  $("#dHist").innerHTML = "";
+  for (const h of it.history || []) { const li = document.createElement("li");
+    li.textContent = `${new Date(h.at).toLocaleString("el-GR")} · ${STATUS_EL[h.status] || h.status}${h.note ? " — " + h.note : ""}`;
+    $("#dHist").appendChild(li); }
+  if (fresh && it.lat != null) map.flyTo({ center: [it.lng, it.lat], zoom: 17 });
+  const open = ["submitted", "received"].includes(it.status);
+  $("#approve").disabled = !open; $("#reject").disabled = !open; $("#resolve").disabled = it.status !== "in_progress";
+}
+
+function ev(f) { return f && f.value != null ? f : null; }
+function renderWorks(it, fresh) {
+  const box = $("#dWorks"), g = it.guarantee;
+  $("#approve").textContent = "✔ Έγκριση & αποστολή συνεργείου";
+  if (!g) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+  if (!fresh && box.dataset.id === it.id + g.id) return;  // keep an open dossier while polling
+  box.dataset.id = it.id + g.id; box.classList.remove("hidden"); box.innerHTML = "";
+  const c = g.clock, h = document.createElement("b"); h.textContent = "🏗 Stoa · Ιστορικό έργων σε αυτό το σημείο"; box.appendChild(h);
+  const hb = document.createElement("div"); hb.style.margin = "6px 0";
+  hb.appendChild(badge(c.status === "ACTIVE" ? "εντός εγγύησης;" : c.status === "ENDED" ? "εγγύηση έληξε" : "ΑΓΝΩΣΤΟ",
+    c.status === "ACTIVE" ? "good" : c.status === "ENDED" ? "" : "warn"));
+  if (c.status === "ACTIVE") hb.appendChild(badge("Tier " + c.tier, TIER_CLS[c.tier]));
+  hb.appendChild(badge(g.distance_m + " m από την αναφορά", "info"));
+  box.appendChild(hb);
+  const p = document.createElement("p"); p.style.margin = "4px 0";
+  p.textContent = `${g.works_type_el} · ${g.street?.value || "?"} · ${g.contractor?.value || "ανάδοχος ΑΓΝΩΣΤΟΣ"} · πληρωμές ${eur(g.amount_paid_eur?.value)}`;
+  box.appendChild(p);
+  const hl = document.createElement("p"); hl.style.margin = "4px 0"; hl.innerHTML = "<b></b>"; hl.querySelector("b").textContent = g.headline_el; box.appendChild(hl);
+  const f = document.createElement("p"); f.className = "muted"; f.style.margin = "4px 0";
+  f.textContent = c.formula + (c.term_label ? ` · περάτωση ${c.anchor_label}, όρος εγγύησης ${c.term_label}` : "");
+  box.appendChild(f);
+  const q = ev(g.completion_date);
+  if (q?.quote) { const bq = document.createElement("blockquote"); bq.textContent = `«${q.quote}» · ΑΔΑ ${q.source?.ada}, σελ. ${q.source?.page}`; box.appendChild(bq); }
+  if (c.status === "ACTIVE") {
+    $("#approve").textContent = "✔ Έγκριση (συνεργείο Δήμου)";
+    const warn = document.createElement("p"); warn.className = "badge warn"; warn.style.display = "block"; warn.style.padding = "8px";
+    warn.textContent = "Πριν στείλετε συνεργείο του Δήμου: η βλάβη ίσως καλύπτεται από την εγγύηση του αναδόχου. Ελέγξτε ότι είναι φθορά του έργου (όχι εμπόδιο ή εκσκαφή ΕΥΔΑΠ/ΔΕΔΔΗΕ).";
+    box.appendChild(warn);
+    const b = document.createElement("button"); b.className = "ghost"; b.textContent = "📄 Προσχέδιο φακέλου προς ανάδοχο";
+    b.onclick = async () => { const d = await api(`/api/reports/${it.id}/dossier`, { method: "POST" });
+      let pre = box.querySelector("pre"); if (!pre) { pre = document.createElement("pre"); box.appendChild(pre); }
+      pre.textContent = d.text; };
+    box.appendChild(b);
+  }
+}
+
+async function loadRadar() {
+  const days = $("#radarDays").value, r = await api(`/api/works/radar?days=${days}`);
+  $("#radarHead").textContent = `${r.items.length} έργα · ${eur(r.total_eur)} πληρωμές · κάλυψη ${r.coverage.usable}/${r.coverage.total} με ημερομηνία · ${r.source} ${r.snapshot || ""}`;
+  const box = $("#radarList"); box.innerHTML = "";
+  for (const w of r.items) {
+    const d = document.createElement("div"); d.className = "ritem";
+    d.textContent = `${w.street?.value} · ${w.works_type_el} · λήγει ${fmtDate(w.clock.until)} (${w.clock.days_left} ημ.) · ${eur(w.amount_paid_eur?.value)}`;
+    d.prepend(badge("Tier " + w.clock.tier, TIER_CLS[w.clock.tier]));
+    const [lng, lat] = w.geometry.coordinates[Math.floor(w.geometry.coordinates.length / 2)];
+    d.onclick = () => map.flyTo({ center: [lng, lat], zoom: 17 });
+    box.appendChild(d);
+  }
+}
+$("#radarDays").onchange = loadRadar;
+
+async function loadEquity() {
+  const r = await api("/api/equity"), box = $("#equity");
+  if (!r.items.length) { box.textContent = "Καμία αναφορά ακόμη."; return; }
+  const t = document.createElement("table");
+  t.innerHTML = "<thead><tr><th scope='col'>Κοινότητα</th><th scope='col'>Αναφορές</th><th scope='col'>Επιλύθηκαν</th><th scope='col'>Ώρες έως 1η ενέργεια</th></tr></thead>";
+  const tb = document.createElement("tbody");
+  for (const g of r.items) { const tr = document.createElement("tr");
+    for (const v of [g.district, g.reports, g.resolved_share == null ? "—" : Math.round(g.resolved_share * 100) + "%",
+                     g.median_hours_to_first_action ?? "—"]) { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }
+    tb.appendChild(tr); }
+  t.appendChild(tb); box.innerHTML = ""; box.appendChild(t);
+  const n = document.createElement("p"); n.className = "muted"; n.textContent = `Όρια περιοχών: ${r.district_source}. Μεγάλες διαφορές = άνιση εξυπηρέτηση.`; box.appendChild(n);
+}
+
+function addWorksLayer() {
+  map.addSource("works", { type: "geojson", data: "/api/works/geojson" });
+  map.addLayer({ id: "works", type: "line", source: "works", filter: ["!=", ["get", "status"], "ENDED"], paint: {
+    "line-width": 7, "line-opacity": .8,
+    "line-color": ["match", ["get", "status"], "ACTIVE", ["match", ["get", "tier"], "A", "#1a7f37", "#b35900"], "#6b4fbb"] } });
+  map.addLayer({ id: "works-ended", type: "line", source: "works", filter: ["==", ["get", "status"], "ENDED"],
+    paint: { "line-width": 5, "line-color": "#8a94a3", "line-dasharray": [1, 1] } });
+  for (const id of ["works", "works-ended"]) map.on("click", id, e => { const p = e.features[0].properties;
+    new maplibregl.Popup().setLngLat(e.lngLat).setText(`${p.street} · ${p.works_type_el} · ${p.contractor} · ${p.headline_el} [${p.ada || "-"}]`).addTo(map); });
+}
+
+async function act(kind) {
+  if (!sel) return;
+  const note = kind === "approve" ? `Εγκρίθηκε από υπάλληλο · συνεργείο καθ' οδόν. ${$("#dReply").value}`.trim() : undefined;
+  await api(`/api/reports/${sel}/${kind}`, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ note }) });
+  await load();
+}
+$("#approve").onclick = () => act("approve"); $("#reject").onclick = () => act("reject"); $("#resolve").onclick = () => act("resolve");
+
+api("/api/health").then(h => { $("#mode").textContent = h.mock ? "MOCK δεδομένα" : "AthensGov Sandbox"; $("#mode").classList.toggle("mock", h.mock); });
+map.on("load", () => { addWorksLayer(); load(); loadRadar(); loadEquity(); }); setInterval(load, 5000); setInterval(loadEquity, 15000);
+</script>
+</body>
+</html>

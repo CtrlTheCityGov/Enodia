@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+data/*.db
+data/photos/*.jpg
+.pytest_cache/
+data/stoa/raw/
+node_modules/
+data/ckan/

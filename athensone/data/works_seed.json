@@ -1,0 +1,73 @@
+{
+  "source": "SEED",
+  "snapshot": "2026-11-21",
+  "organisation": "Δήμος Αθηναίων (δείγμα)",
+  "note": "ΦΑΝΤΑΣΤΙΚΑ δεδομένα επίδειξης. Οι ΑΔΑ, οι ανάδοχοι και οι οδοί δεν είναι πραγματικοί. Αντικαθίστανται από data/stoa/works.json (έξοδος του Stoa pipeline από Διαύγεια + ΚΗΜΔΗΣ).",
+  "works": [
+    {
+      "id": "W-SEED-001",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "title": {"value": "Ανακατασκευή πεζοδρομίων (δείγμα)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-001", "page": 1}},
+      "street": {"value": "Δείγμα Οδός Α", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-001", "page": 1}, "quote": "επί της οδού Δείγμα Α, από τον αρ. 2 έως τον αρ. 40"},
+      "contractor": {"value": "Ανάδοχος Α (SEED)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-001", "page": 1}},
+      "amount_paid_eur": {"value": 48200.0, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-002", "page": 1}},
+      "completion_date": {"value": "2025-09-15", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-003", "page": 2}, "quote": "βεβαιωμένη περάτωση των εργασιών την 15-09-2025"},
+      "guarantee_months": {"value": 15, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-001", "page": 3}, "quote": "χρόνος εγγύησης δεκαπέντε (15) μήνες"},
+      "final_acceptance": false,
+      "geometry": {"type": "LineString", "coordinates": [[23.7410, 37.9656], [23.7420, 37.9660], [23.7430, 37.9664]]}
+    },
+    {
+      "id": "W-SEED-002",
+      "works_type": "asphalt",
+      "resolution": "street",
+      "title": {"value": "Ασφαλτόστρωση οδών (δείγμα)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-010", "page": 1}},
+      "street": {"value": "Δείγμα Οδός Β", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-010", "page": 1}},
+      "contractor": {"value": "Ανάδοχος Β (SEED)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-010", "page": 1}},
+      "amount_paid_eur": {"value": 112000.0, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-011", "page": 1}},
+      "completion_date": {"value": "2025-10-01", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-012", "page": 1}, "quote": "περατώθηκαν την 01-10-2025"},
+      "guarantee_months": {"value": null, "label": "UNKNOWN"},
+      "final_acceptance": false,
+      "geometry": {"type": "LineString", "coordinates": [[23.7385, 37.9708], [23.7395, 37.9712], [23.7405, 37.9716]]}
+    },
+    {
+      "id": "W-SEED-003",
+      "works_type": "lighting",
+      "resolution": "street",
+      "title": {"value": "Αναβάθμιση ηλεκτροφωτισμού (δείγμα)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-020", "page": 1}},
+      "street": {"value": "Δείγμα Οδός Γ", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-020", "page": 1}},
+      "contractor": {"value": "Ανάδοχος Γ (SEED)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-020", "page": 1}},
+      "amount_paid_eur": {"value": 31900.0, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-021", "page": 1}},
+      "completion_date": {"value": "2022-03-01", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-022", "page": 1}},
+      "guarantee_months": {"value": 15, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-020", "page": 2}},
+      "final_acceptance": true,
+      "geometry": {"type": "LineString", "coordinates": [[23.7440, 37.9690], [23.7448, 37.9693], [23.7456, 37.9696]]}
+    },
+    {
+      "id": "W-SEED-004",
+      "works_type": "paving",
+      "resolution": "street",
+      "title": {"value": "Πλακόστρωση πλατείας (δείγμα)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-030", "page": 1}},
+      "street": {"value": "Δείγμα Πλατεία Δ", "label": "INFERRED", "source": {"ada": "SEED-ΑΔΑ-030", "page": 1}},
+      "contractor": {"value": "Ανάδοχος Δ (SEED)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-030", "page": 1}},
+      "amount_paid_eur": {"value": 76500.0, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-031", "page": 1}},
+      "completion_date": {"value": null, "label": "UNKNOWN"},
+      "guarantee_months": {"value": null, "label": "UNKNOWN"},
+      "final_acceptance": false,
+      "geometry": {"type": "LineString", "coordinates": [[23.7432, 37.9670], [23.7437, 37.9672], [23.7442, 37.9670]]}
+    },
+    {
+      "id": "W-SEED-005",
+      "works_type": "ramp",
+      "resolution": "street",
+      "title": {"value": "Κατασκευή ραμπών ΑμεΑ (δείγμα)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-040", "page": 1}},
+      "street": {"value": "Δείγμα Οδός Ε", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-040", "page": 1}},
+      "contractor": {"value": "Ανάδοχος Α (SEED)", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-040", "page": 1}},
+      "amount_paid_eur": {"value": 58000.0, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-041", "page": 1}},
+      "completion_date": {"value": "2026-06-20", "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-042", "page": 1}},
+      "guarantee_months": {"value": 15, "label": "CITED", "source": {"ada": "SEED-ΑΔΑ-040", "page": 2}},
+      "final_acceptance": false,
+      "geometry": {"type": "LineString", "coordinates": [[23.7450, 37.9700], [23.7456, 37.9703], [23.7462, 37.9705]]}
+    }
+  ]
+}

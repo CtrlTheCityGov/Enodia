@@ -1,0 +1,6 @@
+{
+  "name": "athensone-a11y",
+  "private": true,
+  "description": "Only for the accessibility check: python scripts/a11y_check.py",
+  "devDependencies": { "axe-core": "^4.10.0" }
+}
