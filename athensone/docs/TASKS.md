@@ -165,7 +165,7 @@ From the T4 review. **Files:** `app/stoa_ask.py`, `tests/test_T9_fix_t4.py`.
 
 | Task | Owner | State |
 |---|---|---|
-| T10 City districts and air stations from CKAN | E | approved (advisor default A-21), running |
+| T10 City districts and air stations from CKAN | E | approved with leftovers, on main (72 live stations) |
 
 ### T10: City districts and air stations from CKAN (owner E)
 Checked live on Sat 21 Nov: all 5 datasets answer, and `env-all-stations` has fresh rows (AQI, temperature, PM) up to

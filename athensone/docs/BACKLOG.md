@@ -17,3 +17,5 @@ Later improvements, not work to do now. Each with its reason.
 - T5: when CenterFace runs and finds 0 faces, Haar isn't tried as a second check (by design: fewer false blurs).
 - T5: `test_original_never_on_disk` re-detects with threshold 0.5, not the app's 0.2 (blur still gives 0 at 0.2).
 - T5: CenterFace model licence (MIT, from memory): open the Star-Clouds/CenterFace LICENSE before the final push.
+- T10: `_rings()` ignores polygon holes; `_registry()` reads column names from the first row only; WKT parser
+  accepts junk Z/M tokens and unclosed 3-point rings. All low; City data today has none of these.
