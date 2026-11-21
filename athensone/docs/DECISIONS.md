@@ -73,3 +73,6 @@
   resolve in git history (`git show 18e6f2f:athensone/docs/TASKS.md`).
 - **Q-1** (open, both owners) Path for the SPEC's new `GET /health` (on-duty pharmacies/hospitals): `/api/health`
   is already the server-status route used by tests. Proposal: `GET /api/onduty?date=`.
+- **A-31** (Sat 21 Nov, night) Track B may use Claude (Claude Code CLI, Opus) for the **code** step of some tasks:
+  `CLAUDE_STEPS=code agents/drive.sh B<n>`. Tests and review stay on Gemini in Antigravity. Default picks: B1 `api.js`,
+  B6 report flow (privacy), B8 Stoa citations, B9 route cost per profile; the rest run fully in Antigravity.

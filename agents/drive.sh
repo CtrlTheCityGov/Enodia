@@ -8,6 +8,8 @@
 #                 tests Gemini Hydrogen, code $CODE_MODEL (default Gemini Neon), review Gemini Argon.
 #   RUNNER=claude (default otherwise) Claude Code CLI in the foreground, one step after the other:
 #                 tests $TESTS_MODEL (sonnet), code $CODE_MODEL (opus), review $REVIEW_MODEL (sonnet).
+# Mixed: CLAUDE_STEPS="code" (space-separated) sends just those steps to the Claude CLI and the rest to Antigravity,
+#   e.g. CLAUDE_STEPS=code agents/drive.sh B1  -> tests Gemini, code Claude Opus, review Gemini.
 # The rule that matters: the test writer and the reviewer are never the same agent/model as the implementer.
 n=$1; shift; steps=("$@"); (( $#steps )) || steps=(tests code review); t=${(L)n}
 [[ $n == [AB]<-> ]] || { echo "usage: drive.sh A<n>|B<n> [tests code review]"; exit 64; }
@@ -18,7 +20,8 @@ if [[ -z $RUNNER ]]; then (( $+commands[agy] && $+commands[hc] )) && RUNNER=agy 
 for step in $steps; do
   prompt="Read $W/$n-$step-prompt.md and do exactly what it says."
   [[ -f $W/$n-$step-prompt.md ]] || { echo "missing $W/$n-$step-prompt.md (run agents/gen-prompts.sh)"; exit 66; }
-  if [[ $RUNNER == claude ]]; then
+  runner=$RUNNER; [[ " $CLAUDE_STEPS " == *" $step "* ]] && runner=claude
+  if [[ $runner == claude ]]; then
     case $step in
       code)   model=${CODE_MODEL:-opus} ;;
       review) model=${REVIEW_MODEL:-sonnet} ;;

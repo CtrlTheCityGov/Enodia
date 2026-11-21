@@ -2,7 +2,8 @@
 
 Board for the Dev B track of [SPEC.md](SPEC.md). Workflow and rules: [`../../CLAUDE.md`](../../CLAUDE.md).
 Base branch: `dev-b`. Every task: branch `agent/B<n>-<name>` in `.worktrees/B<n>`, merged into `dev-b` on Evgenii's
-word. Cards get a full test list (like [TASKS_A.md](TASKS_A.md)) before they start.
+word. Code step on Claude (A-31): B1, B6, B8, B9 (`CLAUDE_STEPS=code agents/drive.sh B<n>`); the rest
+fully in Antigravity. Cards get a full test list (like [TASKS_A.md](TASKS_A.md)) before they start.
 
 Dev B owns (SPEC «Ιδιοκτησία αρχείων»): `web/js/api.js`, `web/mock/*`, `web/js/ui/{report,points,stoa,workstab}.js`,
 the backend (`app/`, `tests/`, `scripts/`, `data/`). Existing routes don't change (SPEC rule); new ones are added.

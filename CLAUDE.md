@@ -100,7 +100,9 @@ for n in A2 A3 A4; do agents/drive.sh $n & done
 Antigravity in a background `hc` session (`hc read a1-code`, `hc send a1-code "..."`, `hc get a1-code --json`).
 **`RUNNER=claude`** (default otherwise) runs the steps one after another with the Claude Code CLI
 (`claude -p`): tests and review on Sonnet, code on Opus; override with `TESTS_MODEL`, `CODE_MODEL`,
-`REVIEW_MODEL`. The chain stops if the code step made no `<task>:` commit (the implementer stopped with questions:
+`REVIEW_MODEL`. **Mixed:** `CLAUDE_STEPS="code"` sends only the listed steps to the Claude CLI and the rest to
+Antigravity (tests and review stay on Gemini, so they are still a different model from the implementer). Track B uses
+this for the code step of its harder tasks (A-31). The chain stops if the code step made no `<task>:` commit (the implementer stopped with questions:
 read `.worktrees/<task>-code-report.md`).
 
 After the review: the advisor reads the three reports, walks the owner through, and on "merge A1":
