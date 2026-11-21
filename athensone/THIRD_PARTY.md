@@ -60,3 +60,10 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | Διαύγεια OpenData API | Public-sector open data (ν. 3861/2010, ν. 4727/2020 open-data reuse); licence text not re-checked tonight | Δήμος Αθηναίων decisions (αναθέσεις, αναλήψεις, πληρωμές): ΑΔΑ, subject, date, amount. Saved search in `tests/fixtures/B2/diavgeia.json` | https://diavgeia.gov.gr/opendata |
 | ΚΗΜΔΗΣ OpenData API | Public-sector open data (ν. 4412/2016 art. 38, ν. 4727/2020); licence text not re-checked tonight | Contracts: ΑΔΑΜ, contractor, amounts, dates, linked ΑΔΑ. Saved page in `tests/fixtures/B2/khmdhs.json` (civil servants' e-mail and signer names removed) | https://cerpp.eprocurement.gov.gr/khmdhs-opendata |
 | OpenStreetMap (via Overpass, once, by hand) | ODbL 1.0 | Street segments in the curated `STREETS` table of `scripts/fetch_works.py` | https://www.openstreetmap.org/copyright |
+
+### B3: Transit data sources (`app/transit_src.py`, `scripts/fetch_transit.py`)
+
+| Source | Licence / Terms | Role | URL |
+|---|---|---|---|
+| OpenStreetMap via Overpass API | ODbL 1.0 (`© OpenStreetMap contributors`) | Static Athens Metro (M1/M2/M3) and Suburban Railway (Προαστιακός A1–A4) line geometries, official line colours, stations, and wheelchair/elevator tags (`scripts/fetch_transit.py` → `data/transit/static.json`) | https://overpass-api.de/api/interpreter |
+| OASA Telematics API | Public transit open telematics service by OASA S.A. (unverified formal licence file; accessed server-side only with 20 s cache, never redistributed as bulk dataset) | Live bus locations (`getBusLocation`) and stop arrival waits (`getStopArrivals`) in `app/transit_src.py` | https://telematics.oasa.gr/api/ |
