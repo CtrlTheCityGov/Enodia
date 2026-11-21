@@ -24,7 +24,8 @@ function el(tag, className, text) {
   return node;
 }
 
-export async function mount({ api, root, bus }) {
+export async function mount({ api, root, container, bus }) {
+  root = container || root;
   let state = { balance: 0, district: null, history: [], rewards: [], source: null };
 
   // --- pill: button with balance + district progress bar

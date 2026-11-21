@@ -89,8 +89,9 @@ function mapCenter(map) {
  * Mount the bubble + panel into ctx.root (A-35: ctx = {map, api, root, bus}).
  * Expects `ctx.api.stoaAsk({question, center, history})` → `{answer_md, citations}` (B1, api.js).
  */
-export function mount({ map, api, root, bus }) {
-  const doc = root.ownerDocument;
+export function mount({ map, api, root, container, bus }) {
+  root = container || root;
+  const doc = root.ownerDocument || globalThis.document;
   const el = (tag, props = {}) => Object.assign(doc.createElement(tag), props);
   const history = [];
 

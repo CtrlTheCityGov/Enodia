@@ -217,8 +217,9 @@ async function read(key, path, init, fallback, { cache = true } = {}) {
 
 // ---------- reads (SPEC «Backend contracts», paths per A-33) ----------
 
-// bbox = [minLon, minLat, maxLon, maxLat]. Mock answers are the whole snapshot, not cut to bbox.
-export function env(bbox) {
+// bbox = [minLon, minLat, maxLon, maxLat] or { bbox }. Mock answers are the whole snapshot, not cut to bbox.
+export function env(bboxOrOpts) {
+  const bbox = bboxOrOpts && typeof bboxOrOpts === "object" && !Array.isArray(bboxOrOpts) ? bboxOrOpts.bbox : bboxOrOpts;
   return read("env", `/api/map/env${query({ bbox })}`, undefined, () => mockJson("env.json"));
 }
 
@@ -227,12 +228,14 @@ export function works({ bbox, status: workStatus } = {}) {
     () => mockJson("works.geojson"));
 }
 
-export function transit(bbox) {
+export function transit(bboxOrOpts) {
+  const bbox = bboxOrOpts && typeof bboxOrOpts === "object" && !Array.isArray(bboxOrOpts) ? bboxOrOpts.bbox : bboxOrOpts;
   return read("transit", `/api/map/transit${query({ bbox })}`, undefined, () => mockJson("transit.geojson"));
 }
 
-// On-duty pharmacies and hospitals; date = "YYYY-MM-DD".
-export function health(date) {
+// On-duty pharmacies and hospitals; date = "YYYY-MM-DD" or { date }.
+export function health(dateOrOpts) {
+  const date = dateOrOpts && typeof dateOrOpts === "object" ? dateOrOpts.date : dateOrOpts;
   return read("health", `/api/map/health${query({ date })}`, undefined, () => mockJson("health.geojson"));
 }
 
@@ -246,18 +249,26 @@ export function points() {
   return read("points", "/api/map/points", undefined, () => mockJson("points.json"));
 }
 
-// center = [lon, lat]; history = earlier turns of the chat.
+// center = [lon, lat]; history = earlier turns of the chat. Accepts (question, center, history) or ({question, center, history}).
 // Never cached: question and center would sit on the device (A-38). Offline -> mock/stoa.json.
-export function stoaAsk(question, center, history = []) {
-  return read("stoa", "/api/map/stoa_ask", postJson({ question, center, history }),
+export function stoaAsk(questionOrOpts, center, history = []) {
+  const isObj = questionOrOpts && typeof questionOrOpts === "object" && !Array.isArray(questionOrOpts);
+  const question = isObj ? questionOrOpts.question : questionOrOpts;
+  const c = isObj ? questionOrOpts.center : center;
+  const h = isObj ? (questionOrOpts.history ?? []) : history;
+  return read("stoa", "/api/map/stoa_ask", postJson({ question, center: c, history: h }),
     () => stoaFromMock(question), { cache: false });
 }
 
-// from, to = [lon, lat]; profile = "wheelchair" | "stroller" | "cool".
+// from, to = [lon, lat]; profile = "wheelchair" | "stroller" | "cool". Accepts (from, to, profile) or ({from, to, profile}).
 // Never cached: from and to are the user's position and destination (A-38). Offline -> straight line.
-export function routing(from, to, profile) {
-  return read("routing", "/api/map/routing", postJson({ from, to, profile }),
-    async () => straightLine(from, to), { cache: false });
+export function routing(fromOrOpts, to, profile) {
+  const isObj = fromOrOpts && typeof fromOrOpts === "object" && !Array.isArray(fromOrOpts);
+  const f = isObj ? fromOrOpts.from : fromOrOpts;
+  const t = isObj ? fromOrOpts.to : to;
+  const p = isObj ? fromOrOpts.profile : profile;
+  return read("routing", "/api/map/routing", postJson({ from: f, to: t, profile: p }),
+    async () => straightLine(f, t), { cache: false });
 }
 
 // Mock-only files (card B1): always source "mock".
@@ -275,15 +286,21 @@ export async function base() {
 
 // ---------- writes: no fake answers ----------
 
-// fields = {category, lon, lat, note, work_id?, photo?} (SPEC: multipart). Rejects with
+// fields = {category, lon, lat, note, work_id?, photo?} or a FormData (SPEC: multipart). Rejects with
 // OfflineError when the backend can't be reached; the caller queues it (SPEC «Offline fallback» 5).
 // Rejects with RejectedError {status, detail} when the server says no (A-38); the caller shows why.
 export async function sendReport(fields) {
-  const form = new FormData();
-  for (const [name, value] of Object.entries(fields || {})) {
-    if (value === undefined || value === null) continue;
-    if (name === "user_id") continue; // identity is the cookie only (A-34)
-    form.append(name, value instanceof Blob ? value : String(value));
+  let form;
+  if (typeof FormData !== "undefined" && fields instanceof FormData) {
+    form = fields;
+    form.delete("user_id"); // identity is the cookie only (A-34)
+  } else {
+    form = new FormData();
+    for (const [name, value] of Object.entries(fields || {})) {
+      if (value === undefined || value === null) continue;
+      if (name === "user_id") continue; // identity is the cookie only (A-34)
+      form.append(name, value instanceof Blob ? value : String(value));
+    }
   }
   let data;
   try {

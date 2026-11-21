@@ -98,8 +98,9 @@ function el(tag, attrs = {}, text = "") {
   return node;
 }
 
-// ctx = {map, api, root, bus} (DECISIONS.md A-35).
-export function mount({ map, api, root, bus }) {
+// ctx = {map, api, root, container, bus} (DECISIONS.md A-35).
+export function mount({ map, api, root, container, bus }) {
+  root = container || root;
   const storage = window.localStorage;
   const state = { category: null, work_id: null, marker: null };
 
