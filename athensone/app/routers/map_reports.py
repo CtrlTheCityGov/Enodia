@@ -55,27 +55,48 @@ async def create_map_report(
     if category not in map_reports.CATEGORIES:
         raise HTTPException(422, f"unknown category; expected one of {', '.join(map_reports.CATEGORIES)}")
     name, blur = None, {"faces": 0, "plates": 0}
+    privacy_status = privacy.PRIVACY_PROCESSED
     if photo is not None and photo.filename:
         raw = await photo.read()
         if len(raw) > MAX_PHOTO_BYTES:
             raise HTTPException(413, "photo too large")
         try:
-            p = privacy.process_photo(raw)  # faces + plates blurred, EXIF gone, all in memory
-        except Exception:
-            raise HTTPException(400, "not a readable image")
+            p = privacy.process_photo(raw, content_type=photo.content_type)  # fail-closed: faces + plates + EXIF
+        except privacy.PrivacyProcessingError as exc:
+            if exc.code == "file_too_large":
+                raise HTTPException(413, "photo too large") from exc
+            if exc.code in ("invalid_image", "invalid_mime", "invalid_format", "invalid_dimensions", "empty_image"):
+                raise HTTPException(400, "not a readable image") from exc
+            raise HTTPException(503, "privacy processing failed; unprocessed photo rejected") from exc
+        except Exception as exc:
+            raise HTTPException(400, "not a readable image") from exc
         name = f"{uuid.uuid4().hex}.jpg"
         (config.PHOTO_DIR / name).write_bytes(p["jpeg"])  # only the blurred, EXIF-free copy is ever stored
-        blur = {"faces": p["faces"], "plates": p["plates"]}
+        privacy_status = p["privacy_status"]
+        blur = {"faces": p["faces"], "plates": p["plates"], "status": privacy_status}
     photo_url = f"/photos/{name}" if name else None
 
     token = points.ensure_token(request, response)
-    saved = map_reports.create(token, category, lon, lat, note, work_id or None, name,
-                               district=ckan.district_of(lat, lon))
+    saved = map_reports.create(
+        token, category, lon, lat, note, work_id or None, name,
+        district=ckan.district_of(lat, lon),
+        privacy_status=privacy_status,
+        faces_blurred=blur["faces"],
+        plates_blurred=blur["plates"],
+    )
+    city_request_id = None
     if category in map_reports.CITY_CATEGORIES and not saved["duplicate"]:
         absolute = f"{str(request.base_url).rstrip('/')}{photo_url}" if photo_url else None
-        map_reports.link_city_request(saved["id"], _city_request(category, saved["lon"], saved["lat"], note, absolute))
-    return {"id": saved["id"], "photo_url_blurred": photo_url, "points_awarded": saved["points_awarded"],
-            "blur": blur}
+        city_request_id = _city_request(category, saved["lon"], saved["lat"], note, absolute)
+        map_reports.link_city_request(saved["id"], city_request_id)
+    return {
+        "id": saved["id"],
+        "photo_url_blurred": photo_url,
+        "points_awarded": saved["points_awarded"],
+        "blur": blur,
+        "privacy_status": privacy_status,
+        "city_request_id": city_request_id,
+    }
 
 
 @router.get("/api/map/reports")

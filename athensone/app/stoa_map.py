@@ -12,20 +12,20 @@ from __future__ import annotations
 import math
 from typing import Any
 
-from . import stoa_ask
+from . import language, stoa_ask
 from .geo import haversine_km
 
 # Same wording as the Stoa refusal (CLAUDE.md "A source on every answer"; app/stoa_ask.py REFUSAL_TEXT). Sure.
 REFUSAL_MD = stoa_ask.REFUSAL_TEXT
+REFUSAL_MD_EN = "No verified municipal records were found for this query."
 
 # How many on-duty places to list, nearest first. Implementer's choice to keep the panel short (owner may change).
 MAX_ONDUTY = 3
 
-# Question words that send a question to the on-duty provider. Matched on stoa_ask.normalize()d text
-# (accent-free, lower case), so «Φαρμακείο», «φαρμακεία», «ΦΑΡΜΑΚΕΙΟ» all match. Chosen by hand; sure.
-PHARMACY_STEMS = ("φαρμακ",)
-HOSPITAL_STEMS = ("νοσοκομ",)
-ONDUTY_STEMS = ("εφημερ",)  # «εφημερεύει», «εφημερία»: pharmacies and hospitals both
+# Question words that send a question to the on-duty provider (Greek + Greeklish/English mapped via language.py).
+PHARMACY_STEMS = ("φαρμακ", "pharmac")
+HOSPITAL_STEMS = ("νοσοκομ", "hospit")
+ONDUTY_STEMS = ("εφημερ", "onduty", "duty")  # «εφημερεύει», «εφημερία», "on duty"
 
 # B4 names the kinds in Greek (SPEC `GET /health`: kind φαρμακείο/νοσοκομείο); the contract's citation kind is English.
 KIND_EN = {"φαρμακείο": "pharmacy", "νοσοκομείο": "hospital", "pharmacy": "pharmacy", "hospital": "hospital"}
@@ -92,12 +92,12 @@ def line_midpoint(coords: list[list[float]]) -> tuple[float, float] | None:
     return float(pts[-1][0]), float(pts[-1][1])
 
 
-def _refusal() -> dict:
-    return {"answer_md": REFUSAL_MD, "citations": []}
+def _refusal(lang: str = "el") -> dict:
+    return {"answer_md": REFUSAL_MD_EN if lang == "en" else REFUSAL_MD, "citations": [], "language": lang}
 
 
 # ------------------------------------------------------------------ answerers
-def answer_onduty(qn: str, center: list[float]) -> dict:
+def answer_onduty(qn: str, center: list[float], lang: str = "el") -> dict:
     """Nearest on-duty pharmacies/hospitals to `center`. Only rows with `on_duty: true` (null = unknown, not shown)."""
     want = set()
     if _has_stem(qn, PHARMACY_STEMS):
@@ -118,10 +118,11 @@ def answer_onduty(qn: str, center: list[float]) -> dict:
             continue
         rows.append((haversine_km(lat0, lon0, lat, lon), kind, it))
     if not rows:
-        return _refusal()
+        return _refusal(lang)
     rows.sort(key=lambda r: r[0])
 
-    lines = ["Εφημερεύουν κοντά σας:"]
+    is_en = lang == "en"
+    lines = ["On-duty nearby:" if is_en else "Εφημερεύουν κοντά σας:"]
     citations = []
     for dist_km, kind, it in rows[:MAX_ONDUTY]:
         label = _md_text(it["name"])
@@ -129,15 +130,15 @@ def answer_onduty(qn: str, center: list[float]) -> dict:
         if it.get("address"):
             parts.append(_md_text(it["address"]))
         if it.get("phone"):
-            parts.append(f"τηλ. {_md_text(it['phone'])}")
+            parts.append((f"tel. {_md_text(it['phone'])}") if is_en else f"τηλ. {_md_text(it['phone'])}")
         if it.get("hours"):
-            parts.append(f"ώρες {_md_text(it['hours'])}")
+            parts.append((f"hours {_md_text(it['hours'])}") if is_en else f"ώρες {_md_text(it['hours'])}")
         parts.append(f"~{round(dist_km * 1000)} m")
         if it.get("source"):
-            parts.append(f"πηγή: {_md_text(it['source'])}")
+            parts.append((f"source: {_md_text(it['source'])}") if is_en else f"πηγή: {_md_text(it['source'])}")
         lines.append("- " + ", ".join(parts))
         citations.append({"label": label, "lon": float(it["lon"]), "lat": float(it["lat"]), "kind": kind})
-    return {"answer_md": "\n".join(lines), "citations": citations}
+    return {"answer_md": "\n".join(lines), "citations": citations, "language": lang}
 
 
 def answer_works(question: str) -> dict | None:
@@ -191,14 +192,22 @@ def answer_city(question: str, center: list[float]) -> dict:
 
 
 def answer(question: str, center: list[float], history: list | None = None) -> dict:
-    """Route one question to its answerer. `history` is accepted for the contract and not used (rules, not AI)."""
+    """Route one question (Greek, Greeklish, typos, or English) to its verified answerer."""
     question = (question or "").strip()
     if not question:
-        return _refusal()
+        return _refusal("el")
+    lang = language.detect_language(question)
     qn = stoa_ask.normalize(question)
-    if _has_stem(qn, PHARMACY_STEMS + HOSPITAL_STEMS + ONDUTY_STEMS):
-        return answer_onduty(qn, center)
+    q_expanded = stoa_ask.normalize(language.greeklish_to_greek(question))
+    combined_qn = f"{qn} {q_expanded}".strip()
+    if _has_stem(combined_qn, PHARMACY_STEMS + HOSPITAL_STEMS + ONDUTY_STEMS):
+        return answer_onduty(combined_qn, center, lang=lang)
     works_answer = answer_works(question)
+    if works_answer is None and q_expanded and q_expanded != qn:
+        works_answer = answer_works(q_expanded)
     if works_answer is not None:
+        works_answer["language"] = lang
         return works_answer
-    return answer_city(question, center)
+    city = answer_city(question, center)
+    city.setdefault("language", lang)
+    return city

@@ -4,12 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Enodia · Κέντρο Ελέγχου Δήμου Αθηναίων</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="/web/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 <header>
+  <img src="/web/assets/enodia-logo-square.png" alt="" width="28" height="28" style="border-radius:7px;flex-shrink:0">
   <h1>Enodia · Κέντρο Ελέγχου Δήμου Αθηναίων</h1>
   <span id="mode" class="pill">…</span>
   <span id="count" class="pill"></span>
@@ -131,18 +132,48 @@ function render(it, fresh) {
   const bs = $("#dBadges"); bs.innerHTML = ""; bs.appendChild(badge(STATUS_EL[it.status] || it.status, STATUS_CLS[it.status]));
   if (it.cluster_size > 1) bs.appendChild(badge(`Ομάδα: ${it.cluster_size} αναφορές σε 100 m → ένα δρομολόγιο`, "info"));
   $("#dDesc").textContent = it.description || "";
-  const L = it.local, ai = $("#dAi");
+  const L = it.local, mr = it.map_report, ai = $("#dAi");
+  const photoUrl = L?.photo_url || it.photo_url || mr?.photo_url_blurred || null;
+  if (photoUrl) { $("#dImg").src = photoUrl; $("#dImg").classList.remove("hidden"); }
+  else { $("#dImg").classList.add("hidden"); }
   if (L) {
-    $("#dImg").src = L.photo_url; $("#dImg").classList.remove("hidden");
     ai.innerHTML = "";
-    const h = document.createElement("b"); h.textContent = "Πρόταση AI"; ai.appendChild(h);
+    const hdr = document.createElement("div"); hdr.style.display = "flex"; hdr.style.gap = "6px"; hdr.style.alignItems = "center"; hdr.style.flexWrap = "wrap";
+    const h = document.createElement("b"); h.textContent = "Πρόταση AI"; hdr.appendChild(h);
+    hdr.appendChild(badge("AI-GENERATED", "info"));
+    const pStatus = L.privacy_status || "processed";
+    if (pStatus === "review_required" || pStatus === "failed") {
+      hdr.appendChild(badge("NEEDS REVIEW · Απόρρητο", "warn"));
+    } else {
+      hdr.appendChild(badge("Απόρρητο: Επεξεργάστηκε ✓", "good"));
+    }
+    ai.appendChild(hdr);
     const p = document.createElement("p");
     p.textContent = `Κατηγορία: ${L.category} · σοβαρότητα ${L.severity}/5 · βεβαιότητα ${(L.confidence * 100).toFixed(0)}% ` +
       `· πρόσωπα θολωμένα: ${L.faces_blurred} · μοντέλο: ${L.ai.provider || "?"}`;
     ai.appendChild(p);
-    if (L.needs_check) ai.appendChild(badge(`Κάτω από ${threshold * 100}%: επιβεβαιώστε την κατηγορία πριν την έγκριση`, "warn"));
+    if (L.ai?.interpretation?.operator_summary_el) {
+      const sp = document.createElement("p"); sp.className = "muted"; sp.style.margin = "4px 0";
+      sp.textContent = L.ai.interpretation.operator_summary_el;
+      ai.appendChild(sp);
+    }
+    if (L.needs_check) ai.appendChild(badge(`NEEDS REVIEW · Κάτω από ${threshold * 100}%: επιβεβαιώστε την κατηγορία`, "warn"));
     if (fresh) $("#dReply").value = L.ai.draft_reply_el || "";
-  } else { $("#dImg").classList.add("hidden"); ai.textContent = "Χωρίς φωτογραφία/AI (αναφορά από άλλο κανάλι)."; }
+  } else if (mr) {
+    ai.innerHTML = "";
+    const hdr = document.createElement("div"); hdr.style.display = "flex"; hdr.style.gap = "6px"; hdr.style.alignItems = "center"; hdr.style.flexWrap = "wrap";
+    const h = document.createElement("b"); h.textContent = `Αναφορά Χάρτη Πολίτη (${mr.id})`; hdr.appendChild(h);
+    const pStatus = mr.privacy_status || "processed";
+    if (pStatus === "review_required" || pStatus === "failed") {
+      hdr.appendChild(badge("NEEDS REVIEW · Απόρρητο", "warn"));
+    } else {
+      hdr.appendChild(badge("Απόρρητο: Επεξεργάστηκε ✓", "good"));
+    }
+    ai.appendChild(hdr);
+    const p = document.createElement("p");
+    p.textContent = `Κατηγορία: ${mr.category} · Επιβεβαιώσεις πολιτών: ${mr.confirmations} · Θολωμένα: ${mr.faces_blurred} πρόσωπα, ${mr.plates_blurred} πινακίδες`;
+    ai.appendChild(p);
+  } else { ai.textContent = "Χωρίς φωτογραφία/AI (αναφορά από άλλο κανάλι)."; }
   renderWorks(it, fresh);
   $("#dHist").innerHTML = "";
   for (const h of it.history || []) { const li = document.createElement("li");

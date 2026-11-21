@@ -265,6 +265,43 @@ export function worksLookup(ada) {
   return liveJson(`/api/map/works/lookup${query({ ada })}`);
 }
 
+// Neural Greek/English TTS via backend POST /api/tts (returns {ok, blob, voice, lang, provider}).
+export async function tts({ text, lang = null, voice = null } = {}) {
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      controller?.abort();
+      reject(new Error("timeout"));
+    }, Math.max(settings.timeoutMs, 12000));
+  });
+  try {
+    const res = await Promise.race([
+      getFetch()(`${settings.base}/api/tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, lang, voice }),
+        credentials: "same-origin",
+        signal: controller?.signal,
+      }),
+      timeout,
+    ]);
+    if (!res.ok) return { ok: false, status: res.status };
+    const blob = await res.blob();
+    return {
+      ok: true,
+      blob,
+      voice: res.headers?.get?.("X-TTS-Voice") || null,
+      lang: res.headers?.get?.("X-TTS-Lang") || lang,
+      provider: res.headers?.get?.("X-TTS-Provider") || "edge-tts",
+    };
+  } catch {
+    return { ok: false, error: "offline" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // center = [lon, lat]; history = earlier turns of the chat. Accepts (question, center, history) or ({question, center, history}).
 // Never cached: question and center would sit on the device (A-38). Offline -> mock/stoa.json.
 export function stoaAsk(questionOrOpts, center, history = []) {

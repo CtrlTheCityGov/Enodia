@@ -56,9 +56,20 @@ _conn.execute(
         photo TEXT,
         city_request_id TEXT,
         points_awarded INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        privacy_status TEXT NOT NULL DEFAULT 'processed',
+        faces_blurred INTEGER NOT NULL DEFAULT 0,
+        plates_blurred INTEGER NOT NULL DEFAULT 0
     )"""
 )
+_mr_cols = {r[1] for r in _conn.execute("PRAGMA table_info(map_reports)").fetchall()}
+for _col_name, _col_ddl in (
+    ("privacy_status", "TEXT NOT NULL DEFAULT 'processed'"),
+    ("faces_blurred", "INTEGER NOT NULL DEFAULT 0"),
+    ("plates_blurred", "INTEGER NOT NULL DEFAULT 0"),
+):
+    if _col_name not in _mr_cols:
+        _conn.execute(f"ALTER TABLE map_reports ADD COLUMN {_col_name} {_col_ddl}")
 _conn.execute(
     """CREATE TABLE IF NOT EXISTS map_report_confirmations (
         report_id TEXT NOT NULL,
@@ -128,6 +139,9 @@ def create(
     work_id: str | None,
     photo: str | None,
     district: str | None = None,
+    privacy_status: str = "processed",
+    faces_blurred: int = 0,
+    plates_blurred: int = 0,
 ) -> dict:
     """Store a map report and grant its points. Returns {id, points_awarded, lon, lat} (public position)."""
     now = _now()
@@ -143,12 +157,33 @@ def create(
             awarded = points.ACTION_POINTS[action]
     with _lock:
         _conn.execute(
-            "INSERT INTO map_reports (id, account, category, lon, lat, note, work_id, photo, points_awarded, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (rid, account, category, lon, lat, note, work_id, photo, awarded, now.isoformat(timespec="microseconds")),
+            "INSERT INTO map_reports "
+            "(id, account, category, lon, lat, note, work_id, photo, points_awarded, created_at, privacy_status, faces_blurred, plates_blurred)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (rid, account, category, lon, lat, note, work_id, photo, awarded,
+             now.isoformat(timespec="microseconds"), privacy_status, int(faces_blurred), int(plates_blurred)),
         )
         _conn.commit()
     return {"id": rid, "points_awarded": awarded, "lon": lon, "lat": lat, "duplicate": dup}
+
+
+def by_city_request(city_request_id: str) -> dict | None:
+    """Return non-PII metadata of the map report linked to a City request (blurred photo, privacy_status, confirmations)."""
+    found = _rows(
+        "SELECT m.id, m.category, m.lon, m.lat, m.work_id, m.photo, m.city_request_id, m.created_at,"
+        " COALESCE(m.privacy_status, 'processed') AS privacy_status,"
+        " COALESCE(m.faces_blurred, 0) AS faces_blurred, COALESCE(m.plates_blurred, 0) AS plates_blurred,"
+        " COUNT(c.account) AS confirmations"
+        " FROM map_reports m LEFT JOIN map_report_confirmations c ON c.report_id = m.id"
+        " WHERE m.city_request_id = ? GROUP BY m.id",
+        (city_request_id,),
+    )
+    if not found:
+        return None
+    row = found[0]
+    row["confirmations"] = int(row["confirmations"])
+    row["photo_url_blurred"] = f"/photos/{row['photo']}" if row.get("photo") else None
+    return row
 
 
 def link_city_request(report_id: str, city_request_id: str) -> None:

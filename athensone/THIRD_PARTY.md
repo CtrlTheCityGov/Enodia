@@ -16,6 +16,8 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `python-dotenv` | `>=1.0` | BSD-3-Clause | `.env` configuration loading | https://github.com/theskumar/python-dotenv |
 | `pytest` | `>=8` | MIT | Offline test suite | https://github.com/pytest-dev/pytest |
 | `tzdata` | `>=2024.1` (`sys_platform == "win32"`) | Apache-2.0 | IANA timezone database for `zoneinfo.ZoneInfo("Europe/Athens")` on Windows | https://github.com/python/tzdata |
+| `edge-tts` | `>=7.0,<8` | LGPL-3.0 | Neural Greek (`el-GR-AthinaNeural`) and English (`en-US-AriaNeural`) speech synthesis in `app/tts.py` (`POST /api/tts`) | https://github.com/rany2/edge-tts |
+| `OpenCV Zoo YuNet` (`models/face_detection_yunet_2023mar.onnx`) | `2023mar` (232 KB ONNX) | MIT | Primary neural face detector via `cv2.FaceDetectorYN` in `app/privacy.py` (union with CenterFace) | https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet |
 | `scikit-image` | `>=0.22` | BSD-3-Clause | Bundled offline face test fixture (`skimage.data.astronaut`) in `tests/test_T5_blur.py` | https://github.com/scikit-image/scikit-image |
 
 ### T5: Face detection (`deface` / CenterFace)

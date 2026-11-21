@@ -5,6 +5,7 @@ The browser only talks to this server. The sandbox API key never leaves it.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import os
 import time
 import uuid
 
@@ -434,9 +435,15 @@ async def report(request: Request, response: Response, photo: UploadFile = File(
     if len(raw) > 15 * 1024 * 1024:
         raise HTTPException(413, "photo too large")
     try:
-        p = privacy.process_photo(raw)
-    except Exception:
-        raise HTTPException(400, "not a readable image")
+        p = privacy.process_photo(raw, content_type=photo.content_type)
+    except privacy.PrivacyProcessingError as exc:
+        if exc.code == "file_too_large":
+            raise HTTPException(413, "photo too large") from exc
+        if exc.code in ("invalid_image", "invalid_mime", "invalid_format", "invalid_dimensions", "empty_image"):
+            raise HTTPException(400, "not a readable image") from exc
+        raise HTTPException(503, "privacy processing failed; unprocessed photo rejected") from exc
+    except Exception as exc:
+        raise HTTPException(400, "not a readable image") from exc
     if lat is None or lng is None:
         if not p["gps"]:
             raise HTTPException(400, "no location: send lat/lng or a photo with GPS")
@@ -461,7 +468,7 @@ async def report(request: Request, response: Response, photo: UploadFile = File(
             f"AI: {ai['category']} · σοβαρότητα {ai['severity']}/5 · βεβαιότητα {ai['confidence']:.0%}")
     req = sb.create_request(category=ai["category"], title=ai["title_el"],
                             address=address or f"{lat:.5f}, {lng:.5f}", description=desc, lat=lat, lng=lng)
-    store.save(req["id"], name, lat, lng, ai, p["faces"])
+    store.save(req["id"], name, lat, lng, ai, p["faces"], privacy_status=p["privacy_status"])
     # --- T2: Points wallet, earn side ---
     token = points.ensure_token(request, response)
     points.link_report(req["id"], token)
@@ -524,6 +531,16 @@ class Decision(BaseModel):
     note: str | None = None
 
 
+def _require_operator(request: Request) -> None:
+    """Enforce X-Operator-Key when OPERATOR_KEY env var is configured (fail-closed operator auth)."""
+    expected = os.getenv("OPERATOR_KEY", "").strip()
+    if not expected:
+        return
+    provided = (request.headers.get("X-Operator-Key") or "").strip()
+    if provided != expected:
+        raise HTTPException(403, "operator authorization required")
+
+
 def _require_transition(rid: str, disallowed: tuple[str, ...]) -> None:
     """Reject operator status transitions from terminal states in `disallowed`."""
     current = sb.get_request(rid).get("status")
@@ -532,7 +549,8 @@ def _require_transition(rid: str, disallowed: tuple[str, ...]) -> None:
 
 
 @app.post("/api/reports/{rid}/approve")
-def approve(rid: str, d: Decision | None = None):
+def approve(rid: str, request: Request, d: Decision | None = None):
+    _require_operator(request)
     _require_transition(rid, ("resolved", "rejected"))
     note = (d.note if d and d.note else "Εγκρίθηκε από υπάλληλο του Δήμου · το συνεργείο ειδοποιήθηκε")
     out = _merge(sb.update_request(rid, status="in_progress", note=note))
@@ -546,7 +564,8 @@ def approve(rid: str, d: Decision | None = None):
 
 
 @app.post("/api/reports/{rid}/resolve")
-def resolve(rid: str):
+def resolve(rid: str, request: Request):
+    _require_operator(request)
     _require_transition(rid, ("rejected",))
     updated = sb.update_request(rid, status="resolved", note="Το πρόβλημα αποκαταστάθηκε")
     # --- T1: "Is it fixed?" loop ---
@@ -556,7 +575,8 @@ def resolve(rid: str):
 
 
 @app.post("/api/reports/{rid}/reject")
-def reject(rid: str, d: Decision | None = None):
+def reject(rid: str, request: Request, d: Decision | None = None):
+    _require_operator(request)
     _require_transition(rid, ("resolved",))
     return _merge(sb.update_request(rid, status="rejected", note=(d.note if d and d.note else "Απορρίφθηκε από υπάλληλο")))
 
@@ -676,6 +696,11 @@ def _merge(r: dict) -> dict:
         local["photo_url"] = f"/photos/{local['photo']}"
         local["needs_check"] = local["confidence"] < config.CONFIDENCE_THRESHOLD
     r["local"] = local
+    mr = map_reports.by_city_request(r["id"])
+    if mr:
+        r["map_report"] = mr
+        if not local and mr.get("photo_url_blurred"):
+            r["photo_url"] = mr["photo_url_blurred"]
     # --- T1: "Is it fixed?" loop ---
     r["confirmation"] = _confirmation_view(r["id"])
     # --- end T1 ---
@@ -791,6 +816,11 @@ def reset():
 # ------------------------------------------------------------------ static
 app.mount("/photos", StaticFiles(directory=config.PHOTO_DIR), name="photos")
 app.mount("/web", StaticFiles(directory=config.ROOT / "web", html=True), name="web")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return RedirectResponse("/web/favicon.ico")
 
 
 @app.get("/")

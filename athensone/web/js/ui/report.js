@@ -261,9 +261,15 @@ export function mount({ map, api, root, container, bus }) {
         return;
       }
       const r = out.result;
+      const privNote =
+        r.privacy_status === "review_required"
+          ? " · Φωτογραφία: απαιτείται έλεγχος απορρήτου"
+          : r.photo_url_blurred
+            ? " · Φωτογραφία επεξεργάστηκε"
+            : "";
       const toastMsg = r.points_awarded > 0
-        ? `Αναφορά καταχωρήθηκε · +${r.points_awarded} Πόντοι Γειτονιάς`
-        : "Αναφορά καταχωρήθηκε";
+        ? `Αναφορά καταχωρήθηκε · +${r.points_awarded} Πόντοι Γειτονιάς${privNote}`
+        : `Αναφορά καταχωρήθηκε${privNote}`;
       if (r.photo_url_blurred) {
         preview.src = r.photo_url_blurred; // only the backend's blurred copy is ever shown (SPEC «Privacy»)
       }

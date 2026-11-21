@@ -76,10 +76,20 @@ columns were used; override with `CKAN_FIELD_AQI=...` etc. in `.env`). API docs:
 
 ### Tests
 ```bash
+# Backend (offline, full privacy / TTS / NLU / routing / Stoa / operator loop)
 MOCK=1 VISION_PROVIDER=mock VALHALLA_URL=http://127.0.0.1:9 WEATHER=off CKAN_MODE=off STOA_TODAY=2026-11-21 pytest -q
+
+# Frontend (Node built-in test runner, zero build step)
+node --test web/tests/
+
+# Privacy face & Greek/EU plate benchmark
+python scripts/benchmark_privacy.py
 ```
-Runs the whole 7-step loop offline: ask → cool place → route → report with photo GPS (EXIF stripped)
-→ duplicate merged → route avoids hazard → operator approves → status visible → resolved hazard disappears.
+
+### Privacy, Greek Speech & Operator Security Configuration
+- **Multi-detector fail-closed privacy (`app/privacy.py`):** combines **OpenCV Zoo YuNet** (`models/face_detection_yunet_2023mar.onnx`, MIT, 232 KB) + **CenterFace** (`deface`, MIT) + Haar fallback for faces, plus **Greek/EU structural + Haar** (+ optional `PLATE_ONNX_PATH`) for licence plates, with two-stage pixelation + Gaussian blur and complete EXIF removal. Fails closed (`HTTP 503`) if detectors fail—unprocessed originals never touch disk or AI. Flags `review_required` (`NEEDS REVIEW`) if no neural face detector was available.
+- **Neural Greek & English TTS (`app/tts.py`, `POST /api/tts`):** uses `edge-tts` (`el-GR-AthinaNeural` for Greek & mixed Greek-English, `en-US-AriaNeural` for English; configurable via `TTS_VOICE_EL`, `TTS_VOICE_EN`, `TTS_PROVIDER=off`). Speech normalisation preserves Greek Unicode + tonos and expands Greek municipal abbreviations without altering displayed text. Offline browser fallback uses ONLY verified `el-*` voices and refuses to speak Greek with an English voice.
+- **Operator endpoint guard:** set `OPERATOR_KEY=...` in `.env` to require `X-Operator-Key` on `/api/reports/{id}/approve`, `/resolve`, `/reject`. Leave unset for local demo/test mode.
 
 ## The 7-step demo
 

@@ -22,18 +22,24 @@ _conn.execute(
         accessibility_blocker INTEGER,
         ai_json TEXT,
         faces_blurred INTEGER,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        privacy_status TEXT NOT NULL DEFAULT 'processed'
     )"""
 )
+_rep_cols = {r[1] for r in _conn.execute("PRAGMA table_info(reports)").fetchall()}
+if "privacy_status" not in _rep_cols:
+    _conn.execute("ALTER TABLE reports ADD COLUMN privacy_status TEXT NOT NULL DEFAULT 'processed'")
 _conn.commit()
 
 
-def save(request_id, photo, lat, lng, ai: dict, faces: int):
+def save(request_id, photo, lat, lng, ai: dict, faces: int, privacy_status: str = "processed"):
     with _lock:
         _conn.execute(
-            "INSERT OR REPLACE INTO reports VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)",
+            "INSERT OR REPLACE INTO reports "
+            "(request_id, photo, lat, lng, category, severity, confidence, accessibility_blocker, ai_json, faces_blurred, created_at, privacy_status) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,?)",
             (request_id, photo, lat, lng, ai["category"], ai["severity"], ai["confidence"],
-             int(ai.get("accessibility_blocker", False)), json.dumps(ai, ensure_ascii=False), faces),
+             int(ai.get("accessibility_blocker", False)), json.dumps(ai, ensure_ascii=False), faces, privacy_status),
         )
         _conn.commit()
 

@@ -4,6 +4,8 @@
 // label becomes a link that emits `map:flyto` {lon, lat, label} on the shared bus (A-35). main.js flies there.
 // Nothing here touches `document` at import time, so Node can test the pure functions.
 
+import { speakResponse, stopSpeech } from "../speech.js";
+
 // Panel size and animation from SPEC HUD «Κάτω δεξιά». Sure.
 export const PANEL_W = 380;
 export const PANEL_H = 520;
@@ -301,16 +303,34 @@ export function mount({ map, api, root, container, bus }) {
   function addMessage(who, html, speakText = "") {
     const msg = el("div", { className: `stoa-msg stoa-${who}` });
     msg.innerHTML = html; // always built by escapeHtml / renderAnswerHtml
-    if (who === "bot" && speakText && globalThis.speechSynthesis && typeof globalThis.SpeechSynthesisUtterance === "function") {
-      const speakBtn = el("button", { type: "button", className: "stoa-speak-btn", textContent: "Ανάγνωση" });
-      speakBtn.setAttribute("aria-label", "Ανάγνωση απάντησης");
-      speakBtn.addEventListener("click", () => {
-        globalThis.speechSynthesis.cancel();
-        const u = new globalThis.SpeechSynthesisUtterance(speakText);
-        u.lang = "el-GR";
-        globalThis.speechSynthesis.speak(u);
+    if (who === "bot" && speakText) {
+      const speakBtn = el("button", { type: "button", className: "stoa-speak-btn", textContent: "🔊 Ανάγνωση" });
+      speakBtn.setAttribute("aria-label", "Ανάγνωση απάντησης στα ελληνικά");
+      const speechNote = el("span", { className: "stoa-speech-note", role: "status", "aria-live": "polite" });
+      let speaking = false;
+      speakBtn.addEventListener("click", async () => {
+        if (speaking) {
+          stopSpeech();
+          speaking = false;
+          speakBtn.textContent = "🔊 Ανάγνωση";
+          return;
+        }
+        speaking = true;
+        speechNote.textContent = "";
+        speakBtn.textContent = "⏹ Διακοπή";
+        await speakResponse({
+          text: speakText,
+          api,
+          onStatus: (note) => {
+            speechNote.textContent = note;
+          },
+          onEnd: () => {
+            speaking = false;
+            speakBtn.textContent = "🔊 Ανάγνωση";
+          },
+        });
       });
-      msg.append(speakBtn);
+      msg.append(speakBtn, speechNote);
     }
     log.append(msg);
     log.scrollTop = log.scrollHeight;
