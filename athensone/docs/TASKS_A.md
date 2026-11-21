@@ -22,6 +22,7 @@ criteria and recorded in the code report.
 | A3 Φούσκα έργου | 2 | done (merged into dev-a) |
 | A4 Routing drawer + animated route | 2 | done (merged into dev-a) |
 | A5 Mobile layout, reasons highlight, smooth buses, A-35 bus | 3 | done (merged into dev-a) |
+| A6 Integration polish & Dev B HUD styles | 3 | done (merged into dev-a) |
 
 ### A0: Skeleton + test harness (phase 0)
 The folder layout of SPEC «Αρχιτεκτονική», empty but loading, so both devs can start in separate files.
@@ -155,3 +156,36 @@ SPEC Phase 3 («Κινητό layout, highlight των reasons στον χάρτ�
 | `test_workpopup_dispatches_report_open_on_bus` | popup with `bus`, click «Ανέφερε πρόοδο» | `report:open` event dispatched on `bus` with `detail.work_id` |
 | `test_theme_toggle_wcag_label_in_name` | read `web/citizen.html` `#theme-toggle` | no `aria-label` that omits the visible Greek button text (WCAG 2.5.3) |
 | `test_routing_ignores_stale_async_response_and_storage_security_error` | throwing `localStorage` getter + slow req #1 resolving after fast req #2 | no uncaught `SecurityError`; req #2 route stays drawn and req #1 is ignored |
+
+### A6: Integration polish & Dev B HUD styles (phase 3.5, pre-freeze)
+Aligns Dev A's HUD stylesheet, map layers, and `main.js` wiring with Dev B's completed `B0–B10` modules on `origin/dev-b` (strictly Dev A files only; zero Dev B files touched).
+**Files:** `web/css/hud.css`, `web/js/main.js`, `web/js/layers/access.js`, `web/js/layers/reports.js`, `web/js/layers/transit.js`, `web/js/ui/workpopup.js`, `web/tests/A6_integration.test.js`.
+- **Glassmorphism CSS & animations for Dev B's 4 UI panels (`web/css/hud.css`):**
+  - `[hidden] { display: none !important; }` rule so native `hidden` panels stay hidden even when styled with `display: flex`.
+  - **Points (`points.js`):** `.points-pill`, `@keyframes points-pulse` (`600ms`) on `.points-pill.pulse`, rising `@keyframes points-float-up` (`600ms`) on `.points-float`, `.points-bar` / `.points-bar-fill`, `.points-panel` positioned absolutely below `#hud-points` (`right: 0`), `.points-history`, `.points-rewards`, `.points-redeem`, `.points-note`, `.points-status`.
+  - **Report (`report.js`):** circular `.report-fab` («+»), absolutely positioned `.report-menu` and `.report-panel` above `#hud-report` (`bottom: calc(100% + 10px); left: 0`), `.report-preview`, light/dark + 390 px mobile rules.
+  - **Stoa AI (`stoa.js`):** `.stoa-bubble`, `.stoa-panel` positioned absolutely above `#hud-stoa` (`bottom: calc(100% + 10px); right: 0;`) with `.glass` surface and `pointer-events` guard so the closed `visibility: hidden` panel never blocks map clicks, plus `.stoa-log`, `.stoa-msg`, `.stoa-user`, `.stoa-bot`, `.stoa-cite`, `.stoa-form`.
+  - **Works tab (`workstab.js`):** `.workstab-panel` positioned absolutely below `#hud-tabs` (`top: calc(100% + 8px); left: 0;`) so appending it inside `#hud-tabs` never distorts the top-left pill, plus `.workstab-header`, `.workstab-filters`, `.workstab-filter`, `.workstab-search`, `.workstab-list`, `.workstab-card`, `.workstab-status-badge`, `.workstab-ada-link`, `.workstab-seed-badge`, `.workstab-card-actions`, `.workstab-focus`, `.workstab-report`.
+- **`api.status` offline badge wiring (`main.js`, `layers/access.js`):**
+  - `access.js` does not call `state.onOffline()` because `api.access()` is a static pre-downloaded OSM file by design (`SPEC.md` «Εξωτερικές πηγές»).
+  - `main.js` listens to `api.status` `"source"` events (when `api?.status?.addEventListener` exists) and toggles `#hud-offline` based on `state.offline || api.isOffline?.()`.
+- **Live report pins refresh (`layers/reports.js`, `main.js`):**
+  - `reports.js` matches `"congestion"` alongside `"traffic"` / `"συμφόρηση"` (matching `B0`/`B6` category IDs) and exports `refresh(map, api, state)`.
+  - `main.js` refreshes `reports` pins on `bus` `"points:earned"` so a newly submitted Waze report appears on the map immediately.
+- **Work popup SEED & pin coordinates (`ui/workpopup.js`):**
+  - When `props.seed` is truthy or `props.ada` starts with `"SEED-"` (`A-14`), omit the external `diavgeia.gov.gr` link and render plain ΑΔΑ text + `SEED · δοκιμαστικό` badge.
+  - Include `lngLat: event.lngLat` in the `"report:open"` `CustomEvent` detail so the draggable report pin lands on the clicked street.
+  - Return `null` from `guaranteeCountdown` when `today < handover` (or `status !== "completed"` only? No: keep `guaranteeCountdown` pure and clamp `daysLeft` to `totalDays` or keep existing mid/expired tests green — note: `test_popup_has_contractor_euros_ada` passes `in_progress` with valid dates, so only clamp `daysLeft <= totalDays` when `today < handover`).
+- **Transit line IDs & per-poll gen (`layers/transit.js`):**
+  - Include `["get", "id"]` and `"PROASTIAKOS"` in `lineColorExpression()` (matching `B0`/`B3` `transit.geojson`).
+  - Increment `busPollGenByMap` at the start of each `updateBuses` poll so a slow earlier poll can never overwrite a newer poll (A5 review leftover).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_hud_css_styles_all_dev_b_panels_and_animations` | read `web/css/hud.css` | defines `.points-pill.pulse` + `.points-float` (`600ms`), `.report-fab`/`.report-menu`/`.report-panel`, `.stoa-bubble`/`.stoa-panel` (`position: absolute`), `.workstab-panel` (`position: absolute`), and `[hidden]` rule |
+| `test_reports_layer_matches_congestion_and_refreshes` | `reports.register` + `reports.refresh` with `category: "congestion"` | `circle-color` match expression includes `"congestion"`, and `refresh()` updates `reports-source` |
+| `test_access_mock_source_does_not_trigger_offline_badge` | `access.register(map, apiReturningMock, state)` | `state.onOffline` is NOT called for static pre-downloaded `access` data |
+| `test_main_syncs_offline_badge_with_api_status` | `bootstrap()` with fake `api.status` EventTarget + `api.isOffline()` | `#hud-offline` unhides when `api.isOffline()` becomes `true` and re-hides when `false` (while map is online) |
+| `test_workpopup_suppresses_diavgeia_link_for_seed_work` | `popupHtml({ ..., ada: "SEED-ΑΔΑ-001", seed: true })` | no `<a href="https://diavgeia.gov.gr/...">` link; contains `SEED-ΑΔΑ-001` and `SEED` badge text |
+| `test_workpopup_report_open_includes_click_lnglat` | click `"works-line"` at `{ lng: 23.73, lat: 37.97 }`, click «Ανέφερε πρόοδο» | `report:open` event detail includes both `work_id` and `lngLat` |
+| `test_transit_ignores_stale_bus_poll_and_matches_proastiakos` | two overlapping polls (#1 slow, #2 fast) + rail layer paint | stale poll #1 does not overwrite poll #2's bus coords; `line-color` expression handles `PROASTIAKOS` |
