@@ -24,6 +24,10 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `deface` (bundles `centerface.onnx`) | `==1.5.0` (installed with `pip install --no-deps deface==1.5.0`) | MIT (`Copyright (c) 2020 Martin Drawitsch`, verified in installed `deface-1.5.0` metadata) | Primary face detector (`deface.centerface.CenterFace`) in `app/privacy.py`, with automatic fallback to OpenCV Haar cascades. Runs on OpenCV `cv2.dnn` without `onnxruntime`. | https://github.com/ORB-HD/deface |
 
 > **Install note (OpenCV 4.x compatibility):** `deface==1.5.0` declares `opencv-python` (unpinned, resolving to 5.x, which removes `cv2.CascadeClassifier`). Always install `deface` with `pip install --no-deps deface==1.5.0` after `requirements.txt` so `opencv-python-headless>=4.9,<5` remains intact. `deface.centerface.CenterFace` only imports `os`, `functools`, `numpy`, and `cv2`.
+>
+> **Model weights:** `centerface.onnx` comes from CenterFace (https://github.com/Star-Clouds/CenterFace), MIT licence
+> (from memory, not re-checked tonight: open its LICENSE before the final push). `onnxruntime` (MIT) is not installed;
+> the model runs on OpenCV `cv2.dnn`.
 
 ## Frontend & accessibility (`web/`, `package.json`)
 

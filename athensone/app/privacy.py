@@ -1,11 +1,12 @@
 """Privacy proxy: runs BEFORE a photo is stored or sent to any AI model.
 
 1. Reads GPS from EXIF (to drop the map pin automatically, FixMyStreet-style).
-2. Blurs faces (OpenCV Haar cascades, frontal + profile).
+2. Blurs faces: CenterFace through 'deface' (MIT) first, OpenCV Haar cascades (frontal + profile)
+   as the fallback when deface is missing or fails (T5).
 3. Re-encodes the image as JPEG WITHOUT any EXIF (location, phone model, time are gone).
 
-Licence plates: not detected in this prototype. Production path: an open plate
-detector (or the open-source 'deface' / 'EgoBlur' models) at the same step.
+Licence plates: not detected in this prototype (deface does faces only). Production path:
+an open plate detector at the same step.
 """
 from __future__ import annotations
 

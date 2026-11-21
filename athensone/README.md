@@ -22,6 +22,7 @@ sees live.
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+pip install --no-deps deface==1.5.0                      # better face blur (T5); --no-deps keeps OpenCV 4
 cp .env.example .env                                     # leave SANDBOX_KEY empty = mock mode
 uvicorn app.main:app --reload --port 8000
 python seed.py --reset                                   # in a second terminal
