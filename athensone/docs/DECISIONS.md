@@ -95,3 +95,7 @@
   `map_report` 5, `confirm_other` 2, `work_progress_photo` 15, `city_confirmed` +20; cap 10 map reports/day; no
   points for a report within 50 m and 30 min of another of the same category. The T2 actions (operator approve 10,
   dossier 30, fix confirmed 5) stay for the existing routes, so their tests keep passing.
+- **A-37** (Evgenii, Sat 21 Nov) Every env point carries `aqi_scale`: `eaqi` (Open-Meteo European AQI 0–100+) or
+  `city_1_6` (AthensGov station class 1–6). The scales are not converted; the heatmap (Dev A) and the cool route (B9)
+  weigh air by `pm25` (µg/m³ on both sources). Report `category` ids and Stoa citation `kind`s are the B6/B8 ones,
+  in the mocks too.

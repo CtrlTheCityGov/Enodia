@@ -19,3 +19,9 @@ Later improvements, not work to do now. Each with its reason.
 - T5: CenterFace model licence (MIT, from memory): open the Star-Clouds/CenterFace LICENSE before the final push.
 - T10: `_rings()` ignores polygon holes; `_registry()` reads column names from the first row only; WKT parser
   accepts junk Z/M tokens and unclosed 3-point rings. All low; City data today has none of these.
+- B0: several CKAN sensors share a neighbourhood centroid in `web/mock/env.json` (stacked heatmap weight);
+  `reports_count` in `works.geojson` doesn't match the report pins; `test_reports_rounded_and_anonymous` doesn't
+  check the contract keys. The in-progress SEED work has a guarantee date (popup should show the countdown only for
+  `completed`). Low; the live endpoints replace the mocks.
+- B5: if CKAN is unreachable and nothing is cached, one `/api/map/env` refresh makes 270 failed CKAN calls (fetch the
+  station list once per refresh); `ENV_BBOX` not validated; `?bbox=%20` gives 422 while `?bbox=` gives the full grid.
