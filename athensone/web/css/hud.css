@@ -1,0 +1,111 @@
+/* AthensOne Citizen Map — HUD & glassmorphism skeleton (SPEC.md "Map & Visual Spec"). */
+
+:root {
+  /* Glassmorphism surface and border values from SPEC.md "HUD (glassmorphism)" (certainty: verified). */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-blur: 12px;
+  --glass-shadow: 0 4px 16px rgba(15, 23, 42, 0.14); /* Standard soft shadow matching SPEC "ήπια σκιά" (certainty: design default). */
+  --glass-radius-pill: 999px; /* SPEC.md "HUD (glassmorphism)" (certainty: verified). */
+  --glass-radius-panel: 16px; /* SPEC.md "HUD (glassmorphism)" (certainty: verified). */
+  --hud-text: #111827; /* High-contrast dark ink on light glass for WCAG AA (certainty: design default). */
+  --hud-gap: 12px; /* Edge inset for floating HUD controls (certainty: design default). */
+}
+
+[data-theme="dark"] {
+  /* Dark glassmorphism surface from SPEC.md "HUD (glassmorphism)" (certainty: verified). */
+  --glass-bg: rgba(20, 24, 32, 0.55);
+  --hud-text: #f3f4f6; /* High-contrast light ink on dark glass for WCAG AA (certainty: design default). */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw; /* Full-screen canvas 100vw x 100vh from SPEC.md "Map & Visual Spec" (certainty: verified). */
+  height: 100vh;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--hud-text);
+}
+
+#map {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hud > * {
+  pointer-events: auto;
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-panel);
+  box-shadow: var(--glass-shadow);
+  color: var(--hud-text);
+}
+
+.glass-pill {
+  border-radius: var(--glass-radius-pill);
+}
+
+.hud-top-left {
+  position: fixed;
+  top: var(--hud-gap);
+  left: var(--hud-gap);
+}
+
+.hud-top-center {
+  position: fixed;
+  top: var(--hud-gap);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 2 * var(--hud-gap));
+}
+
+.hud-top-right {
+  position: fixed;
+  top: var(--hud-gap);
+  right: var(--hud-gap);
+}
+
+.hud-bottom-left {
+  position: fixed;
+  bottom: var(--hud-gap);
+  left: var(--hud-gap);
+}
+
+.hud-bottom-center {
+  position: fixed;
+  bottom: var(--hud-gap);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.hud-bottom-right {
+  position: fixed;
+  bottom: var(--hud-gap);
+  right: var(--hud-gap);
+}
+
+.hidden {
+  display: none !important;
+}
