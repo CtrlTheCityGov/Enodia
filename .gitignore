@@ -1,2 +1,4 @@
 .worktrees/
 .DS_Store
+athensone/data/onduty/hospitals-*.json
+athensone/data/onduty/pharmacies-*.json
