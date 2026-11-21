@@ -1,8 +1,8 @@
 // Entry point for the AthensOne Citizen Map (SPEC.md "Αρχιτεκτονική").
 // Imports Dev A modules statically and Dev B optional modules dynamically in a try/catch
-// so A0 loads without waiting for Dev B and imports safely in Node.
+// so Dev A loads without waiting for Dev B and imports safely in Node.
 
-import { createMap } from "./map.js";
+import { createMap, setTheme } from "./map.js";
 import * as envLayer from "./layers/env.js";
 import * as accessLayer from "./layers/access.js";
 import * as worksLayer from "./layers/works.js";
@@ -32,16 +32,40 @@ export const LAYERS = [
   reportsLayer,
 ];
 
+// Greek UI labels for the Light/Dark theme toggle button (SPEC.md F9, certainty: design default).
+const THEME_LABEL_TO_DARK = "Σκοτεινό";
+const THEME_LABEL_TO_LIGHT = "Φωτεινό";
+
+function isMissingModuleError(err) {
+  if (!err) {
+    return false;
+  }
+  if (err.code === "ERR_MODULE_NOT_FOUND" || err.code === "ENOENT") {
+    return true;
+  }
+  // Browsers reject missing dynamic ES module imports with a TypeError (certainty: standard browser behavior).
+  if (
+    err instanceof TypeError &&
+    /dynamically imported module|module script failed/i.test(err.message ?? "")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 async function tryImport(specifier) {
   try {
     return await import(specifier);
-  } catch {
+  } catch (err) {
+    if (!isMissingModuleError(err)) {
+      console.error(`Failed to load optional module ${specifier}:`, err);
+    }
     return null;
   }
 }
 
 export async function bootstrap(root = typeof document !== "undefined" ? document : null) {
-  if (!root) {
+  if (!root || typeof root.getElementById !== "function") {
     return null;
   }
 
@@ -51,9 +75,86 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
   }
 
   const api = optional["./api.js"] ?? null;
+  const offlineBadgeEl = root.getElementById("hud-offline");
+  const initialTheme = root.documentElement?.dataset?.theme === "dark" ? "dark" : "light";
+
+  function showOfflineBadge() {
+    if (offlineBadgeEl?.classList) {
+      offlineBadgeEl.classList.remove("hidden");
+    }
+  }
+
+  const state = {
+    visible: {},
+    theme: initialTheme,
+    activeTab: "map",
+    offline: false,
+    offlineGeo: null,
+    onOffline: () => {
+      showOfflineBadge();
+    },
+  };
+
   const mapContainer = root.getElementById("map");
-  const state = { visible: {}, theme: "light" };
   const map = mapContainer ? createMap(mapContainer, state) : null;
+
+  const themeBtn = root.getElementById("theme-toggle");
+  function applyTheme(nextTheme) {
+    const normalized = nextTheme === "dark" ? "dark" : "light";
+    state.theme = normalized;
+    if (root.documentElement?.dataset) {
+      root.documentElement.dataset.theme = normalized;
+    }
+    if (themeBtn) {
+      const isDark = normalized === "dark";
+      themeBtn.setAttribute("aria-pressed", String(isDark));
+      themeBtn.textContent = isDark ? THEME_LABEL_TO_LIGHT : THEME_LABEL_TO_DARK;
+    }
+    if (map) {
+      setTheme(map, normalized, state);
+    }
+  }
+
+  if (themeBtn) {
+    const isDark = state.theme === "dark";
+    themeBtn.setAttribute("aria-pressed", String(isDark));
+    themeBtn.textContent = isDark ? THEME_LABEL_TO_LIGHT : THEME_LABEL_TO_DARK;
+    if (typeof themeBtn.addEventListener === "function") {
+      themeBtn.addEventListener("click", () => {
+        applyTheme(state.theme === "dark" ? "light" : "dark");
+      });
+    }
+  }
+
+  const tabsContainer = root.getElementById("hud-tabs");
+  const tabMapBtn = root.getElementById("tab-map");
+  const tabWorksBtn = root.getElementById("tab-works");
+
+  function selectTab(tab) {
+    const nextTab = tab === "works" ? "works" : "map";
+    state.activeTab = nextTab;
+    if (tabsContainer?.dataset) {
+      tabsContainer.dataset.activeTab = nextTab;
+    }
+    if (tabMapBtn) {
+      tabMapBtn.setAttribute("aria-selected", String(nextTab === "map"));
+      tabMapBtn.classList?.toggle("is-active", nextTab === "map");
+    }
+    if (tabWorksBtn) {
+      tabWorksBtn.setAttribute("aria-selected", String(nextTab === "works"));
+      tabWorksBtn.classList?.toggle("is-active", nextTab === "works");
+    }
+    if (typeof state.onTabChange === "function") {
+      state.onTabChange(nextTab);
+    }
+  }
+
+  if (tabMapBtn && typeof tabMapBtn.addEventListener === "function") {
+    tabMapBtn.addEventListener("click", () => selectTab("map"));
+  }
+  if (tabWorksBtn && typeof tabWorksBtn.addEventListener === "function") {
+    tabWorksBtn.addEventListener("click", () => selectTab("works"));
+  }
 
   const layerBarEl = root.getElementById("hud-layerbar");
   if (layerBarEl) {
@@ -69,7 +170,15 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
     initRouting(routingEl, map, api);
   }
 
-  return { map, api, state, layers: LAYERS, optional };
+  return {
+    map,
+    api,
+    state,
+    layers: LAYERS,
+    optional,
+    setTheme: applyTheme,
+    selectTab,
+  };
 }
 
 // Run bootstrap only in a browser environment; importing main.js in Node does not touch DOM or maplibregl.

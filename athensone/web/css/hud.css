@@ -1,4 +1,4 @@
-/* AthensOne Citizen Map — HUD & glassmorphism skeleton (SPEC.md "Map & Visual Spec"). */
+/* AthensOne Citizen Map — HUD & glassmorphism styles (SPEC.md "Map & Visual Spec"). */
 
 :root {
   /* Glassmorphism surface and border values from SPEC.md "HUD (glassmorphism)" (certainty: verified). */
@@ -9,13 +9,26 @@
   --glass-radius-pill: 999px; /* SPEC.md "HUD (glassmorphism)" (certainty: verified). */
   --glass-radius-panel: 16px; /* SPEC.md "HUD (glassmorphism)" (certainty: verified). */
   --hud-text: #111827; /* High-contrast dark ink on light glass for WCAG AA (certainty: design default). */
+  --hud-active-bg: #1d4ed8; /* WCAG AA (>6.7:1 with white) active tab pill fill (certainty: design default). */
+  --hud-active-text: #ffffff;
+  --hud-hover-bg: rgba(17, 24, 39, 0.08);
+  --hud-divider: rgba(17, 24, 39, 0.16);
+  --hud-focus: #1d4ed8;
+  --hud-offline-dot: #d97706; /* Amber offline status indicator (certainty: design default). */
   --hud-gap: 12px; /* Edge inset for floating HUD controls (certainty: design default). */
+  --hud-top-row-height: 44px; /* Approximate height of the top HUD pill row for clean secondary placement (certainty: design default). */
 }
 
 [data-theme="dark"] {
   /* Dark glassmorphism surface from SPEC.md "HUD (glassmorphism)" (certainty: verified). */
   --glass-bg: rgba(20, 24, 32, 0.55);
   --hud-text: #f3f4f6; /* High-contrast light ink on dark glass for WCAG AA (certainty: design default). */
+  --hud-active-bg: #2563eb; /* WCAG AA (>5.1:1 with white) active tab pill fill in dark mode (certainty: design default). */
+  --hud-active-text: #ffffff;
+  --hud-hover-bg: rgba(243, 244, 246, 0.12);
+  --hud-divider: rgba(243, 244, 246, 0.22);
+  --hud-focus: #93c5fd;
+  --hud-offline-dot: #fbbf24;
 }
 
 *,
@@ -104,6 +117,80 @@ body {
   position: fixed;
   bottom: var(--hud-gap);
   right: var(--hud-gap);
+}
+
+.hud-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
+.hud-tablist {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.hud-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: var(--glass-radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.hud-btn:hover {
+  background: var(--hud-hover-bg);
+}
+
+.hud-btn:focus-visible {
+  outline: 2px solid var(--hud-focus);
+  outline-offset: 2px;
+}
+
+.hud-tab.is-active,
+.hud-tab[aria-selected="true"] {
+  background: var(--hud-active-bg);
+  color: var(--hud-active-text);
+}
+
+.hud-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--hud-divider);
+  margin: 0 2px;
+}
+
+/* Positioned below the top HUD row so showing it never overlaps #hud-tabs, #hud-layerbar, or #hud-points. */
+#hud-offline {
+  position: fixed;
+  top: calc(var(--hud-gap) * 2 + var(--hud-top-row-height));
+  left: var(--hud-gap);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  z-index: 11;
+}
+
+#hud-offline::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hud-offline-dot);
+  flex: none;
 }
 
 .hidden {
