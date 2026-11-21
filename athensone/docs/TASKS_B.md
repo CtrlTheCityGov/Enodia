@@ -21,7 +21,7 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B7 Points pill + panel | 2 | `ui/points.js`, pulse + «+N»; SPEC rewards; `/points/redeem` (Nice) | **merged** into `dev-b` |
 | B8 Stoa citations + flyTo | 2 | `/api/map/stoa_ask` with `citations[{label, lon, lat, kind}]`; `ui/stoa.js` | **merged** into `dev-b` |
 | B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | **merged** into `dev-b` |
-| B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | **running** |
+| B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | **merged** into `dev-b` |
 
 ### B0: Contracts + first mocks (phase 0)
 SPEC «Backend contracts», «Εξωτερικές πηγές» (Fallback column), «Offline fallback», «Demo script». Every file in

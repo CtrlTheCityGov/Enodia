@@ -43,3 +43,5 @@ Later improvements, not work to do now. Each with its reason.
 - B9: if every wheelchair candidate touches an obstacle, the least-bad candidate is returned without a `blocked: true`
   flag (needs both owners if added to the contract); `env` reasons use `feature_id` `"shade"` / `"busy_road"`; second
   `routing.candidates()` call for the `reasons` baseline doubles live Valhalla latency.
+- B10: `formatEur(value)` formats `0` or negative amounts if passed (backend and mocks use `null` for unknown); `Escape`
+  listener on `root` only fires when focus is inside `root`.
