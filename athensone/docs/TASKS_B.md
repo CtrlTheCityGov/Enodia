@@ -22,6 +22,7 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B8 Stoa citations + flyTo | 2 | `/api/map/stoa_ask` with `citations[{label, lon, lat, kind}]`; `ui/stoa.js` | **merged** into `dev-b` |
 | B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | **merged** into `dev-b` |
 | B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | **merged** into `dev-b` |
+| B11 Phase 4 integration & end-to-end demo rehearsal | 4 | Combine `dev-a` + `dev-b`, end-to-end tests of the 3-min demo script (`bootstrap`, `api.js`, all 4 Dev B HUD widgets + `bus` events, offline degradation) | **running** |
 
 ### B0: Contracts + first mocks (phase 0)
 SPEC «Backend contracts», «Εξωτερικές πηγές» (Fallback column), «Offline fallback», «Demo script». Every file in
@@ -423,3 +424,29 @@ SPEC F8, HUD «Πάνω αριστερά», «Demo script» step 6; A-35.
 | `test_js_work_midpoint` (node) | LineString `[[23.72, 37.97], [23.74, 37.99]]` | `[23.73, 37.98]` |
 | `test_js_mount_emits_report_open_and_flyto` (node) | fake DOM/bus/api, open «Έργα» tab, click «Ανέφερε πρόοδο» and map-focus button on a work | `report:open` emitted with `{work_id, lngLat}` and `map:flyto` emitted with `{lon, lat, label}` |
 | `test_js_import_has_no_dom` (node) | import `ui/workstab.js` in Node | no error, no globals touched |
+
+### B11: Phase 4 integration & end-to-end demo rehearsal (phase 4)
+SPEC «Φάσεις» 4, «Κριτήρια αποδοχής», «Demo script (3 λεπτά)»; A-35, A-38.
+**Files:** `web/js/api.js`, `web/js/ui/{points,report,stoa,workstab}.js`, `tests/test_B11_e2e_demo.py`,
+`web/tests/B11_e2e_demo.test.js`.
+- Verify and harden the end-to-end 3-minute demo flow across the backend (`/api/map/*`) and the frontend ES modules
+  (`api.js`, `ui/points.js`, `ui/report.js`, `ui/stoa.js`, `ui/workstab.js`) when mounted into a DOM with the HUD slots
+  of `web/citizen.html` (`#hud-tabs`, `#hud-points`, `#hud-report`, `#hud-stoa`) and a shared `EventTarget` `bus`.
+- Ensure that:
+  1. `ui/workstab.js` listens to `tab:change` `{tab: "works"|"map"}` on `bus` (dispatched by Dev A's `main.js` when
+     `#tab-works` / `#tab-map` is clicked) in addition to direct clicks on the tab buttons, and refreshes the works list
+     when opened via `tab:change`.
+  2. When a report is submitted via `ui/report.js` (`submitReport` or form submit), it emits `points:earned` on `bus`
+     so `ui/points.js` pulses and increments its displayed balance, and also emits `report:created` `{id, category,
+     lon, lat}` on `bus` so the map reports layer can refresh.
+  3. On backend `/api/map/*`: all 6 demo steps (env grid, transit, works + work progress report with photo blur & +15
+     points, wheelchair vs cool routing avoiding in-progress work, Stoa pharmacy question near Syntagma with citation
+     coordinates, points & voucher redemption) succeed end-to-end in sequence on a single `TestClient` session.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_e2e_demo_backend_6_steps` | single `TestClient` running SPEC Demo script steps 2–6 against `/api/map/*` | env grid ≥ 20 pts; transit 3 collections; work progress photo report awards 15 pts & strips EXIF; wheelchair & cool routes return LineStrings; Stoa pharmacy query returns citation; points balance 15 & redeem works after earning 30 |
+| `test_js_workstab_opens_on_bus_tab_change` (node) | `workstab.mount({map, api, root, container, bus})`, dispatch `tab:change` `{tab: "works"}` then `{tab: "map"}` on `bus` | panel opens and loads works from `api.works()` on `"works"`, hides on `"map"` |
+| `test_js_report_to_points_pulse_via_bus` (node) | `points.mount` and `report.mount` sharing `bus`, submit a report awarding 15 points | `points` pill balance increases by 15 and gets `.pulse` class + `+15` float |
+| `test_js_workstab_report_open_prefills_report_panel` (node) | `workstab.mount` and `report.mount` sharing `bus`, click «Ανέφερε πρόοδο» on work `W-SEED-001` | `report` panel opens with `work_progress` category and title containing `W-SEED-001` |
+| `test_js_stoa_citation_emits_flyto_on_shared_bus` (node) | `stoa.mount` with `api.stoaAsk` returning a pharmacy citation, submit question and click citation link | `map:flyto` dispatched on `bus` with numeric `lon`, `lat`, and pharmacy `label` |
