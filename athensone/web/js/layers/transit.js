@@ -17,6 +17,9 @@ export const label = BUSES_LABEL;
 // Bus telematics polling interval: 20 s (source: SPEC.md "Εξωτερικές πηγές", TASKS_A.md A2, certainty: verified).
 export const BUS_POLL_INTERVAL_MS = 20_000;
 
+// Smooth bus glide animation duration between 20 s snapshots in ms (source: TASKS_A.md A5, certainty: design default).
+export const BUS_ANIMATION_MS = 1000;
+
 // Official Athens Metro & Suburban rail line colors (source: A2 prompt & STASY/OASA branding, certainty: verified in prompt).
 export const ATHENS_LINE_COLORS = Object.freeze({
   M1: "#007a3d", // Line 1 (ISAP) green
@@ -53,6 +56,163 @@ const BUS_STROKE_COLOR = "#ffffff";
 const BUS_STROKE_WIDTH = 2;
 
 const busPollTimers = new WeakMap();
+const busAnimByMap = new WeakMap();
+const lastBusesByMap = new WeakMap();
+const busPollGenByMap = new WeakMap();
+const busesActiveByMap = new WeakMap();
+
+function getBusFeatureId(feature) {
+  if (!feature || typeof feature !== "object") {
+    return null;
+  }
+  const raw = feature.properties?.id ?? feature.id;
+  if (raw === undefined || raw === null || raw === "") {
+    return null;
+  }
+  return String(raw);
+}
+
+function isValidPointCoords(coords) {
+  return (
+    Array.isArray(coords) &&
+    coords.length >= 2 &&
+    Number.isFinite(coords[0]) &&
+    Number.isFinite(coords[1])
+  );
+}
+
+// Linearly interpolate bus [lon, lat] positions between snapshots sharing an id/properties.id (TASKS_A.md A5).
+export function interpolateBuses(prevFC, nextFC, t) {
+  const prev = toFeatureCollection(prevFC);
+  const next = toFeatureCollection(nextFC);
+  const numericT = Number(t);
+  const clampedT = Number.isFinite(numericT) ? Math.max(0, Math.min(1, numericT)) : 1;
+
+  const prevCoordsById = new Map();
+  for (const feature of prev.features) {
+    const busId = getBusFeatureId(feature);
+    if (
+      busId !== null &&
+      feature?.geometry?.type === "Point" &&
+      isValidPointCoords(feature.geometry.coordinates)
+    ) {
+      prevCoordsById.set(busId, feature.geometry.coordinates);
+    }
+  }
+
+  const features = next.features.map((feature) => {
+    if (
+      !feature ||
+      feature.geometry?.type !== "Point" ||
+      !isValidPointCoords(feature.geometry.coordinates)
+    ) {
+      return feature;
+    }
+    const busId = getBusFeatureId(feature);
+    const prevCoords = busId !== null ? prevCoordsById.get(busId) : null;
+    if (!prevCoords) {
+      return feature;
+    }
+    const [prevLon, prevLat] = prevCoords;
+    const [nextLon, nextLat] = feature.geometry.coordinates;
+    const lon = prevLon + (nextLon - prevLon) * clampedT;
+    const lat = prevLat + (nextLat - prevLat) * clampedT;
+    return {
+      ...feature,
+      geometry: {
+        ...feature.geometry,
+        coordinates: [lon, lat],
+      },
+    };
+  });
+
+  return {
+    type: "FeatureCollection",
+    features,
+  };
+}
+
+function cancelBusAnimation(map) {
+  if (!map) {
+    return;
+  }
+  const anim = busAnimByMap.get(map);
+  if (!anim) {
+    return;
+  }
+  anim.cancelled = true;
+  if (anim.rafId !== null && typeof globalThis.cancelAnimationFrame === "function") {
+    globalThis.cancelAnimationFrame(anim.rafId);
+  }
+  anim.rafId = null;
+  busAnimByMap.delete(map);
+}
+
+function updateBusesData(map, nextBuses) {
+  if (!map || typeof map.getSource !== "function") {
+    return;
+  }
+  const busesSrc = map.getSource(BUSES_SOURCE_ID);
+  if (!busesSrc || typeof busesSrc.setData !== "function") {
+    return;
+  }
+
+  const prevAnim = busAnimByMap.get(map);
+  const prevFC = prevAnim?.currentFC ?? lastBusesByMap.get(map) ?? null;
+  cancelBusAnimation(map);
+
+  const raf = globalThis.requestAnimationFrame;
+  const hasPrev = Boolean(prevFC && Array.isArray(prevFC.features) && prevFC.features.length > 0);
+  const hasNext = Boolean(nextBuses && Array.isArray(nextBuses.features) && nextBuses.features.length > 0);
+
+  if (!hasPrev || !hasNext || typeof raf !== "function") {
+    lastBusesByMap.set(map, nextBuses);
+    busesSrc.setData(nextBuses);
+    return;
+  }
+
+  const anim = {
+    cancelled: false,
+    rafId: null,
+    startTime: null,
+    currentFC: prevFC,
+  };
+  busAnimByMap.set(map, anim);
+
+  function step(timestamp) {
+    if (anim.cancelled || !busesActiveByMap.get(map)) {
+      return;
+    }
+    const now =
+      typeof timestamp === "number"
+        ? timestamp
+        : typeof globalThis.performance?.now === "function"
+          ? globalThis.performance.now()
+          : Date.now();
+    if (anim.startTime === null) {
+      anim.startTime = now;
+    }
+    const elapsed = Math.max(0, now - anim.startTime);
+    const progress = Math.min(1, elapsed / BUS_ANIMATION_MS);
+    const frameFC = interpolateBuses(prevFC, nextBuses, progress);
+    anim.currentFC = frameFC;
+
+    const liveSrc = typeof map.getSource === "function" ? map.getSource(BUSES_SOURCE_ID) : null;
+    if (liveSrc && typeof liveSrc.setData === "function") {
+      liveSrc.setData(frameFC);
+    }
+
+    if (progress < 1) {
+      anim.rafId = raf(step);
+    } else {
+      anim.rafId = null;
+      lastBusesByMap.set(map, nextBuses);
+      busAnimByMap.delete(map);
+    }
+  }
+
+  anim.rafId = raf(step);
+}
 
 function emptyFeatureCollection() {
   return { type: "FeatureCollection", features: [] };
@@ -117,6 +277,7 @@ async function loadTransitData(map, api, { updateRail = false, updateBuses = fal
   if (!map || !api || typeof api.transit !== "function") {
     return null;
   }
+  const busGen = updateBuses ? (busPollGenByMap.get(map) ?? 0) : null;
   try {
     const bbox = getMapBbox(map);
     const res = await api.transit(bbox ? { bbox } : undefined);
@@ -134,11 +295,11 @@ async function loadTransitData(map, api, { updateRail = false, updateBuses = fal
         stationsSrc.setData(bundle.stations);
       }
     }
-    if (updateBuses && typeof map.getSource === "function") {
-      const busesSrc = map.getSource(BUSES_SOURCE_ID);
-      if (busesSrc && typeof busesSrc.setData === "function") {
-        busesSrc.setData(bundle.buses);
+    if (updateBuses) {
+      if (!busesActiveByMap.get(map) || (busPollGenByMap.get(map) ?? 0) !== busGen) {
+        return bundle;
       }
+      updateBusesData(map, bundle.buses);
     }
     return bundle;
   } catch {
@@ -150,6 +311,10 @@ export function stopBusPolling(map) {
   if (!map) {
     return;
   }
+  busesActiveByMap.set(map, false);
+  busPollGenByMap.set(map, (busPollGenByMap.get(map) ?? 0) + 1);
+  cancelBusAnimation(map);
+  lastBusesByMap.delete(map);
   const timerId = busPollTimers.get(map);
   if (timerId !== undefined) {
     clearInterval(timerId);
@@ -165,6 +330,8 @@ export function startBusPolling(map, api, state = null) {
   if (!api || typeof api.transit !== "function") {
     return;
   }
+  busesActiveByMap.set(map, true);
+  busPollGenByMap.set(map, (busPollGenByMap.get(map) ?? 0) + 1);
   loadTransitData(map, api, { updateBuses: true, state });
   const timerId = setInterval(() => {
     loadTransitData(map, api, { updateBuses: true, state });
@@ -172,11 +339,20 @@ export function startBusPolling(map, api, state = null) {
   busPollTimers.set(map, timerId);
 }
 
-export function setBusesEnabled(map, api, enabled, state = null) {
-  const isOn = Boolean(enabled);
+export function setBusesEnabled(map, apiOrEnabled, enabled, state = null) {
+  let api = apiOrEnabled;
+  let isOn;
+  let activeState = state;
+  if (typeof apiOrEnabled === "boolean" && enabled === undefined) {
+    api = null;
+    isOn = apiOrEnabled;
+    activeState = null;
+  } else {
+    isOn = Boolean(enabled);
+  }
   applyVisibility(map, busLayerIds, isOn);
   if (isOn) {
-    startBusPolling(map, api, state);
+    startBusPolling(map, api, activeState);
   } else {
     stopBusPolling(map);
   }

@@ -14,10 +14,11 @@ const HEATMAP_LAYER_ID = "env-heat";
 // MapLibre layer ids added by this module (TASKS_A.md A2, certainty: verified).
 export const layerIds = [HEATMAP_LAYER_ID];
 
-// Supported heatmap weight modes matching SPEC.md "Backend contracts" GET /env fields (certainty: verified).
+// Supported heatmap weight modes matching SPEC.md "Backend contracts" GET /env fields and A-37 pm25 mode (certainty: verified).
 export const MODES = Object.freeze({
   temp: "temp",
   aqi: "aqi",
+  pm25: "pm25",
 });
 
 // Temperature normalization bounds (15-42 C for Athens summer/winter range) (certainty: design default).
@@ -27,6 +28,10 @@ const TEMP_MAX_C = 42;
 // AQI normalization bounds (0-150 standard air quality index scale) (certainty: design default).
 const AQI_MIN = 0;
 const AQI_MAX = 150;
+
+// PM2.5 normalization bounds in ug/m3 (0-75 covering EU/EEA Good through Very Poor bands; source: TASKS_A.md A5 / A-37, bounds certainty: design default).
+const PM25_MIN = 0;
+const PM25_MAX = 75;
 
 // Heatmap visual tuning constants for urban point grids (certainty: design default).
 const HEATMAP_INTENSITY = 1.1;
@@ -58,6 +63,18 @@ const AQI_COLOR_RAMP = [
   1, "rgba(147, 51, 234, 0.92)",
 ];
 
+// Heatmap color ramp for PM2.5 mode (low teal/green -> moderate yellow -> elevated orange -> high crimson) (certainty: design default).
+const PM25_COLOR_RAMP = [
+  "interpolate",
+  ["linear"],
+  ["heatmap-density"],
+  0, "rgba(16, 185, 129, 0)",
+  0.25, "rgba(20, 184, 166, 0.55)",
+  0.5, "rgba(250, 204, 21, 0.75)",
+  0.75, "rgba(249, 115, 22, 0.85)",
+  1, "rgba(190, 24, 93, 0.92)",
+];
+
 const modeByMap = new WeakMap();
 
 function emptyFeatureCollection() {
@@ -86,11 +103,29 @@ function getMapBbox(map) {
 }
 
 function normalizeMode(mode) {
-  return mode === MODES.aqi ? MODES.aqi : MODES.temp;
+  if (mode === MODES.aqi) {
+    return MODES.aqi;
+  }
+  if (mode === MODES.pm25) {
+    return MODES.pm25;
+  }
+  return MODES.temp;
+}
+
+function heatmapColorForMode(mode = MODES.temp) {
+  const normalized = normalizeMode(mode);
+  if (normalized === MODES.aqi) {
+    return AQI_COLOR_RAMP;
+  }
+  if (normalized === MODES.pm25) {
+    return PM25_COLOR_RAMP;
+  }
+  return TEMP_COLOR_RAMP;
 }
 
 export function heatmapWeightForMode(mode = MODES.temp) {
-  if (normalizeMode(mode) === MODES.aqi) {
+  const normalized = normalizeMode(mode);
+  if (normalized === MODES.aqi) {
     return [
       "interpolate",
       ["linear"],
@@ -98,6 +133,17 @@ export function heatmapWeightForMode(mode = MODES.temp) {
       AQI_MIN,
       0,
       AQI_MAX,
+      1,
+    ];
+  }
+  if (normalized === MODES.pm25) {
+    return [
+      "interpolate",
+      ["linear"],
+      ["coalesce", ["to-number", ["get", "pm25"]], 0],
+      PM25_MIN,
+      0,
+      PM25_MAX,
       1,
     ];
   }
@@ -126,11 +172,7 @@ export function setMode(map, mode) {
   }
   if (typeof map.getLayer !== "function" || map.getLayer(HEATMAP_LAYER_ID)) {
     map.setPaintProperty(HEATMAP_LAYER_ID, "heatmap-weight", heatmapWeightForMode(nextMode));
-    map.setPaintProperty(
-      HEATMAP_LAYER_ID,
-      "heatmap-color",
-      nextMode === MODES.aqi ? AQI_COLOR_RAMP : TEMP_COLOR_RAMP,
-    );
+    map.setPaintProperty(HEATMAP_LAYER_ID, "heatmap-color", heatmapColorForMode(nextMode));
   }
   return nextMode;
 }
@@ -188,7 +230,7 @@ export async function register(map, api, options = {}) {
           16,
           HEATMAP_RADIUS_HIGH_ZOOM,
         ],
-        "heatmap-color": mode === MODES.aqi ? AQI_COLOR_RAMP : TEMP_COLOR_RAMP,
+        "heatmap-color": heatmapColorForMode(mode),
         "heatmap-opacity": HEATMAP_OPACITY,
       },
     });

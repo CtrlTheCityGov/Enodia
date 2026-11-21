@@ -15,6 +15,33 @@ export const PROFILES = [
 export const ROUTE_SOURCE_ID = "route";
 export const ROUTE_LAYER_ID = "route-line";
 
+// MapLibre source and layer IDs for highlighted routing reasons (source: TASKS_A.md A5 & A5_polish.test.js; certainty: verified).
+export const REASONS_HIGHLIGHT_SOURCE_ID = "route-reasons-highlight-source";
+export const REASONS_HIGHLIGHT_LAYER_ID = "route-reasons-highlight";
+const REASONS_HIGHLIGHT_POINTS_LAYER_ID = "route-reasons-highlight-points";
+
+// Highlight colors/dimensions for features cited in route reasons (certainty: design default).
+const REASONS_HIGHLIGHT_COLOR = "#facc15";
+const REASONS_HIGHLIGHT_STROKE = "#d97706";
+const REASONS_HIGHLIGHT_LINE_WIDTH_PX = 8;
+const REASONS_HIGHLIGHT_LINE_BLUR_PX = 1.5;
+const REASONS_HIGHLIGHT_POINT_RADIUS_PX = 10;
+
+// Mobile viewport width breakpoint matching hud.css @media (max-width: 600px) (source: TASKS_A.md A2/A5; certainty: verified).
+const MOBILE_BREAKPOINT_PX = 600;
+
+// Known Dev A layer -> MapLibre source IDs used as fallback when highlightReasons is called without an explicit lookup (certainty: verified from layers/*.js).
+const LAYER_SOURCE_IDS = Object.freeze({
+  works: ["works-source"],
+  env: ["env-source"],
+  access: ["access-source"],
+  health: ["health-source"],
+  reports: ["reports-source"],
+  transit: ["transit-buses-source", "transit-stations-source", "transit-lines-source"],
+  "transit-buses": ["transit-buses-source"],
+  "transit-rail": ["transit-stations-source", "transit-lines-source"],
+});
+
 // localStorage key for persisting the user's selected routing profile (source: SPEC.md "Routing" requires persistence, key name not specified; certainty: design default).
 export const PROFILE_STORAGE_KEY = "athensone.routing.profile";
 
@@ -65,8 +92,9 @@ const ATHENS_PLACES = {
   serafio: [23.7115, 37.9776],
 };
 
-// Per-map active route state so Light/Dark setStyle() switches restore the active route without leaking fake maps in tests.
+// Per-map active route and reasons highlight state so Light/Dark setStyle() switches restore them without leaking fake maps in tests.
 const routeStateByMap = new WeakMap();
+const reasonsHighlightByMap = new WeakMap();
 
 function isValidProfileId(id) {
   return PROFILES.some((p) => p.id === id);
@@ -117,25 +145,41 @@ function formatCoordPair(lonLat) {
   return `${Number(lonLat[1]).toFixed(4)}, ${Number(lonLat[0]).toFixed(4)}`;
 }
 
-export function loadSavedProfile(storage = typeof globalThis.localStorage !== "undefined" ? globalThis.localStorage : null) {
+function resolveLocalStorage(storage) {
+  if (storage !== undefined) {
+    return storage;
+  }
+  try {
+    return typeof globalThis.localStorage !== "undefined" ? globalThis.localStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+export function loadSavedProfile(storage) {
   const fallback = PROFILES[0].id;
-  if (!storage || typeof storage.getItem !== "function") {
+  const store = resolveLocalStorage(storage);
+  if (!store || typeof store.getItem !== "function") {
     return fallback;
   }
   try {
-    const saved = storage.getItem(PROFILE_STORAGE_KEY);
+    const saved = store.getItem(PROFILE_STORAGE_KEY);
     return isValidProfileId(saved) ? saved : fallback;
   } catch {
     return fallback;
   }
 }
 
-export function saveProfile(profileId, storage = typeof globalThis.localStorage !== "undefined" ? globalThis.localStorage : null) {
-  if (!isValidProfileId(profileId) || !storage || typeof storage.setItem !== "function") {
+export function saveProfile(profileId, storage) {
+  if (!isValidProfileId(profileId)) {
+    return false;
+  }
+  const store = resolveLocalStorage(storage);
+  if (!store || typeof store.setItem !== "function") {
     return false;
   }
   try {
-    storage.setItem(PROFILE_STORAGE_KEY, profileId);
+    store.setItem(PROFILE_STORAGE_KEY, profileId);
     return true;
   } catch {
     return false;
@@ -469,6 +513,182 @@ function reapplyRouteOverlay(targetMap) {
   };
 }
 
+function getFeatureIdentifier(feature) {
+  if (!feature || typeof feature !== "object") {
+    return null;
+  }
+  const raw = feature.properties?.id ?? feature.id;
+  return raw !== undefined && raw !== null && raw !== "" ? String(raw) : null;
+}
+
+function extractFeaturesList(collectionOrList) {
+  if (!collectionOrList) {
+    return [];
+  }
+  if (Array.isArray(collectionOrList)) {
+    return collectionOrList;
+  }
+  if (collectionOrList.type === "FeatureCollection" && Array.isArray(collectionOrList.features)) {
+    return collectionOrList.features;
+  }
+  if (collectionOrList.data?.type === "FeatureCollection" && Array.isArray(collectionOrList.data.features)) {
+    return collectionOrList.data.features;
+  }
+  return [];
+}
+
+function lookupReasonFeature(map, layerName, featureId, lookup) {
+  const targetId = String(featureId);
+
+  if (typeof lookup === "function") {
+    return lookup(layerName, featureId) ?? null;
+  }
+
+  if (lookup && typeof lookup === "object") {
+    const entry =
+      lookup instanceof Map
+        ? lookup.get(layerName)
+        : Object.hasOwn(lookup, layerName)
+          ? lookup[layerName]
+          : null;
+    const features = extractFeaturesList(entry);
+    const matched = features.find((f) => getFeatureIdentifier(f) === targetId);
+    if (matched) {
+      return matched;
+    }
+    if (Array.isArray(lookup) || lookup.type === "FeatureCollection") {
+      const fromFlat = extractFeaturesList(lookup).find((f) => getFeatureIdentifier(f) === targetId);
+      if (fromFlat) {
+        return fromFlat;
+      }
+    }
+  }
+
+  if (map && typeof map.getSource === "function") {
+    const sourceIds = LAYER_SOURCE_IDS[layerName] ?? [`${layerName}-source`, layerName];
+    for (const sourceId of sourceIds) {
+      const src = map.getSource(sourceId);
+      const data = src?.data ?? src?._data;
+      const matched = extractFeaturesList(data).find((f) => getFeatureIdentifier(f) === targetId);
+      if (matched) {
+        return matched;
+      }
+    }
+  }
+
+  return null;
+}
+
+function ensureReasonsHighlightOnMap(map, featureCollection) {
+  if (!map) {
+    return;
+  }
+  const existingSource =
+    typeof map.getSource === "function" ? map.getSource(REASONS_HIGHLIGHT_SOURCE_ID) : null;
+  if (existingSource && typeof existingSource.setData === "function") {
+    existingSource.setData(featureCollection);
+  } else if (typeof map.addSource === "function") {
+    map.addSource(REASONS_HIGHLIGHT_SOURCE_ID, {
+      type: "geojson",
+      data: featureCollection,
+    });
+  }
+
+  const hasLineLayer =
+    typeof map.getLayer === "function" ? Boolean(map.getLayer(REASONS_HIGHLIGHT_LAYER_ID)) : false;
+  if (!hasLineLayer && typeof map.addLayer === "function") {
+    map.addLayer({
+      id: REASONS_HIGHLIGHT_LAYER_ID,
+      type: "line",
+      source: REASONS_HIGHLIGHT_SOURCE_ID,
+      layout: {
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": REASONS_HIGHLIGHT_COLOR,
+        "line-width": REASONS_HIGHLIGHT_LINE_WIDTH_PX,
+        "line-blur": REASONS_HIGHLIGHT_LINE_BLUR_PX,
+        "line-opacity": 0.85,
+      },
+    });
+  }
+
+  const hasPointLayer =
+    typeof map.getLayer === "function"
+      ? Boolean(map.getLayer(REASONS_HIGHLIGHT_POINTS_LAYER_ID))
+      : false;
+  if (!hasPointLayer && typeof map.addLayer === "function") {
+    map.addLayer({
+      id: REASONS_HIGHLIGHT_POINTS_LAYER_ID,
+      type: "circle",
+      source: REASONS_HIGHLIGHT_SOURCE_ID,
+      filter: ["in", ["geometry-type"], ["literal", ["Point", "MultiPoint"]]],
+      paint: {
+        "circle-radius": REASONS_HIGHLIGHT_POINT_RADIUS_PX,
+        "circle-color": REASONS_HIGHLIGHT_COLOR,
+        "circle-opacity": 0.45,
+        "circle-stroke-color": REASONS_HIGHLIGHT_STROKE,
+        "circle-stroke-width": 3,
+      },
+    });
+  }
+}
+
+function reapplyReasonsHighlight(targetMap) {
+  const fc = reasonsHighlightByMap.get(targetMap);
+  if (!fc) {
+    return null;
+  }
+  ensureReasonsHighlightOnMap(targetMap, fc);
+  return {
+    id: REASONS_HIGHLIGHT_SOURCE_ID,
+    layerIds: [REASONS_HIGHLIGHT_LAYER_ID, REASONS_HIGHLIGHT_POINTS_LAYER_ID],
+  };
+}
+
+// Highlight features referenced by route reasons on a dedicated map layer, clearing when reasons is empty (TASKS_A.md A5).
+export function highlightReasons(map, reasons = [], lookup = null) {
+  if (!map || typeof map !== "object") {
+    return null;
+  }
+
+  const matchedFeatures = [];
+  const seenKeys = new Set();
+
+  if (Array.isArray(reasons)) {
+    for (const reason of reasons) {
+      if (!reason || typeof reason !== "object") {
+        continue;
+      }
+      const layerName = typeof reason.layer === "string" ? reason.layer.trim() : "";
+      const featureId = reason.feature_id;
+      if (!layerName || featureId === undefined || featureId === null || featureId === "") {
+        continue;
+      }
+      const dedupeKey = `${layerName}:${String(featureId)}`;
+      if (seenKeys.has(dedupeKey)) {
+        continue;
+      }
+      const feature = lookupReasonFeature(map, layerName, featureId, lookup);
+      if (feature) {
+        seenKeys.add(dedupeKey);
+        matchedFeatures.push(feature);
+      }
+    }
+  }
+
+  const featureCollection = {
+    type: "FeatureCollection",
+    features: matchedFeatures,
+  };
+
+  reasonsHighlightByMap.set(map, featureCollection);
+  registerOverlay(reapplyReasonsHighlight);
+  ensureReasonsHighlightOnMap(map, featureCollection);
+  return featureCollection;
+}
+
 export function initRouting(container, map, api, options = {}) {
   const doc = container?.ownerDocument ?? (typeof globalThis.document !== "undefined" ? globalThis.document : null);
   if (!container || !doc) {
@@ -476,10 +696,14 @@ export function initRouting(container, map, api, options = {}) {
   }
 
   let activeProfile = loadSavedProfile();
-  let collapsed = false;
+  const isNarrowViewport =
+    typeof globalThis.innerWidth === "number" && globalThis.innerWidth <= MOBILE_BREAKPOINT_PX;
+  let collapsed =
+    typeof options?.initialCollapsed === "boolean" ? options.initialCollapsed : isNarrowViewport;
   let pickMode = null;
   let cancelAnimation = null;
   let lastRoute = null;
+  let routeRequestSeq = 0;
   const coords = { from: null, to: null };
 
   const mapState = {
@@ -621,8 +845,10 @@ export function initRouting(container, map, api, options = {}) {
   function setCollapsed(nextCollapsed) {
     collapsed = Boolean(nextCollapsed);
     drawer.classList.toggle("is-collapsed", collapsed);
+    container.classList?.toggle?.("is-routing-expanded", !collapsed);
     handleBtn.setAttribute("aria-expanded", String(!collapsed));
   }
+  setCollapsed(collapsed);
 
   // Optional vertical pointer drag gesture on the drawer handle (ignored safely in minimal fake DOMs).
   let dragStartY = null;
@@ -750,6 +976,7 @@ export function initRouting(container, map, api, options = {}) {
       return null;
     }
 
+    const reqId = ++routeRequestSeq;
     routeBtn.disabled = true;
     summaryEl.textContent = "Υπολογισμός διαδρομής…";
     try {
@@ -758,10 +985,16 @@ export function initRouting(container, map, api, options = {}) {
         to,
         profile: activeProfile,
       });
+      if (reqId !== routeRequestSeq) {
+        return null;
+      }
       const sourceTag = response?.source ?? null;
       const route = response?.geometry ? response : response?.data ?? response;
       if (!route || !route.geometry) {
         summaryEl.textContent = "Δεν βρέθηκε διαδρομή.";
+        if (map) {
+          highlightReasons(map, []);
+        }
         return null;
       }
 
@@ -779,13 +1012,67 @@ export function initRouting(container, map, api, options = {}) {
             : labelText;
 
       drawRoute(route);
+      if (map) {
+        const lookup =
+          typeof options?.getLookup === "function" ? options.getLookup() : (options?.lookup ?? null);
+        highlightReasons(map, route.reasons ?? [], lookup);
+      }
       return route;
     } catch {
+      if (reqId !== routeRequestSeq) {
+        return null;
+      }
       summaryEl.textContent = "Δεν ήταν δυνατός ο υπολογισμός διαδρομής.";
       return null;
     } finally {
-      routeBtn.disabled = false;
+      if (reqId === routeRequestSeq) {
+        routeBtn.disabled = false;
+      }
     }
+  }
+
+  function handleRouteRequestEvent(event) {
+    const detail = event?.detail;
+    if (!detail || typeof detail !== "object") {
+      return;
+    }
+    if (isValidProfileId(detail.profile)) {
+      activeProfile = detail.profile;
+      saveProfile(activeProfile);
+      updateProfileButtons();
+    }
+    if (
+      Array.isArray(detail.from) &&
+      detail.from.length >= 2 &&
+      detail.from[0] != null &&
+      detail.from[1] != null &&
+      Number.isFinite(Number(detail.from[0])) &&
+      Number.isFinite(Number(detail.from[1]))
+    ) {
+      coords.from = [Number(detail.from[0]), Number(detail.from[1])];
+      fromField.input.value = detail.fromLabel ?? formatCoordPair(coords.from);
+    } else if (!resolvePoint("from")) {
+      coords.from = [ATHENS_PLACES.συνταγμα[0], ATHENS_PLACES.συνταγμα[1]];
+      fromField.input.value = "Σύνταγμα";
+    }
+    if (
+      Array.isArray(detail.to) &&
+      detail.to.length >= 2 &&
+      detail.to[0] != null &&
+      detail.to[1] != null &&
+      Number.isFinite(Number(detail.to[0])) &&
+      Number.isFinite(Number(detail.to[1]))
+    ) {
+      coords.to = [Number(detail.to[0]), Number(detail.to[1])];
+      toField.input.value = detail.toLabel ?? formatCoordPair(coords.to);
+    }
+    setCollapsed(false);
+    requestRoute();
+  }
+
+  const bus = options?.bus && typeof options.bus.addEventListener === "function" ? options.bus : null;
+  if (bus) {
+    bus.addEventListener("route:request", handleRouteRequestEvent);
   }
 
   form.addEventListener("submit", (e) => {
@@ -817,6 +1104,9 @@ export function initRouting(container, map, api, options = {}) {
       }
       if (map && typeof map.off === "function") {
         map.off("click", handleMapClick);
+      }
+      if (bus && typeof bus.removeEventListener === "function") {
+        bus.removeEventListener("route:request", handleRouteRequestEvent);
       }
     },
   };
