@@ -23,6 +23,7 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B9 Route cost per profile | 2 | wheelchair / stroller / cool from the same layers the map shows; `reasons[{text, layer, feature_id}]` | **merged** into `dev-b` |
 | B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | **merged** into `dev-b` |
 | B11 Phase 4 integration & end-to-end demo rehearsal | 4 | Combine `dev-a` + `dev-b`, end-to-end tests of the 3-min demo script (`bootstrap`, `api.js`, all 4 Dev B HUD widgets + `bus` events, offline degradation) | **merged** into `dev-b` |
+| B12 Cross-module backend wiring (`works_map` + `routing_map` + `map_reports`) | 4 | `works_map._open_reports` and `routing_map._open_reports` include `map_reports`; `route_cost.in_progress` supports B2 evidence-wrapped dates via `works_src.status_of` | **running** |
 
 ### B0: Contracts + first mocks (phase 0)
 SPEC «Backend contracts», «Εξωτερικές πηγές» (Fallback column), «Offline fallback», «Demo script». Every file in
@@ -450,3 +451,29 @@ SPEC «Φάσεις» 4, «Κριτήρια αποδοχής», «Demo script (3
 | `test_js_report_to_points_pulse_via_bus` (node) | `points.mount` and `report.mount` sharing `bus`, submit a report awarding 15 points | `points` pill balance increases by 15 and gets `.pulse` class + `+15` float |
 | `test_js_workstab_report_open_prefills_report_panel` (node) | `workstab.mount` and `report.mount` sharing `bus`, click «Ανέφερε πρόοδο» on work `W-SEED-001` | `report` panel opens with `work_progress` category and title containing `W-SEED-001` |
 | `test_js_stoa_citation_emits_flyto_on_shared_bus` (node) | `stoa.mount` with `api.stoaAsk` returning a pharmacy citation, submit question and click citation link | `map:flyto` dispatched on `bus` with numeric `lon`, `lat`, and pharmacy `label` |
+
+### B12: Cross-module backend wiring (`works_map` + `routing_map` + `map_reports`) (phase 4)
+SPEC F3, F4, F5, «Demo script» steps 3–4.
+**Files:** `app/map_reports.py`, `app/routers/works_map.py`, `app/routers/routing_map.py`, `app/route_cost.py`,
+`tests/test_B12_cross_wiring.py`.
+- `app/map_reports.py`: add `all_reports() -> list[dict]` returning stored rows (`id, category, lon, lat, work_id,
+  city_request_id, created_at`).
+- `app/routers/works_map.py`: `_open_reports()` includes SQLite `map_reports` rows that have no `city_request_id`
+  (such as `work_progress`, `incident`, `congestion`) alongside the open sandbox requests (so `obstacle`/`damage`
+  reports forwarded to the sandbox are not double-counted). Submitting a `work_progress` report within 30 m of a work
+  via `POST /api/map/reports` increments that work's `reports_count` in `GET /api/map/works`.
+- `app/routers/routing_map.py`: `_open_reports()` includes `map_reports.all_reports()` (where `category == "obstacle"`
+  has `blocker: True`, `category == "congestion"` has `blocker: False` and is in `SOFT_REPORT_CATEGORIES`, and any row
+  linked to `city_request_id` checks that its sandbox status is still in `main.OPEN`), so `POST /api/map/routing`
+  avoids `obstacle` and `congestion` reports created through `POST /api/map/reports` and returns their `MR-...` id in
+  `reasons[].feature_id`.
+- `app/route_cost.py`: `in_progress(work, today)` accepts both B2 evidence-wrapped works records (`start_date` /
+  `end_date` as `{"value": "YYYY-MM-DD", ...}` via `works_src.status_of(work, today.isoformat()) == "in_progress"`) and
+  top-level `status == "in_progress"` records.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_work_progress_map_report_increments_works_reports_count` | `POST /api/map/reports` with `category="work_progress"` on `W-SEED-001` (`lon=23.7420, lat=37.9660`) | `GET /api/map/works` shows `reports_count == 1` for `W-SEED-001` |
+| `test_obstacle_map_report_not_double_counted_on_work` | `POST /api/map/reports` with `category="obstacle"` on `W-SEED-001` (`lon=23.7420, lat=37.9660`) | `GET /api/map/works` shows `reports_count == 1` (not 2) for `W-SEED-001` |
+| `test_wheelchair_routing_avoids_map_report_obstacle` | `POST /api/map/reports` with `category="obstacle"` at Syntagma→Monastiraki midpoint (`lon=23.73025, lat=37.9758`) | `POST /api/map/routing` (`profile="wheelchair"`) avoids the midpoint (> 20 m) and includes a `reports` reason with that `MR-...` id |
+| `test_wheelchair_routing_avoids_b2_evidence_wrapped_in_progress_work` | B2-schema work with evidence-wrapped `start_date: {"value": "2026-10-01", "label": "CITED"}` and `end_date: {"value": "2026-12-31", "label": "CITED"}` (no top-level `status` key) on Syntagma→Monastiraki | `POST /api/map/routing` (`profile="wheelchair"`) avoids the work and includes a `works` reason with its id |
