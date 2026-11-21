@@ -35,7 +35,7 @@ def parse_bbox(raw: str) -> tuple[float, float, float, float]:
 @router.get("/api/map/env")
 def map_env(bbox: str | None = None) -> dict[str, Any]:
     """Serve the environmental grid (temp_c, aqi, pm25, uv_index, updated_at) in SPEC GET /env GeoJSON shape."""
-    parsed_bbox = parse_bbox(bbox) if bbox else None
+    parsed_bbox = parse_bbox(bbox) if bbox and bbox.strip() else None
     return envgrid_src.get_env_grid(parsed_bbox)
 
 

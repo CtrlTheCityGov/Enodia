@@ -75,3 +75,9 @@ def test_cool_spots_endpoint():
     assert body["type"] == "FeatureCollection"
     assert len(body["features"]) >= 1
     assert "uv_index" in open("app/envgrid_src.py", encoding="utf-8").read()
+
+
+def test_map_reports_rejects_nonfinite_bbox():
+    client = TestClient(app)
+    r = client.get("/api/map/reports?bbox=23.7,37.9,nan,38.0")
+    assert r.status_code == 422

@@ -275,11 +275,19 @@ def get_env_grid(bbox: tuple[float, float, float, float] | None = None) -> dict[
             aq_rows = fetch_air_quality(pts)
             fetched_at = _now_iso()
             max_km = config.ENV_STATION_MAX_M / 1000.0
-            station_lookup = (
-                (lambda lat, lon: ckan.nearest_air(lat, lon, max_km=max_km))
-                if ckan.enabled()
-                else None
-            )
+            ckan_failed = False
+
+            def _lookup_station(lat: float, lon: float) -> dict[str, Any] | None:
+                nonlocal ckan_failed
+                if ckan_failed:
+                    return None
+                try:
+                    return ckan.nearest_air(lat, lon, max_km=max_km)
+                except ckan.Unavailable:
+                    ckan_failed = True
+                    return None
+
+            station_lookup = _lookup_station if ckan.enabled() else None
             features = build_features(pts, fc_rows, aq_rows, fetched_at, station_lookup=station_lookup)
         except (httpx.HTTPError, ValueError, KeyError, TypeError):
             features = None

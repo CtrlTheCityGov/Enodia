@@ -6,6 +6,7 @@ POST /api/map/reports/{id}/confirm  confirmations + 1, +2 to the confirmer (not 
 """
 from __future__ import annotations
 
+import math
 import uuid
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
@@ -47,6 +48,8 @@ async def create_map_report(
     work_id: str | None = Form(None),
     photo: UploadFile | None = File(None),
 ):
+    if not (math.isfinite(lon) and math.isfinite(lat)):
+        raise HTTPException(422, "lon and lat must be finite numbers")
     if category not in map_reports.CATEGORIES:
         raise HTTPException(422, f"unknown category; expected one of {', '.join(map_reports.CATEGORIES)}")
     name, blur = None, {"faces": 0, "plates": 0}
@@ -81,7 +84,7 @@ def list_map_reports(bbox: str | None = None, since: str | None = None):
             box = tuple(float(x) for x in bbox.split(","))
         except ValueError:
             box = ()
-        if len(box) != 4:
+        if len(box) != 4 or not all(math.isfinite(x) for x in box) or box[0] > box[2] or box[1] > box[3]:
             raise HTTPException(422, "bbox must be minLon,minLat,maxLon,maxLat")
     ts = None
     if since:

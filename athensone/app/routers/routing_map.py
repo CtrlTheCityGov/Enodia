@@ -40,7 +40,7 @@ def _open_reports() -> list[dict]:
                for r in store.all_reports()
                if r["lat"] is not None and r["lng"] is not None and status.get(r["request_id"], "submitted") in main.OPEN]
     for row in map_reports.all_reports():
-        if row["city_request_id"] is not None and status.get(row["city_request_id"]) not in main.OPEN:
+        if row["city_request_id"] is not None and status.get(row["city_request_id"], "submitted") not in main.OPEN:
             continue
         # B12 defines obstacle as a blocker and congestion as soft (see SOFT_REPORT_CATEGORIES).
         reports.append({"id": row["id"], "lat": row["lat"], "lng": row["lon"], "category": row["category"],
