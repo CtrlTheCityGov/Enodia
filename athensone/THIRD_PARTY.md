@@ -52,3 +52,11 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | Open-Meteo Forecast API | `/v1/forecast` (`temperature_2m`) | CC BY 4.0 (free tier: non-commercial use; attribution: *Weather data by Open-Meteo.com*) | Temperature grid in `app/envgrid_src.py` (`GET /api/map/env`) and weather in `app/main.py` | https://open-meteo.com/en/terms |
 | Open-Meteo Air Quality API | `/v1/air-quality` (`european_aqi`, `pm2_5`) | CC BY 4.0 (free tier: non-commercial use; attribution: *Weather data by Open-Meteo.com*) | European AQI and PM2.5 grid in `app/envgrid_src.py` (`GET /api/map/env`) | https://open-meteo.com/en/docs/air-quality-api |
 | AthensGov Open Data (CKAN) | `env-stations-registry`, `env-all-stations` | CC BY 4.0 | Municipal environmental sensor overrides within 300 m in `app/envgrid_src.py` via `app/ckan.py` | https://opendata.cityofathens.gr |
+
+### B2: Works data sources (`app/works_src.py`, `scripts/fetch_works.py`)
+
+| Source | Licence / terms | Role | Source URL |
+|---|---|---|---|
+| Διαύγεια OpenData API | Public-sector open data (ν. 3861/2010, ν. 4727/2020 open-data reuse); licence text not re-checked tonight | Δήμος Αθηναίων decisions (αναθέσεις, αναλήψεις, πληρωμές): ΑΔΑ, subject, date, amount. Saved search in `tests/fixtures/B2/diavgeia.json` | https://diavgeia.gov.gr/opendata |
+| ΚΗΜΔΗΣ OpenData API | Public-sector open data (ν. 4412/2016 art. 38, ν. 4727/2020); licence text not re-checked tonight | Contracts: ΑΔΑΜ, contractor, amounts, dates, linked ΑΔΑ. Saved page in `tests/fixtures/B2/khmdhs.json` (civil servants' e-mail and signer names removed) | https://cerpp.eprocurement.gov.gr/khmdhs-opendata |
+| OpenStreetMap (via Overpass, once, by hand) | ODbL 1.0 | Street segments in the curated `STREETS` table of `scripts/fetch_works.py` | https://www.openstreetmap.org/copyright |

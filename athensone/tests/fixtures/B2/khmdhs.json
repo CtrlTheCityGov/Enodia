@@ -1,0 +1,830 @@
+{
+ "content": [
+  {
+   "title": "ΕΝΕΡΓΕΙΑΚΗ ΑΝΑΒΑΘΜΙΣΗ ΚΤΙΡΙΩΝ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ ",
+   "referenceNumber": "26SYMV020241843",
+   "prevReferenceNo": "23SYMV012685793",
+   "noticeReferenceNumber": null,
+   "submissionDate": "2026-11-20T10:22:57.939",
+   "lastUpdateDate": null,
+   "contractSignedDate": "2023-05-15",
+   "startDate": "2023-05-16",
+   "noEndDate": false,
+   "endDate": "2027-05-15",
+   "cancelled": false,
+   "cancellationDate": null,
+   "cancellationType": null,
+   "cancellationReason": null,
+   "cancellationADA": null,
+   "decisionRelatedAda": "9ΚΕΜΩ6Ν-0ΛΝ",
+   "contractNumber": "143996",
+   "authorEmail": null,
+   "organizationVatNumber": "090025537",
+   "greekOrganizationVatNumber": false,
+   "commitmentNo": null,
+   "diavgeiaADA": null,
+   "aaht": "1007.E84501.0001",
+   "budget": null,
+   "contractBudget": 1431527.93,
+   "bidsSubmitted": null,
+   "maxBidsSubmitted": 2,
+   "numberOfSections": 1,
+   "assignedContract": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "socialContract": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "centralGovernmentAuthority": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "nutsCodes": [
+    {
+     "nutsCode": {
+      "key": "EL",
+      "value": "ΕΛΛΑΔΑ"
+     }
+    }
+   ],
+   "approvedRequestsList": [],
+   "organization": {
+    "key": "6013",
+    "value": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+   },
+   "procedureType": {
+    "key": "1",
+    "value": "Ανοιχτή διαδικασία"
+   },
+   "awardProcedure": null,
+   "nutsCode": {
+    "key": "EL303",
+    "value": "Κεντρικός Τομέας Αθηνών"
+   },
+   "nutsCity": "ΑΘΗΝΑ",
+   "nutsPostalCode": "11252",
+   "nutsCountry": {
+    "key": "GR",
+    "value": "Ελλάδα"
+   },
+   "centralizedMarkets": [
+    {
+     "centralizedMarket": {
+      "key": "8",
+      "value": "Δεν χρησιμοποιείται"
+     }
+    }
+   ],
+   "legalContext": {
+    "key": "5",
+    "value": "ν.4412/2016 - Βιβλίο Ι – κάτω των ορίων"
+   },
+   "contractType": {
+    "key": "10",
+    "value": "Έργα"
+   },
+   "assignCriteria": {
+    "key": "8",
+    "value": "Βάσει βέλτιστης σχέσης ποιότητας – τιμής"
+   },
+   "classificationOfPublicLawOrganization": {
+    "key": "2",
+    "value": "ΟΤΑ"
+   },
+   "typeOfContractingAuthority": {
+    "key": "9",
+    "value": "ΝΠΔΔ"
+   },
+   "contractingAuthorityActivity": {
+    "key": "1",
+    "value": "Γενικές δημόσιες υπηρεσίες"
+   },
+   "contractDuration": 24,
+   "contractDurationUnitOfMeasure": {
+    "key": "3",
+    "value": "Μήνες"
+   },
+   "contractRelatedADA": {
+    "number1": null,
+    "number2": null,
+    "number3": "2ΦΟΒΩ6Μ-20Σ"
+   },
+   "fundingDetails": {
+    "publicFundingRef": "ΕΠ0857",
+    "publicFundingRefNum": "2025ΕΠ08570017",
+    "publicFundingRefOps": "6018679",
+    "cofundProgramRef": "5109432",
+    "selfFundProgramRef": "3170103008",
+    "espaFundProgramRef": null,
+    "regularBudgetFundedProgramRef": null
+   },
+   "contractingDataDetails": {
+    "unitsOperator": {
+     "key": "100025694",
+     "value": "Δ/ΝΣΗ ΚΤΗΡΙΑΚΗΣ ΥΠΟΔΟΜΗΣ"
+    },
+    "signers": null,
+    "contractingMembersDataList": [
+     {
+      "country": {
+       "key": "GR",
+       "value": "Ελλάδα"
+      },
+      "vatNumber": "094433131",
+      "greekVatNumber": null,
+      "name": "ΛΑΚΩΝ ΑΤΕ",
+      "transactorDescription": {
+       "key": "EL",
+       "value": "Φυσικό ή Νομικό πρόσωπο εντός της Ελλάδας"
+      }
+     }
+    ]
+   },
+   "totalCostWithVAT": 1431527.93,
+   "totalCostWithoutVAT": 1154458.01,
+   "objectDetailsList": [
+    {
+     "quantity": 1,
+     "type": {
+      "key": "Erg",
+      "value": "Έργο"
+     },
+     "costWithoutVAT": 1154458.01,
+     "vat": "24",
+     "currency": {
+      "key": "EUR",
+      "value": "Ευρώ"
+     },
+     "shortDescription": "4η χρονική παράταση κατά 6 μήνες ήτοι από 15/11/26 μέχρι 15/5/27 για το «ΤΜΗΜΑ 1 – ΕΝΕΡΓΕΙΑΚΗ ΑΝΑΒΑΘΜΙΣΗ ΣΧΟΛΙΚΩΝ ΚΤΙΡΙΩΝ», ΕΤΠΑ – Ίδιοι Πόροι Δήμου Αθηναίων, ποσού 1.431.527,93€ συμπεριλαμβανομένου ΦΠΑ 24%, του έργου «ΕΝΕΡΓΕΙΑΚΗ ΑΝΑΒΑΘΜΙΣΗ ΚΤΙΡΙΩΝ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ», σύμφωνα με την 2039/16-11-26 ΠΔΕ.",
+     "cpvs": [
+      {
+       "key": "45454100-5",
+       "value": "Εργασίες ανακαίνισης"
+      },
+      {
+       "key": "45331000-6",
+       "value": "Εργασίες εγκαταστάσεων θέρμανσης"
+      },
+      {
+       "key": "45321000-3",
+       "value": "Εργασίες θερμομόνωσης"
+      },
+      {
+       "key": "45310000-3",
+       "value": "Εργασίες ηλεκτρολογικών εγκαταστάσεων"
+      }
+     ],
+     "greenContracts": {
+      "key": "1",
+      "value": "Δεν εμπίπτει στο ΕΣΔ"
+     },
+     "goodServices": null,
+     "cityOfConstruction": null,
+     "countryOfDelivery": {
+      "key": "GR",
+      "value": "Ελλάδα"
+     },
+     "addressForDelivery": null,
+     "postalCode": null,
+     "city": "ΑΘΗΝΑ",
+     "streetNumber": null,
+     "budgetCode": null,
+     "requestRefNo": "22AWRD011328797"
+    }
+   ],
+   "additionalContractTypes": null,
+   "mixedContract": false,
+   "requestRefNo": null,
+   "nextRefNo": null,
+   "nextExtended": null,
+   "nextModified": null,
+   "auctionRefNo": "22AWRD011328797",
+   "paymentRefNo": [],
+   "revoked": false,
+   "revocationStatus": null,
+   "revocationReason": null,
+   "exceptions": null
+  },
+  {
+   "title": "ΤΜΗΜΑ 2 ''ΣΥΝΤΗΡΗΣΕΙΣ – ΒΕΛΤΙΩΣΕΙΣ ΣΧΟΛΕΙΩΝ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ ΣΤΗΝ 3Η, 4Η ΚΑΙ 5Η ΔΗΜΟΤΙΚΗ ΚΟΙΝΟΤΗΤΑ",
+   "referenceNumber": "26SYMV019778626",
+   "prevReferenceNo": "25SYMV017504238",
+   "noticeReferenceNumber": null,
+   "submissionDate": "2026-09-14T14:57:56.728",
+   "lastUpdateDate": null,
+   "contractSignedDate": "2026-09-14",
+   "startDate": "2026-09-14",
+   "noEndDate": false,
+   "endDate": "2028-09-04",
+   "cancelled": false,
+   "cancellationDate": null,
+   "cancellationType": null,
+   "cancellationReason": null,
+   "cancellationADA": null,
+   "decisionRelatedAda": null,
+   "contractNumber": "233771",
+   "authorEmail": null,
+   "organizationVatNumber": "090025537",
+   "greekOrganizationVatNumber": false,
+   "commitmentNo": null,
+   "diavgeiaADA": null,
+   "aaht": "1007.E84501.0001",
+   "budget": null,
+   "contractBudget": 809533.63,
+   "bidsSubmitted": 4,
+   "maxBidsSubmitted": 4,
+   "numberOfSections": 5,
+   "assignedContract": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "socialContract": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "centralGovernmentAuthority": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "nutsCodes": [
+    {
+     "nutsCode": {
+      "key": "EL303",
+      "value": "Κεντρικός Τομέας Αθηνών"
+     }
+    }
+   ],
+   "approvedRequestsList": [],
+   "organization": {
+    "key": "6013",
+    "value": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+   },
+   "procedureType": {
+    "key": "1",
+    "value": "Ανοιχτή διαδικασία"
+   },
+   "awardProcedure": null,
+   "nutsCode": {
+    "key": "EL303",
+    "value": "Κεντρικός Τομέας Αθηνών"
+   },
+   "nutsCity": "ΑΘΗΝΑ",
+   "nutsPostalCode": "10551",
+   "nutsCountry": {
+    "key": "GR",
+    "value": "Ελλάδα"
+   },
+   "centralizedMarkets": [
+    {
+     "centralizedMarket": {
+      "key": "8",
+      "value": "Δεν χρησιμοποιείται"
+     }
+    }
+   ],
+   "legalContext": {
+    "key": "4",
+    "value": "ν.4412/2016 - Βιβλίο Ι – άνω των ορίων"
+   },
+   "contractType": {
+    "key": "10",
+    "value": "Έργα"
+   },
+   "assignCriteria": {
+    "key": "2",
+    "value": "Βάσει τιμής"
+   },
+   "classificationOfPublicLawOrganization": {
+    "key": "2",
+    "value": "ΟΤΑ"
+   },
+   "typeOfContractingAuthority": {
+    "key": "9",
+    "value": "ΝΠΔΔ"
+   },
+   "contractingAuthorityActivity": {
+    "key": "1",
+    "value": "Γενικές δημόσιες υπηρεσίες"
+   },
+   "contractDuration": 36,
+   "contractDurationUnitOfMeasure": {
+    "key": "3",
+    "value": "Μήνες"
+   },
+   "contractRelatedADA": {
+    "number1": null,
+    "number2": null,
+    "number3": "ΨΗΠΑΩ6Μ-41Α"
+   },
+   "fundingDetails": {
+    "publicFundingRef": null,
+    "publicFundingRefNum": null,
+    "publicFundingRefOps": null,
+    "cofundProgramRef": null,
+    "selfFundProgramRef": "7331.404",
+    "espaFundProgramRef": null,
+    "regularBudgetFundedProgramRef": null
+   },
+   "contractingDataDetails": {
+    "unitsOperator": {
+     "key": "100025694",
+     "value": "Δ/ΝΣΗ ΚΤΗΡΙΑΚΗΣ ΥΠΟΔΟΜΗΣ"
+    },
+    "signers": null,
+    "contractingMembersDataList": [
+     {
+      "country": {
+       "key": "GR",
+       "value": "Ελλάδα"
+      },
+      "vatNumber": "094433131",
+      "greekVatNumber": true,
+      "name": "Π. ΜΙΧΑΛΙΤΣΗΣ ΑΤΟΕΕΕΕ",
+      "transactorDescription": null
+     }
+    ]
+   },
+   "totalCostWithVAT": 1003821.7,
+   "totalCostWithoutVAT": 809533.63,
+   "objectDetailsList": [
+    {
+     "quantity": 1,
+     "type": {
+      "key": "Erg",
+      "value": "Έργο"
+     },
+     "costWithoutVAT": 809533.63,
+     "vat": "24",
+     "currency": {
+      "key": "EUR",
+      "value": "Ευρώ"
+     },
+     "shortDescription": "1Η ΣΣΕ  κατασκευής του έργου: ΣΥΝΤΗΡΗΣΕΙΣ - ΒΕΛΤΙΩΣΕΙΣ ΚΤΙΡΙΩΝ ΚΑΙ ΣΧΟΛΕΙΩΝ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ  Περιγραφή: ΤΜΗΜΑ 2 ΣΥΝΤΗΡΗΣΕΙΣ – ΒΕΛΤΙΩΣΕΙΣ ΣΧΟΛΕΙΩΝ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ ΣΤΗΝ 3Η , 4Η & 5Η ΔΗΜΟΤΙΚΗ ΚΟΙΝΟΤΗΤΑ",
+     "cpvs": [
+      {
+       "key": "45000000-7",
+       "value": "Κατασκευαστικές εργασίες"
+      },
+      {
+       "key": "45453000-7",
+       "value": "Εργασίες γενικής επισκευής και ανακαίνισης"
+      },
+      {
+       "key": "45300000-0",
+       "value": "Εργασίες κτιριακών εγκαταστάσεων"
+      },
+      {
+       "key": "45214200-2",
+       "value": "Κατασκευαστικές εργασίες για σχολικά κτίρια"
+      }
+     ],
+     "greenContracts": {
+      "key": "1",
+      "value": "Δεν εμπίπτει στο ΕΣΔ"
+     },
+     "goodServices": null,
+     "cityOfConstruction": null,
+     "countryOfDelivery": {
+      "key": "GR",
+      "value": "Ελλάδα"
+     },
+     "addressForDelivery": null,
+     "postalCode": null,
+     "city": "ΑΘΗΝΑ",
+     "streetNumber": null,
+     "budgetCode": null,
+     "requestRefNo": "25AWRD017503984"
+    }
+   ],
+   "additionalContractTypes": null,
+   "mixedContract": false,
+   "requestRefNo": null,
+   "nextRefNo": null,
+   "nextExtended": null,
+   "nextModified": null,
+   "auctionRefNo": "25AWRD017503984",
+   "paymentRefNo": [],
+   "revoked": false,
+   "revocationStatus": null,
+   "revocationReason": null,
+   "exceptions": null
+  },
+  {
+   "title": "«ΑΡΣΗ ΕΠΙΚΙΝΔΥΝΟΤΗΤΑΣ ΣΕ ΟΔΟΣΤΡΩΜΑΤΑ, ΠΕΖΟΔΡΟΜΙΑ ΚΑΙ ΛΟΙΠΟΥΣ ΚΟΙΝΟΧΡΗΣΤΟΥΣ ΧΩΡΟΥΣ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ",
+   "referenceNumber": "26SYMV019449260",
+   "prevReferenceNo": null,
+   "noticeReferenceNumber": null,
+   "submissionDate": "2026-07-15T12:01:44.985",
+   "lastUpdateDate": null,
+   "contractSignedDate": "2026-07-14",
+   "startDate": "2026-07-14",
+   "noEndDate": false,
+   "endDate": "2029-07-13",
+   "cancelled": false,
+   "cancellationDate": null,
+   "cancellationType": null,
+   "cancellationReason": null,
+   "cancellationADA": null,
+   "decisionRelatedAda": null,
+   "contractNumber": "186804",
+   "authorEmail": null,
+   "organizationVatNumber": "090025537",
+   "greekOrganizationVatNumber": null,
+   "commitmentNo": null,
+   "diavgeiaADA": null,
+   "aaht": "1007.E84501.0001",
+   "budget": null,
+   "contractBudget": 1785503.03,
+   "bidsSubmitted": null,
+   "maxBidsSubmitted": 6,
+   "numberOfSections": 1,
+   "assignedContract": {
+    "key": "1",
+    "value": "Ναι"
+   },
+   "socialContract": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "centralGovernmentAuthority": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "nutsCodes": [
+    {
+     "nutsCode": {
+      "key": "EL303",
+      "value": "Κεντρικός Τομέας Αθηνών"
+     }
+    }
+   ],
+   "approvedRequestsList": [],
+   "organization": {
+    "key": "6013",
+    "value": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+   },
+   "procedureType": {
+    "key": "18",
+    "value": "Διαδικασία άρθρου 128 του ν.4412/16"
+   },
+   "awardProcedure": null,
+   "nutsCode": {
+    "key": "EL303",
+    "value": "Κεντρικός Τομέας Αθηνών"
+   },
+   "nutsCity": "ΑΘΗΝΑ",
+   "nutsPostalCode": "10551",
+   "nutsCountry": {
+    "key": "GR",
+    "value": "Ελλάδα"
+   },
+   "centralizedMarkets": [
+    {
+     "centralizedMarket": {
+      "key": "8",
+      "value": "Δεν χρησιμοποιείται"
+     }
+    }
+   ],
+   "legalContext": {
+    "key": "5",
+    "value": "ν.4412/2016 - Βιβλίο Ι – κάτω των ορίων"
+   },
+   "contractType": {
+    "key": "10",
+    "value": "Έργα"
+   },
+   "assignCriteria": {
+    "key": "2",
+    "value": "Βάσει τιμής"
+   },
+   "classificationOfPublicLawOrganization": {
+    "key": "2",
+    "value": "ΟΤΑ"
+   },
+   "typeOfContractingAuthority": {
+    "key": "9",
+    "value": "ΝΠΔΔ"
+   },
+   "contractingAuthorityActivity": {
+    "key": "12",
+    "value": "Τυχόν άλλη δραστηριότητα"
+   },
+   "contractDuration": 36,
+   "contractDurationUnitOfMeasure": {
+    "key": "3",
+    "value": "Μήνες"
+   },
+   "contractRelatedADA": {
+    "number1": null,
+    "number2": null,
+    "number3": "ΡΨΖΤΩ6Μ-ΨΣΓ"
+   },
+   "fundingDetails": {
+    "publicFundingRef": null,
+    "publicFundingRefNum": null,
+    "publicFundingRefOps": null,
+    "cofundProgramRef": null,
+    "selfFundProgramRef": "030",
+    "espaFundProgramRef": null,
+    "regularBudgetFundedProgramRef": null
+   },
+   "contractingDataDetails": {
+    "unitsOperator": {
+     "key": "89579",
+     "value": "ΔΙΕΥΘΥΝΣΗ ΟΔΟΠΟΙΙΑΣ ΚΑΙ ΑΠΟΧΕΤΕΥΣΗΣ"
+    },
+    "signers": null,
+    "contractingMembersDataList": [
+     {
+      "country": {
+       "key": "GR",
+       "value": "Ελλάδα"
+      },
+      "vatNumber": "998383482",
+      "greekVatNumber": true,
+      "name": "ΔΟΜΙΚΗ ΑΘΗΝΩΝ Α.Τ.Ε.",
+      "transactorDescription": null
+     }
+    ]
+   },
+   "totalCostWithVAT": 2214023.76,
+   "totalCostWithoutVAT": 1785503.03,
+   "objectDetailsList": [
+    {
+     "quantity": 1,
+     "type": {
+      "key": "Erg",
+      "value": "Έργο"
+     },
+     "costWithoutVAT": 1785503.03,
+     "vat": "24",
+     "currency": {
+      "key": "EUR",
+      "value": "Ευρώ"
+     },
+     "shortDescription": "Σκοπός του παρόντος έργου είναι η άμεση παρέμβαση και αποκατάσταση στα σημεία των οδών, πεζοδρομίων και λοιπών κοινοχρήστων χώρων, τα οποία έχουν καταστεί επικίνδυνα λόγω βλαβών.",
+     "cpvs": [
+      {
+       "key": "45233142-6",
+       "value": "Εργασίες επισκευής οδών"
+      }
+     ],
+     "greenContracts": {
+      "key": "1",
+      "value": "Δεν εμπίπτει στο ΕΣΔ"
+     },
+     "goodServices": null,
+     "cityOfConstruction": null,
+     "countryOfDelivery": {
+      "key": "GR",
+      "value": "Ελλάδα"
+     },
+     "addressForDelivery": null,
+     "postalCode": null,
+     "city": "ΑΘΗΝΑ",
+     "streetNumber": null,
+     "budgetCode": null,
+     "requestRefNo": null
+    }
+   ],
+   "additionalContractTypes": null,
+   "mixedContract": false,
+   "requestRefNo": null,
+   "nextRefNo": null,
+   "nextExtended": null,
+   "nextModified": null,
+   "auctionRefNo": null,
+   "paymentRefNo": [
+    "26PAY020029246"
+   ],
+   "revoked": false,
+   "revocationStatus": null,
+   "revocationReason": null,
+   "exceptions": null
+  },
+  {
+   "title": "Επισκευή και συντήρηση Η/Μ εγκαταστάσεων κτηρίων του Δήμου Αθηναίων,  έτους 2020 (6η παράταση)",
+   "referenceNumber": "26SYMV019227042",
+   "prevReferenceNo": "26SYMV018485104",
+   "noticeReferenceNumber": null,
+   "submissionDate": "2026-06-15T10:29:15.121",
+   "lastUpdateDate": "2024-08-06",
+   "contractSignedDate": "2026-06-08",
+   "startDate": "2026-06-19",
+   "noEndDate": false,
+   "endDate": "2026-08-19",
+   "cancelled": false,
+   "cancellationDate": null,
+   "cancellationType": null,
+   "cancellationReason": null,
+   "cancellationADA": null,
+   "decisionRelatedAda": null,
+   "contractNumber": "Πράξη Δ.Ε 1243/08.06.2026",
+   "authorEmail": null,
+   "organizationVatNumber": "090025537",
+   "greekOrganizationVatNumber": true,
+   "commitmentNo": null,
+   "diavgeiaADA": null,
+   "aaht": "1007.E84501.0001",
+   "budget": 3177051.58,
+   "contractBudget": 2562138.37,
+   "bidsSubmitted": 2,
+   "maxBidsSubmitted": 1,
+   "numberOfSections": 1,
+   "assignedContract": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "socialContract": {
+    "key": "1",
+    "value": "Ναι"
+   },
+   "centralGovernmentAuthority": {
+    "key": "2",
+    "value": "Όχι"
+   },
+   "nutsCodes": [
+    {
+     "nutsCode": {
+      "key": "EL303",
+      "value": "Κεντρικός Τομέας Αθηνών"
+     }
+    }
+   ],
+   "approvedRequestsList": [],
+   "organization": {
+    "key": "6013",
+    "value": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+   },
+   "procedureType": {
+    "key": "1",
+    "value": "Ανοιχτή διαδικασία"
+   },
+   "awardProcedure": null,
+   "nutsCode": {
+    "key": "EL303",
+    "value": "Κεντρικός Τομέας Αθηνών"
+   },
+   "nutsCity": "ΑΘΗΝΑ",
+   "nutsPostalCode": "10552",
+   "nutsCountry": {
+    "key": "GR",
+    "value": "Ελλάδα"
+   },
+   "centralizedMarkets": [
+    {
+     "centralizedMarket": {
+      "key": "8",
+      "value": "Δεν χρησιμοποιείται"
+     }
+    }
+   ],
+   "legalContext": {
+    "key": "5",
+    "value": "ν.4412/2016 - Βιβλίο Ι – κάτω των ορίων"
+   },
+   "contractType": {
+    "key": "10",
+    "value": "Έργα"
+   },
+   "assignCriteria": {
+    "key": "2",
+    "value": "Βάσει τιμής"
+   },
+   "classificationOfPublicLawOrganization": {
+    "key": "2",
+    "value": "ΟΤΑ"
+   },
+   "typeOfContractingAuthority": {
+    "key": "9",
+    "value": "ΝΠΔΔ"
+   },
+   "contractingAuthorityActivity": {
+    "key": "10",
+    "value": "Πολιτισμός και θρησκεία"
+   },
+   "contractDuration": 64,
+   "contractDurationUnitOfMeasure": {
+    "key": "3",
+    "value": "Μήνες"
+   },
+   "contractRelatedADA": {
+    "number1": null,
+    "number2": null,
+    "number3": "94ΖΑΩ6Μ-Ρ4Ω"
+   },
+   "fundingDetails": {
+    "publicFundingRef": null,
+    "publicFundingRefNum": "2021ΣΕ05520000",
+    "publicFundingRefOps": null,
+    "cofundProgramRef": null,
+    "selfFundProgramRef": null,
+    "espaFundProgramRef": null,
+    "regularBudgetFundedProgramRef": "3170103 (ΑΔΑ:6ΥΦ246ΜΤΛ6-03Ε)"
+   },
+   "contractingDataDetails": {
+    "unitsOperator": {
+     "key": "100085478",
+     "value": "ΔΗΜΟΤΙΚΗ ΕΠΙΤΡΟΠΗ"
+    },
+    "signers": null,
+    "contractingMembersDataList": [
+     {
+      "country": {
+       "key": "GR",
+       "value": "Ελλάδα"
+      },
+      "vatNumber": "998807770",
+      "greekVatNumber": true,
+      "name": "ΠΕΤΚΑ ΑΝΩΝΥΜΗ ΤΕΧΝΙΚΗ ΕΜΠΟΡΙΚΗ ΒΙΟΜΗΧΑΝΙΚΗ ΤΟΥΡΙΣΤΙΚΗ ΞΕΝΟΔΟΧΕΙΑΚΗ ΚΤΗΜΑΤΙΚΗ ΚΑΙ ΛΑΤΟΜΙΚΗ ΕΤΑΙΡΕΙΑ",
+      "transactorDescription": null
+     }
+    ]
+   },
+   "totalCostWithVAT": 3177051.58,
+   "totalCostWithoutVAT": 2562138.37,
+   "objectDetailsList": [
+    {
+     "quantity": 1,
+     "type": {
+      "key": "Erg",
+      "value": "Έργο"
+     },
+     "costWithoutVAT": 2562138.37,
+     "vat": "24",
+     "currency": {
+      "key": "EUR",
+      "value": "Ευρώ"
+     },
+     "shortDescription": "5η παράταση αρχικής  Δημόσιας Σύμβασης & 1ης Συμπληρωματική Σύμβαση Εργασιών (ΣΣΕ) του έργου: “Επισκευή και συντήρηση ηλεκτρομηχανολογικών εγκαταστάσεων κτηρίων του Δήμου Αθηναίων, έτους 2020” ",
+     "cpvs": [
+      {
+       "key": "45259000-7",
+       "value": "Επισκευή και συντήρηση εγκαταστάσεων"
+      },
+      {
+       "key": "45300000-0",
+       "value": "Εργασίες κτιριακών εγκαταστάσεων"
+      }
+     ],
+     "greenContracts": {
+      "key": "1",
+      "value": "Δεν εμπίπτει στο ΕΣΔ"
+     },
+     "goodServices": null,
+     "cityOfConstruction": null,
+     "countryOfDelivery": {
+      "key": "GR",
+      "value": "Ελλάδα"
+     },
+     "addressForDelivery": null,
+     "postalCode": null,
+     "city": "AΘΗΝΑ",
+     "streetNumber": null,
+     "budgetCode": "Κ.Α 7331.342  Φ64/Δ72",
+     "requestRefNo": "21AWRD008067911"
+    }
+   ],
+   "additionalContractTypes": null,
+   "mixedContract": false,
+   "requestRefNo": null,
+   "nextRefNo": null,
+   "nextExtended": null,
+   "nextModified": null,
+   "auctionRefNo": "21AWRD008067911",
+   "paymentRefNo": [],
+   "revoked": false,
+   "revocationStatus": null,
+   "revocationReason": null,
+   "exceptions": null
+  }
+ ],
+ "pageable": {
+  "pageNumber": 0,
+  "pageSize": 50,
+  "sort": {
+   "sorted": false,
+   "unsorted": true,
+   "empty": true
+  },
+  "offset": 0,
+  "unpaged": false,
+  "paged": true
+ },
+ "last": true,
+ "totalElements": 4,
+ "totalPages": 1,
+ "first": true,
+ "numberOfElements": 4,
+ "size": 50,
+ "number": 0,
+ "sort": {
+  "sorted": false,
+  "unsorted": true,
+  "empty": true
+ },
+ "empty": false
+}

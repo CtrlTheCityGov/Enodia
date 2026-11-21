@@ -1,0 +1,479 @@
+{
+ "decisions": [
+  {
+   "protocolNumber": "Η με αριθμό 1579/2026 Πράξη Δημοτικής Επιτροπής",
+   "adam": null,
+   "subject": "«Αποδοχή της ένταξης και της χρηματοδότησης της Πράξης «ΑΝΑΚΑΙΝΙΣΕΙΣ ΓΙΑ ΕΝΕΡΓΕΙΑΚΗ ΑΠΟΔΟΣΗ ΚΤΙΡΙΩΝ ΚΑΙ ΣΧΟΛΕΙΩΝ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ ΚΑΙ ΣΤΙΣ ΕΠΤΑ (7) ΔΗΜΟΤΙΚΕΣ ΚΟΙΝΟΤΗΤΕΣ» με Κωδικό ΟΠΣ 6057446, ποσού 6.446.867,00€ (συγχρηματοδοτούμενη δημόσια δαπάνη) επί συνολικού κόστους πράξης 14.200.000,00€, στο πλαίσιο του Επιχειρησιακού Προγράμματος «Αττική 2021-2027».",
+   "issueDate": 1787702400000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100084487"
+   ],
+   "unitIds": [
+    "100085478"
+   ],
+   "decisionTypeId": "2.4.7.1",
+   "thematicCategoryIds": [
+    "10004"
+   ],
+   "extraFieldValues": {
+    "kanonistikipraxitype": "Πράξη Οργάνου Διοίκησης ΟΤΑ Α’ και Β’ Βαθμού (και εποπτευόμενων φορέων τους)",
+    "kanonistikiPraxiPublishMedium": "στην ιστοσελίδα του φορέα",
+    "fek": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ",
+    "co_competent": null
+   },
+   "privateData": false,
+   "ada": "ΨΠΝΗΩ6Μ-Η1Θ",
+   "publishTimestamp": 1787741798201,
+   "submissionTimestamp": 1787741798201,
+   "versionId": "a21fb910-874f-481b-b137-c547ab224f27",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/ΨΠΝΗΩ6Μ-Η1Θ",
+   "documentUrl": "https://diavgeia.gov.gr/doc/ΨΠΝΗΩ6Μ-Η1Θ",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "03262/2026",
+   "adam": null,
+   "subject": "Α' ΜΕΡΟΣ ΤΟΥ 7ου ΛΟΓΑΡΙΑΣΜΟΥ-ΑΝΑΒΑΘΜΙΣΗ ΗΛΕΚΤΡΙΚΩΝ ΕΓΚΑΤΑΣΤΑΣΕΩΝ ΚΤΙΡΙΩΝ ΚΑΙ ΣΧΟΛΕΙΩΝ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ,ΣΥΜΦ.276606/05-10-2023,(23SYMV013539122 2023-10-05)**",
+   "issueDate": 1786320000000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100044705"
+   ],
+   "unitIds": [
+    "100046471"
+   ],
+   "decisionTypeId": "Β.2.2",
+   "thematicCategoryIds": [
+    "24"
+   ],
+   "extraFieldValues": {
+    "org": {
+     "afm": "090025537",
+     "afmType": "EL",
+     "enterName": false,
+     "name": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+    },
+    "skipVatReason": null,
+    "sponsor": [
+     {
+      "sponsorAFMName": {
+       "afm": "099364656",
+       "afmType": "EL",
+       "afmCountry": "EL",
+       "enterName": false,
+       "name": "ΥΡΙΑ ΤΕΧΝΙΚΗ ΑΝΩΝΥΜΗ ΕΤΑΙΡΕΙΑ"
+      },
+      "expenseAmount": {
+       "amount": 330032.15,
+       "currency": "EUR"
+      }
+     }
+    ],
+    "relatedEkgrisiDapanis": [],
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ"
+   },
+   "privateData": false,
+   "ada": "6ΑΝΚΩ6Μ-ΘΛ1",
+   "publishTimestamp": 1786357171532,
+   "submissionTimestamp": 1786357171532,
+   "versionId": "8465fad4-07c8-4767-a50c-1a6dda537935",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/6ΑΝΚΩ6Μ-ΘΛ1",
+   "documentUrl": "https://diavgeia.gov.gr/doc/6ΑΝΚΩ6Μ-ΘΛ1",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "03189/2026",
+   "adam": null,
+   "subject": "ΥΛΟΠΟΙΗΣΗ ΤΟΥ ΠΡΟΓΡΑΜΜΑΤΟΣ \"ΑΝΟΙΧΤΑ ΣΧΟΛΕΙΑ\" ΓΙΑ ΤΟ ΕΤΟΣ 2026(ΑΡΙΘ.ΣΥΜΦ.158717/16-06-2026 -26SYMV019240568)",
+   "issueDate": 1785974400000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100044705"
+   ],
+   "unitIds": [
+    "100046471"
+   ],
+   "decisionTypeId": "Β.2.2",
+   "thematicCategoryIds": [
+    "24"
+   ],
+   "extraFieldValues": {
+    "org": {
+     "afm": "090025537",
+     "afmType": "EL",
+     "enterName": false,
+     "name": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+    },
+    "skipVatReason": null,
+    "sponsor": [
+     {
+      "sponsorAFMName": {
+       "afm": "136292761",
+       "afmType": "EL",
+       "afmCountry": "EL",
+       "enterName": false,
+       "name": "ΠΟΥΛΑ,,ΑΝΝΑ,ΙΟΡΔΑΝΗΣ"
+      },
+      "expenseAmount": {
+       "amount": 130130.56,
+       "currency": "EUR"
+      }
+     }
+    ],
+    "relatedEkgrisiDapanis": [],
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ"
+   },
+   "privateData": false,
+   "ada": "6Α7ΖΩ6Μ-Μ1Χ",
+   "publishTimestamp": 1786080819535,
+   "submissionTimestamp": 1786080819535,
+   "versionId": "b0a5657f-fa4a-49a4-b94b-7e3cd0df76c7",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/6Α7ΖΩ6Μ-Μ1Χ",
+   "documentUrl": "https://diavgeia.gov.gr/doc/6Α7ΖΩ6Μ-Μ1Χ",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "206231",
+   "adam": null,
+   "subject": "Την μερική ανάκληση της δέσμευσης οικονομικού έτους 2027 και ποσού ΕΒΔΟΜΗΝΤΑ-ΟΚΤΩ ΧΙΛΙΑΔΕΣ ΤΡΙΑΚΟΣΙΑ ΤΡΙΑΝΤΑ-ΕΝΝΕΑ ΕΥΡΩ ΚΑΙ ΕΞΗΝΤΑ-ΔΥΟ ΛΕΠΤΑ (78.339,62) στον ΑΛΕ 2420304 Πηγή Χρ. 0 – Τακτικός Προϋπολογισμός /Υπηρεσία 30 – ΥΠΗΡΕΣΙΕΣ ΤΕΧΝΙΚΩΝ ΕΡΓΩΝ « Αμοιβές και έξοδα συντήρησης και επισκευής μηχανημάτων και εξοπλισμού », λόγω ανακατανομής πιστώσεων για την εκτέλεση του με αρ.πρωτ.74048/20-03-2024 συμφωνητικού για την συντήρηση κλιματιστικών μονάδων κτιρίων και σχολείων του Δήμου Αθηναίων",
+   "issueDate": 1785801600000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100084487"
+   ],
+   "unitIds": [
+    "93917"
+   ],
+   "decisionTypeId": "Β.1.3",
+   "thematicCategoryIds": [
+    "24"
+   ],
+   "extraFieldValues": {
+    "financialYear": 2026,
+    "budgettype": "Τακτικός Προϋπολογισμός",
+    "entryNumber": null,
+    "partialead": false,
+    "recalledExpenseDecision": false,
+    "amountWithVAT": {
+     "amount": 78339.62,
+     "currency": "EUR"
+    },
+    "amountWithKae": [
+     {
+      "sponsorAFMName": {
+       "afm": "090025537",
+       "afmType": "EL",
+       "afmCountry": "EL",
+       "enterName": false,
+       "name": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+      },
+      "kae": "2420304",
+      "amountWithVAT": 78339.62
+     }
+    ],
+    "relatedPartialADA": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ"
+   },
+   "privateData": false,
+   "ada": "9ΥΨΟΩ6Μ-ΣΟ4",
+   "publishTimestamp": 1785914083013,
+   "submissionTimestamp": 1785914083013,
+   "versionId": "7df4ccc1-889f-4574-8c75-5877e2854eee",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/9ΥΨΟΩ6Μ-ΣΟ4",
+   "documentUrl": "https://diavgeia.gov.gr/doc/9ΥΨΟΩ6Μ-ΣΟ4",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "1481/2026 ΠΡΑΞΗ Δ.Ε.",
+   "adam": null,
+   "subject": "Έγκριση του από 22.07.2026 4ου Πρακτικού – Γνωμοδότησης της Επιτροπής Διενέργειας και Αξιολόγησης Προσφορών της ηλεκτρονικής, ανοικτής διαδικασίας σύναψης δημόσιας σύμβασης, άνω των ορίων, με κριτήριο ανάθεσης την πλέον συμφέρουσα από οικονομική άποψη προσφορά αποκλειστικά μόνο βάσει τιμής επί της τιμής του ενδεικτικού προϋπολογισμού, για το σύνολο των σχολικών μονάδων, για την «ΠΡΟΜΗΘΕΙΑ ΕΤΟΙΜΟΥ ΦΑΓΗΤΟΥ (ΜΕΣΗΜΒΡΙΝΟ) ΓΙΑ ΤΗ ΣΙΤΙΣΗ ΤΩΝ ΜΑΘΗΤΩΝ ΤΟΥ ΜΟΥΣΙΚΟΥ ΣΧΟΛΕΙΟΥ ΑΘΗΝΑΣ ΚΑΙ ΤΟΥ ΚΑΛΛΙΤΕΧΝΙΚΟΥ ΣΧΟΛΕΙΟΥ ΑΘΗΝΑΣ ΔΙΑΡΚΕΙΑΣ 24 ΜΗΝΩΝ», εκτιμώμενης αξίας σύμβασης 1.608.825,00€ συμπεριλαμβανομένου δικαιώματος προαίρεσης συμπεριλαμβανομένου ΦΠΑ 13%, που αφορά στο στάδιο αξιολόγησης των δικαιολογητικών κατακύρωσης και την κατακύρωση του αποτελέσματος της διαδικασίας",
+   "issueDate": 1785110400000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100084487"
+   ],
+   "unitIds": [
+    "100085478"
+   ],
+   "decisionTypeId": "2.4.7.1",
+   "thematicCategoryIds": [
+    "20"
+   ],
+   "extraFieldValues": {
+    "kanonistikipraxitype": "Πράξη Οργάνου Διοίκησης ΟΤΑ Α’ και Β’ Βαθμού (και εποπτευόμενων φορέων τους)",
+    "kanonistikiPraxiPublishMedium": null,
+    "fek": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ",
+    "co_competent": null
+   },
+   "privateData": false,
+   "ada": "Ε4ΔΞΩ6Μ-ΓΤΒ",
+   "publishTimestamp": 1785495852127,
+   "submissionTimestamp": 1785495852127,
+   "versionId": "356f88bb-ae7b-49f3-ae35-bf02bac68e10",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/Ε4ΔΞΩ6Μ-ΓΤΒ",
+   "documentUrl": "https://diavgeia.gov.gr/doc/Ε4ΔΞΩ6Μ-ΓΤΒ",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "201991",
+   "adam": null,
+   "subject": "Β ΑΠΟΦΑΣΗ ΠΑΡΟΧΗ  ΥΠΗΡΕΣΙΩΝ ΥΠΟΣΤΗΡΙΞΗΣ ΤΟΥ ΔΗΜΟΥ ΣΤΗΝ ΠΑΡΑΚΟΛΟΥΘΗΣΗ ΤΩΝ ΚΟΝΔΥΛΙΩΝ ΓΙΑ ΤΗΝ ΛΕΙΤΟΥΡΓΙΑ ΤΩΝ ΣΧΟΛΕΙΩΝ ΜΕΤΑ ΤΗΝ ΕΝΣΩΜΑΤΩΣΗ ΤΩΝ ΑΡΜΟΔΙΟΤΗΤΩΝ ΤΩΝ ΣΧΟΛΙΚΩΝ ΕΠΙΤΡΟΠΩΝ ΣΤΟ ΔΗΜΟ ΑΘΗΝΑΙΩΝ",
+   "issueDate": 1785456000000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100084487"
+   ],
+   "unitIds": [
+    "93100"
+   ],
+   "decisionTypeId": "Δ.2.2",
+   "thematicCategoryIds": [
+    "24"
+   ],
+   "extraFieldValues": {
+    "person": [],
+    "awardAmount": {
+     "amount": 36580.0,
+     "currency": "EUR"
+    },
+    "textRelatedADA": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ"
+   },
+   "privateData": false,
+   "ada": "ΨΨΔ9Ω6Μ-Ζ4Ξ",
+   "publishTimestamp": 1785489906871,
+   "submissionTimestamp": 1785489906871,
+   "versionId": "12f28041-e6f2-45b7-9e10-e88b67caa9db",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/ΨΨΔ9Ω6Μ-Ζ4Ξ",
+   "documentUrl": "https://diavgeia.gov.gr/doc/ΨΨΔ9Ω6Μ-Ζ4Ξ",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "Η με αριθμό 1488/2026 Πράξη Δημοτικής Επιτροπής",
+   "adam": null,
+   "subject": "«Συγκρότηση Επιτροπής Παραλαβής του έργου «ΤΜΗΜΑ 3 - ΣΥΝΤΗΡΗΣΕΙΣ – ΒΕΛΤΙΩΣΕΙΣ ΚΤΙΡΙΩΝ ΚΑΙ ΣΧΟΛΕΙΩΝ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ ΣΤΗΝ 4Η ΚΑΙ 5Η ΔΗΜΟΤΙΚΗ ΚΟΙΝΟΤΗΤΑ ΕΤΟΥΣ 2020-2022».",
+   "issueDate": 1785456000000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100084487"
+   ],
+   "unitIds": [
+    "100085478"
+   ],
+   "decisionTypeId": "2.4.7.1",
+   "thematicCategoryIds": [
+    "10004"
+   ],
+   "extraFieldValues": {
+    "kanonistikipraxitype": "Πράξη Οργάνου Διοίκησης ΟΤΑ Α’ και Β’ Βαθμού (και εποπτευόμενων φορέων τους)",
+    "kanonistikiPraxiPublishMedium": "στην ιστοσελίδα του φορέα",
+    "fek": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ",
+    "co_competent": null
+   },
+   "privateData": false,
+   "ada": "9ΡΑΔΩ6Μ-ΥΛΧ",
+   "publishTimestamp": 1785481453094,
+   "submissionTimestamp": 1785481453094,
+   "versionId": "03819541-20ce-4d1a-a4c5-ee780dfe943d",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/9ΡΑΔΩ6Μ-ΥΛΧ",
+   "documentUrl": "https://diavgeia.gov.gr/doc/9ΡΑΔΩ6Μ-ΥΛΧ",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "202382",
+   "adam": null,
+   "subject": "Την έγκριση της δαπάνης και την διάθεση, καθώς και την δέσμευση πίστωσης ποσού 3.383.000,00 € (ΤΡΙΑ ΕΚΑΤΟΜΜΥΡΙΟ ΤΡΙΑΚΟΣΙΑ ΟΓΔΟΝΤΑ-ΤΡΙΑ ΧΙΛΙΑΔΕΣ ΕΥΡΩ) για την πληρωμή ισόποσης δαπάνης σε βάρος της πίστωσης του προϋπολογισμού εξόδων του Δήμου Αθηναίων Οικ. έτος 2026 Πηγή Χρ. 0 - Τακτικός Προϋπολογισμός / Υπηρεσία 30 - ΥΠΗΡΕΣΙΕΣ ΤΕΧΝΙΚΩΝ ΕΡΓΩΝ, ΑΛΕ 2420301 << Αμοιβές και έξοδα συντήρησης και επισκευής κτιρίων και έργων υποδομών >> για την αντιμετώπιση της δαπάνης που αφορά την εκτέλεση των με αρ.πρωτ.289608/17-11-2025, 217113/05-09-2025, 226480/16-09-2025, 189207/23-07-2025 και 309403/04- 12-2025 συμφωνητικών που αφορούν το έργο Συντηρήσεις-βελτιώσεις κτιρίων και Σχολείων του Δήμου Αθηναίων. Για το εν λόγω έργο επιπλέον δεσμεύεται το ποσό των 1.355.604,27€ στο ο.έ.2027 για την υπογραφή της 1ης Σ.Σ. και την αναθεώρηση του 3ου Α.Π.Ε. .",
+   "issueDate": 1785369600000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100084487"
+   ],
+   "unitIds": [
+    "93917"
+   ],
+   "decisionTypeId": "Β.1.3",
+   "thematicCategoryIds": [
+    "24"
+   ],
+   "extraFieldValues": {
+    "financialYear": 2026,
+    "budgettype": "Τακτικός Προϋπολογισμός",
+    "entryNumber": null,
+    "partialead": false,
+    "recalledExpenseDecision": false,
+    "amountWithVAT": {
+     "amount": 3383000.0,
+     "currency": "EUR"
+    },
+    "amountWithKae": [
+     {
+      "sponsorAFMName": {
+       "afm": "090025537",
+       "afmType": "EL",
+       "afmCountry": "EL",
+       "enterName": false,
+       "name": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+      },
+      "kae": "2420301",
+      "amountWithVAT": 3383000.0
+     }
+    ],
+    "relatedPartialADA": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ"
+   },
+   "privateData": false,
+   "ada": "ΨΗΠΑΩ6Μ-41Α",
+   "publishTimestamp": 1785470695169,
+   "submissionTimestamp": 1785470695169,
+   "versionId": "dabe2f90-bdc3-4948-bf24-e395c0cc1374",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/ΨΗΠΑΩ6Μ-41Α",
+   "documentUrl": "https://diavgeia.gov.gr/doc/ΨΗΠΑΩ6Μ-41Α",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "187933",
+   "adam": null,
+   "subject": "Απόφαση μείωσης εγγυήσεων ανάληψης κρατήσεων για το έργο «ΤΜΗΜΑ 3: ΣΥΝΤΗΡΗΣΕΙΣ –\nΒΕΛΤΙΩΣΕΙΣ ΣΧΟΛΕΙΩΝ ΤΟΥ ΔΗΜΟΥ ΑΘΗΝΑΙΩΝ ΣΤΗΝ 6Η & 7Η Δ.Κ.», ποσού 31.735,52 €, της\nαναδόχου εταιρίας KONTOS CONCREATE A.T.E.",
+   "issueDate": 1784073600000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100096801"
+   ],
+   "unitIds": [
+    "100025694"
+   ],
+   "decisionTypeId": "2.4.7.1",
+   "thematicCategoryIds": [
+    "20"
+   ],
+   "extraFieldValues": {
+    "kanonistikipraxitype": null,
+    "kanonistikiPraxiPublishMedium": null,
+    "fek": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ",
+    "co_competent": null
+   },
+   "privateData": false,
+   "ada": "ΡΒΛΥΩ6Μ-ΛΓΘ",
+   "publishTimestamp": 1785405966030,
+   "submissionTimestamp": 1785405966030,
+   "versionId": "5ed6ea7f-a0f7-4e9c-8a42-6ab2f2995dbf",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/ΡΒΛΥΩ6Μ-ΛΓΘ",
+   "documentUrl": "https://diavgeia.gov.gr/doc/ΡΒΛΥΩ6Μ-ΛΓΘ",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  },
+  {
+   "protocolNumber": "200223",
+   "adam": null,
+   "subject": "Την μερική ανάκληση της δέσμευσης οικονομικού έτους 2027 και ποσού ΤΡΙΩΝ ΕΚΑΤΟΜΜΥΡΙΩΝ ΤΡΙΑΚΟΣΙΩΝ ΟΓΔΟΝΤΑ-ΤΡΙΩΝ ΧΙΛΙΑΔΩΝ ΕΥΡΩ ευρώ (3.383.000,00) στον ΑΛΕ 2420301 Πηγή Χρ. 0 – Τακτικός Προϋπολογισμός /Υπηρεσία 30 – ΥΠΗΡΕΣΙΕΣ ΤΕΧΝΙΚΩΝ ΕΡΓΩΝ « Αμοιβές και έξοδα συντήρησης και επισκευής κτιρίων και έργων υποδομών », λόγω ανακατανομής πιστώσεων για την εκτέλεση και αποπληρωμή των με αρ.πρωτ.289608/17-11-2025, 217113/05-09-2025, 226480/16-09-2025, 189207/23-07-2025 και 309403/04- 12-2025 συμφωνητικών που αφορούν το έργο Συντηρήσεις-βελτιώσεις κτιρίων και Σχολείων του Δήμου Αθηναίων",
+   "issueDate": 1785196800000,
+   "organizationId": "6013",
+   "signerIds": [
+    "100084487"
+   ],
+   "unitIds": [
+    "93917"
+   ],
+   "decisionTypeId": "Β.1.3",
+   "thematicCategoryIds": [
+    "24"
+   ],
+   "extraFieldValues": {
+    "financialYear": 2026,
+    "budgettype": "Τακτικός Προϋπολογισμός",
+    "entryNumber": null,
+    "partialead": false,
+    "recalledExpenseDecision": true,
+    "amountWithVAT": {
+     "amount": 3383000.0,
+     "currency": "EUR"
+    },
+    "amountWithKae": [
+     {
+      "sponsorAFMName": {
+       "afm": "090025537",
+       "afmType": "EL",
+       "afmCountry": "EL",
+       "enterName": false,
+       "name": "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ"
+      },
+      "kae": "2420301",
+      "amountWithVAT": 3383000.0
+     }
+    ],
+    "relatedPartialADA": null,
+    "relatedDecisions": [],
+    "documentType": "ΠΡΑΞΗ"
+   },
+   "privateData": false,
+   "ada": "Ψ9ΨΜΩ6Μ-ΙΨΖ",
+   "publishTimestamp": 1785300354536,
+   "submissionTimestamp": 1785300354536,
+   "versionId": "85a1a855-608e-4a8d-a110-7b9dac9c3d40",
+   "status": "PUBLISHED",
+   "url": "https://diavgeia.gov.gr/luminapi/api/decisions/Ψ9ΨΜΩ6Μ-ΙΨΖ",
+   "documentUrl": "https://diavgeia.gov.gr/doc/Ψ9ΨΜΩ6Μ-ΙΨΖ",
+   "documentChecksum": null,
+   "attachments": [],
+   "warnings": null,
+   "correctedVersionId": null
+  }
+ ],
+ "info": {
+  "query": "subject:\"ΣΧΟΛΕΙΩΝ\" AND submissionTimestamp:[DT(2026-07-01T00:00:00+03:00) TO DT(2026-11-21T20:57:41+02:00)] AND issueDate:[DT(2026-07-01T00:00:00+03:00) TO DT(2026-08-31T00:00:00+03:00)] AND organizationUid:\"6013\" AND status:\"Αναρτημένη\"",
+  "page": 0,
+  "size": 10,
+  "actualSize": 10,
+  "total": 20,
+  "order": "recent"
+ }
+}
