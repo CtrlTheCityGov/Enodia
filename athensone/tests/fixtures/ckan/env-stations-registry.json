@@ -1,0 +1,20 @@
+{
+  "records": [
+    {
+      "_id": 1,
+      "station_id": "101",
+      "name": "Σταθμός Παγκρατίου",
+      "address": "Πλατεία Βαρνάβα",
+      "neighbourhood_id": "10",
+      "municipal_district_id": "2"
+    },
+    {
+      "_id": 2,
+      "station_id": "102",
+      "name": "Σταθμός Κέντρου",
+      "address": "Οδός Δείγμα",
+      "neighbourhood_id": "11",
+      "municipal_district_id": "1"
+    }
+  ]
+}

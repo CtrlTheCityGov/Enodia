@@ -38,8 +38,8 @@ SLUGS = {
 FIELD_HINTS = {
     "station_id": ["station_id", "stationid", "station", "sensor_id", "id"],
     "name": ["name_el", "name", "title", "onoma", "όνομα", "label", "description"],
-    "lat": ["lat", "latitude", "y", "geo_lat"],
-    "lon": ["lon", "lng", "long", "longitude", "x", "geo_lon"],
+    "lat": ["lat", "latitude", "y", "geo_lat", "position_lat"],
+    "lon": ["lon", "lng", "long", "longitude", "x", "geo_lon", "position_lon"],
     "time": ["measurement_time", "measured_at", "timestamp", "interval_start", "datetime", "date", "time"],
     "aqi": ["aqi", "air_quality_index", "caqi"],
     "temp": ["temperature", "temp", "air_temperature"],
@@ -47,8 +47,15 @@ FIELD_HINTS = {
     "pm25": ["pm2_5", "pm25", "pm2.5"],
     "pm10": ["pm10"],
     "no2": ["no2"],
-    "geometry": ["geometry", "geom", "the_geom", "wkt", "geojson", "shape"],
+    "geometry": ["geometry", "geom", "the_geom", "wkt", "geojson", "shape", "polygon_geo"],
+    # --- T10: City districts and air stations from CKAN ---
+    # Join keys verified live on opendata.cityofathens.gr (TASKS.md T10, Sat 21 Nov; certainty: sure).
+    "district_id": ["municipal_district_id", "district_id"],
+    "neighbourhood_id": ["neighbourhood_id", "neighborhood_id"],
 }
+# Station location precision flags (DECISIONS.md A-21; certainty: sure).
+LOCATION_EXACT = "exact"
+LOCATION_NEIGHBOURHOOD_CENTRE = "neighbourhood_centre"
 # European AQI wording for the 1-6 scale (our reading of the portal's 1-6 AQI; confirm on the day)
 AQI_EL = {1: "Καλή", 2: "Ικανοποιητική", 3: "Μέτρια", 4: "Κακή", 5: "Πολύ κακή", 6: "Εξαιρετικά κακή"}
 
@@ -159,22 +166,153 @@ def field(keys, role: str) -> str | None:
     return None
 
 
-def _num(v):
+def _num(v) -> float | None:
+    if v is None or isinstance(v, bool):
+        return None
     try:
-        return float(str(v).replace(",", "."))
+        x = float(str(v).strip().replace(",", "."))
+        return x if math.isfinite(x) else None
     except (TypeError, ValueError):
         return None
 
 
 # ------------------------------------------------------------------ geometry helpers
+# --- T10: City districts and air stations from CKAN ---
+# OGC WKT (ISO/IEC 13249-3) parser for POINT, POLYGON, MULTIPOLYGON strings (TASKS.md T10; certainty: sure).
+_WKT_DIM_TAGS = ("Z", "M", "ZM")  # optional OGC WKT coordinate dimension suffixes (certainty: sure)
+
+
+def _unwrap_parens(text: str) -> str | None:
+    """Strip one balanced pair of outer parentheses, or return None if unbalanced."""
+    s = text.strip()
+    if len(s) < 2 or s[0] != "(" or s[-1] != ")":
+        return None
+    depth = 0
+    for i, ch in enumerate(s):
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth < 0 or (depth == 0 and i != len(s) - 1):
+                return None
+    return s[1:-1].strip() if depth == 0 else None
+
+
+def _split_top_level(text: str) -> list[str] | None:
+    """Split on top-level commas outside nested parentheses; return None if unbalanced."""
+    parts: list[str] = []
+    depth = 0
+    start = 0
+    for i, ch in enumerate(text):
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth < 0:
+                return None
+        elif ch == "," and depth == 0:
+            parts.append(text[start:i].strip())
+            start = i + 1
+    if depth != 0:
+        return None
+    parts.append(text[start:].strip())
+    return parts
+
+
+def _wkt_coord(text: str) -> list[float] | None:
+    """Parse one 'lon lat [z [m]]' WKT coordinate into [lon, lat]."""
+    toks = text.strip().split()
+    if len(toks) < 2 or len(toks) > 4:
+        return None
+    x, y = _num(toks[0]), _num(toks[1])
+    if x is None or y is None:
+        return None
+    return [x, y]
+
+
+def _wkt_ring(text: str) -> list[list[float]] | None:
+    """Parse a parenthesized WKT ring '(x1 y1, x2 y2, ...)'."""
+    inner = _unwrap_parens(text)
+    if not inner:
+        return None
+    pts: list[list[float]] = []
+    for item in inner.split(","):
+        pt = _wkt_coord(item)
+        if pt is None:
+            return None
+        pts.append(pt)
+    return pts if len(pts) >= 3 else None
+
+
+def _wkt_polygon_coords(text: str) -> list[list[list[float]]] | None:
+    """Parse '((ring1), (hole1), ...)' into GeoJSON Polygon coordinates."""
+    inner = _unwrap_parens(text)
+    if not inner:
+        return None
+    ring_strs = _split_top_level(inner)
+    if not ring_strs:
+        return None
+    rings: list[list[list[float]]] = []
+    for rs in ring_strs:
+        ring = _wkt_ring(rs)
+        if ring is None:
+            return None
+        rings.append(ring)
+    return rings
+
+
+def _parse_wkt(text: str) -> dict | None:
+    """Parse a WKT POINT, POLYGON, or MULTIPOLYGON string into a GeoJSON geometry dict."""
+    s = text.strip()
+    if not s:
+        return None
+    if s.upper().startswith("SRID=") and ";" in s:
+        s = s.split(";", 1)[1].strip()
+    paren = s.find("(")
+    if paren == -1:
+        return None
+    head = s[:paren].strip().upper().split()
+    if not head or len(head) > 2 or (len(head) == 2 and head[1] not in _WKT_DIM_TAGS):
+        return None
+    kind, body = head[0], s[paren:].strip()
+    if kind == "POINT":
+        inner = _unwrap_parens(body)
+        if not inner or "," in inner:
+            return None
+        pt = _wkt_coord(inner)
+        return {"type": "Point", "coordinates": pt} if pt is not None else None
+    if kind == "POLYGON":
+        rings = _wkt_polygon_coords(body)
+        return {"type": "Polygon", "coordinates": rings} if rings is not None else None
+    if kind == "MULTIPOLYGON":
+        inner = _unwrap_parens(body)
+        if not inner:
+            return None
+        poly_strs = _split_top_level(inner)
+        if not poly_strs:
+            return None
+        polys: list[list[list[list[float]]]] = []
+        for ps in poly_strs:
+            poly = _wkt_polygon_coords(ps)
+            if poly is None:
+                return None
+            polys.append(poly)
+        return {"type": "MultiPolygon", "coordinates": polys}
+    return None
+
+
 def _geom(value):
     if isinstance(value, dict):
         return value if "type" in value else None
-    if isinstance(value, str) and value.strip().startswith("{"):
-        try:
-            return json.loads(value)
-        except ValueError:
-            return None
+    if isinstance(value, str):
+        s = value.strip()
+        if s.startswith("{"):
+            try:
+                g = json.loads(s)
+                return g if isinstance(g, dict) and "type" in g else None
+            except ValueError:
+                return None
+        return _parse_wkt(s)
     return None
 
 
@@ -217,12 +355,16 @@ def _polygons(slug_key: str) -> dict:
     recs = got["result"].get("records", [])
     keys = list(recs[0]) if recs else []
     gk, nk = field(keys, "geometry"), field(keys, "name")
+    dk = field(keys, "district_id")
     feats = []
     for rec in recs:
         g = _geom(rec.get(gk)) if gk else None
         if g:
-            feats.append({"type": "Feature", "geometry": g,
-                          "properties": {"name_el": rec.get(nk) if nk else None, "id": rec.get("_id")}})
+            props = {"name_el": rec.get(nk) if nk else None,
+                     "id": rec.get("id") if rec.get("id") is not None else rec.get("_id")}
+            if dk and rec.get(dk) is not None:
+                props["municipal_district_id"] = str(rec.get(dk)).strip()
+            feats.append({"type": "Feature", "geometry": g, "properties": props})
     return {"type": "FeatureCollection", "features": feats, "source": got["source"]}
 
 
@@ -234,17 +376,80 @@ def neighbourhoods() -> dict:
     return _polygons("neighbourhoods")
 
 
+# --- T10: City districts and air stations from CKAN ---
+def _district_names() -> dict[str, str]:
+    """Map municipal district id (str) -> district name from municipal-districts-athens."""
+    pkg = package(SLUGS["districts"])
+    ds = datastore_resource(pkg["result"])
+    if not ds:
+        return {}
+    got = records(ds["id"], limit=1000)
+    recs = got["result"].get("records", [])
+    if not recs:
+        return {}
+    keys = list(recs[0])
+    low = {k.lower(): k for k in keys}
+    f_id = low.get("id") or low.get("municipal_district_id") or low.get("district_id") or low.get("_id")
+    f_name = field(keys, "name")
+    if not f_id or not f_name:
+        return {}
+    names: dict[str, str] = {}
+    for rec in recs:
+        did, name = rec.get(f_id), rec.get(f_name)
+        if did is not None and name:
+            names[str(did).strip()] = str(name)
+    return names
+
+
+def _neighbourhood_centres() -> dict[str, tuple[float, float]]:
+    """Map neighbourhood id (str) -> (lat, lon) centre from neighbourhoods-athens."""
+    pkg = package(SLUGS["neighbourhoods"])
+    ds = datastore_resource(pkg["result"])
+    if not ds:
+        return {}
+    got = records(ds["id"], limit=1000)
+    recs = got["result"].get("records", [])
+    if not recs:
+        return {}
+    keys = list(recs[0])
+    low = {k.lower(): k for k in keys}
+    f_id = low.get("id") or low.get("neighbourhood_id") or low.get("_id")
+    f_lat, f_lon = field(keys, "lat"), field(keys, "lon")
+    if not f_id or not f_lat or not f_lon:
+        return {}
+    centres: dict[str, tuple[float, float]] = {}
+    for rec in recs:
+        nid = rec.get(f_id)
+        lat, lon = _num(rec.get(f_lat)), _num(rec.get(f_lon))
+        if nid is not None and lat is not None and lon is not None:
+            centres[str(nid).strip()] = (lat, lon)
+    return centres
+
+
 def district_of(lat, lng) -> str | None:
     """Name of the Δημοτική Κοινότητα containing the point, or None if unknown/unavailable."""
-    if lat is None or not enabled():
+    lat, lng = _num(lat), _num(lng)
+    if lat is None or lng is None or not enabled():
         return None
     try:
         fc = districts()
     except Unavailable:
         return None
-    for f in fc["features"]:
+    if fc["features"]:
+        for f in fc["features"]:
+            if any(_in_ring(lng, lat, r) for r in _rings(f.get("geometry"))):
+                return f["properties"].get("name_el") or "—"
+        return None
+    try:
+        nb = neighbourhoods()
+        names = _district_names()
+    except Unavailable:
+        return None
+    for f in nb["features"]:
         if any(_in_ring(lng, lat, r) for r in _rings(f.get("geometry"))):
-            return f["properties"].get("name_el") or "—"
+            did = (f.get("properties") or {}).get("municipal_district_id")
+            if did is not None:
+                return names.get(str(did).strip())
     return None
 
 
@@ -259,17 +464,34 @@ def _registry(slug_key: str) -> tuple[list[dict], str]:
         return [], got["source"]
     keys = list(recs[0])
     f_id, f_name, f_lat, f_lon = (field(keys, r) for r in ("station_id", "name", "lat", "lon"))
+    f_geom, f_nb = field(keys, "geometry"), field(keys, "neighbourhood_id")
+    nb_centres: dict[str, tuple[float, float]] | None = None
     out = []
     for rec in recs:
-        lat, lon = _num(rec.get(f_lat)), _num(rec.get(f_lon))
+        lat = _num(rec.get(f_lat)) if f_lat else None
+        lon = _num(rec.get(f_lon)) if f_lon else None
+        location = LOCATION_EXACT
         if lat is None or lon is None:
-            g = _geom(rec.get(field(keys, "geometry") or ""))
-            if g and g.get("type") == "Point":
-                lon, lat = g["coordinates"][:2]
+            g = _geom(rec.get(f_geom)) if f_geom else None
+            coords = g.get("coordinates") if g and g.get("type") == "Point" else None
+            if isinstance(coords, (list, tuple)) and len(coords) >= 2:
+                lon, lat = _num(coords[0]), _num(coords[1])
+        if (lat is None or lon is None) and f_nb:
+            nid = rec.get(f_nb)
+            if nid is not None and str(nid).strip():
+                if nb_centres is None:
+                    try:
+                        nb_centres = _neighbourhood_centres()
+                    except Unavailable:
+                        nb_centres = {}
+                centre = nb_centres.get(str(nid).strip())
+                if centre:
+                    lat, lon = centre
+                    location = LOCATION_NEIGHBOURHOOD_CENTRE
         if lat is None or lon is None:
             continue
         out.append({"station_id": rec.get(f_id) if f_id else rec.get("_id"), "name": rec.get(f_name) if f_name else None,
-                    "lat": lat, "lng": lon})
+                    "lat": lat, "lng": lon, "location": location})
     return out, got["source"]
 
 
@@ -295,13 +517,16 @@ def air_latest() -> dict:
     latest: dict = {}
     for rec in got["result"].get("records", []):
         sid = rec.get(f["station_id"]) if f["station_id"] else None
-        if sid is None or sid in latest:
+        if sid is None:
             continue
-        latest[sid] = rec
-    by_id = {str(s["station_id"]): s for s in stations}
+        sid_key = str(sid).strip()
+        if not sid_key or sid_key in latest:
+            continue
+        latest[sid_key] = rec
+    by_id = {str(s["station_id"]).strip(): s for s in stations}
     items = []
-    for sid, rec in latest.items():
-        st = by_id.get(str(sid))
+    for sid_key, rec in latest.items():
+        st = by_id.get(sid_key)
         if not st:
             continue
         aqi = _num(rec.get(f["aqi"])) if f["aqi"] else None

@@ -1,0 +1,40 @@
+{
+  "records": [
+    {
+      "_id": 1,
+      "station_id": "101",
+      "measurement_time": "2026-11-21T10:00:00",
+      "aqi": "1",
+      "temperature": "18.0",
+      "humidity": "60",
+      "pm25": "8.0"
+    },
+    {
+      "_id": 2,
+      "station_id": "101",
+      "measurement_time": "2026-11-21T12:00:00",
+      "aqi": "3",
+      "temperature": "24.5",
+      "humidity": "52",
+      "pm25": "19.2"
+    },
+    {
+      "_id": 3,
+      "station_id": "102",
+      "measurement_time": "2026-11-21T10:00:00",
+      "aqi": "2",
+      "temperature": "19.0",
+      "humidity": "58",
+      "pm25": "11.0"
+    },
+    {
+      "_id": 4,
+      "station_id": "102",
+      "measurement_time": "2026-11-21T12:00:00",
+      "aqi": "4",
+      "temperature": "26.0",
+      "humidity": "48",
+      "pm25": "27.5"
+    }
+  ]
+}
