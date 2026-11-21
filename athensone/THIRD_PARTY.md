@@ -36,3 +36,10 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | `maplibre-gl` | `4.7.1` | BSD-3-Clause | Interactive map rendering (`web/citizen.html`, `web/operator.html`) | https://github.com/maplibre/maplibre-gl-js |
 | OpenStreetMap tiles | — | ODbL 1.0 | Basemap tiles (`© OpenStreetMap` attribution shown) | https://www.openstreetmap.org/copyright |
 | `axe-core` | `^4.10.0` | MPL-2.0 | Accessibility check dev dependency (`scripts/a11y_check.py`) | https://github.com/dequelabs/axe-core |
+
+## Data Sources (B3: Transit)
+
+| Source | Licence / Terms | Role | URL |
+|---|---|---|---|
+| OpenStreetMap via Overpass API | ODbL 1.0 (`© OpenStreetMap contributors`) | Static Athens Metro (M1/M2/M3) and Suburban Railway (Προαστιακός A1–A4) line geometries, official line colours, stations, and wheelchair/elevator tags (`scripts/fetch_transit.py` → `data/transit/static.json`) | https://overpass-api.de/api/interpreter |
+| OASA Telematics API | Public transit open telematics service by OASA S.A. (unverified formal licence file; accessed server-side only with 20 s cache, never redistributed as bulk dataset) | Live bus locations (`getBusLocation`) and stop arrival waits (`getStopArrivals`) in `app/transit_src.py` | https://telematics.oasa.gr/api/ |
