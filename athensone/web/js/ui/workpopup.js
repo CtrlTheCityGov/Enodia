@@ -19,6 +19,10 @@ const STATUS_LABELS = {
 // external URL reachability unverified in offline test environment).
 const DIAVGEIA_BASE_URL = "https://diavgeia.gov.gr/decision/view/";
 
+// Synthetic SEED work prefix and Greek badge label (source: DECISIONS.md A-14 & TASKS_A.md A6, certainty: verified).
+const SEED_ADA_PREFIX = "SEED-";
+const SEED_BADGE_LABEL = "SEED · δοκιμαστικό";
+
 // Allowed characters in a Diavgeia ADA code: Unicode letters (Greek/Latin), digits, and hyphens,
 // with at least one alphanumeric character; rejects quotes, angle brackets, spaces, slashes, and query/fragment chars
 // (source: Diavgeia ADA format e.g. Ψ1ΑΒΩ6Μ-123, certainty: high).
@@ -135,6 +139,17 @@ export function paidPct(paid, contract) {
   return Math.min(100, Math.max(0, rawPct));
 }
 
+function isSeedWork(data) {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+  if (data.seed) {
+    return true;
+  }
+  const ada = typeof data.ada === "string" ? data.ada.trim() : "";
+  return ada.toUpperCase().startsWith(SEED_ADA_PREFIX);
+}
+
 export function guaranteeCountdown(handover, guaranteeEnd, today = new Date()) {
   const handoverMs = parseUtcDayMs(handover);
   const endMs = parseUtcDayMs(guaranteeEnd);
@@ -154,8 +169,11 @@ export function guaranteeCountdown(handover, guaranteeEnd, today = new Date()) {
     return { daysLeft: 0, pctLeft: 0 };
   }
 
-  const daysLeft = Math.round(remainingMs / MS_PER_DAY);
-  const pctLeft = Math.min(100, Math.max(0, Math.round((remainingMs / totalMs) * 100)));
+  // Clamp remaining time to the guarantee window when today precedes handover
+  // so future-start works do not inflate daysLeft beyond the guarantee period (TASKS_A.md A6).
+  const effectiveRemainingMs = todayMs < handoverMs ? totalMs : remainingMs;
+  const daysLeft = Math.round(effectiveRemainingMs / MS_PER_DAY);
+  const pctLeft = Math.min(100, Math.max(0, Math.round((effectiveRemainingMs / totalMs) * 100)));
   return { daysLeft, pctLeft };
 }
 
@@ -164,6 +182,9 @@ export function diavgeiaUrl(ada) {
     return null;
   }
   const cleaned = ada.trim();
+  if (cleaned.toUpperCase().startsWith(SEED_ADA_PREFIX)) {
+    return null;
+  }
   if (!SAFE_ADA_RE.test(cleaned)) {
     return null;
   }
@@ -227,9 +248,16 @@ export function popupHtml(props, today = new Date(), options = {}) {
       : "";
 
   const adaText = typeof data.ada === "string" ? data.ada.trim() : "";
-  const adaHref = adaText !== "" ? diavgeiaUrl(adaText) : null;
+  const isSeed = isSeedWork(data);
+  const adaHref = !isSeed && adaText !== "" ? diavgeiaUrl(adaText) : null;
   let adaContentHtml;
-  if (adaHref !== null) {
+  if (isSeed) {
+    const plainAdaHtml =
+      adaText !== ""
+        ? `<span class="work-popup__ada-text">${escapeHtml(adaText)}</span> `
+        : `<span class="work-popup__unknown">${UNKNOWN_LABEL}</span> `;
+    adaContentHtml = `${plainAdaHtml}<span class="work-popup__seed-badge">${SEED_BADGE_LABEL}</span>`;
+  } else if (adaHref !== null) {
     adaContentHtml = `<a class="work-popup__ada-link" href="${escapeHtml(adaHref)}" target="_blank" rel="noopener noreferrer">${escapeHtml(adaText)}</a>`;
   } else if (adaText !== "") {
     adaContentHtml = `<span class="work-popup__ada-text">${escapeHtml(adaText)}</span>`;
@@ -348,11 +376,14 @@ export function initWorkPopup(map, options = {}) {
           if (!workId) {
             return;
           }
+          const clickLngLat = event.lngLat;
           if (bus) {
-            bus.dispatchEvent(new CustomEvent("report:open", { detail: { work_id: workId } }));
+            bus.dispatchEvent(
+              new CustomEvent("report:open", { detail: { work_id: workId, lngLat: clickLngLat } }),
+            );
           }
           if (reportOpener && !reportHasMount) {
-            reportOpener({ work_id: workId });
+            reportOpener({ work_id: workId, lngLat: clickLngLat });
           }
         });
       }

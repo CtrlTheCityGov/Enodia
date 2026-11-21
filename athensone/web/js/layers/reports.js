@@ -78,6 +78,15 @@ export function setData(map, geojson) {
   }
 }
 
+export async function refresh(map, api, state = {}) {
+  if (!map) {
+    return emptyFeatureCollection();
+  }
+  const data = await loadReportsData(map, api, state);
+  setData(map, data);
+  return data;
+}
+
 export async function register(map, api, state = {}) {
   if (!map) {
     return { id, layerIds };
@@ -104,7 +113,7 @@ export async function register(map, api, state = {}) {
         "circle-color": [
           "match",
           ["coalesce", ["get", "category"], ""],
-          ["traffic", "συμφόρηση"],
+          ["congestion", "traffic", "συμφόρηση"],
           REPORT_COLORS.traffic,
           ["incident", "συμβάν"],
           REPORT_COLORS.incident,
@@ -122,8 +131,7 @@ export async function register(map, api, state = {}) {
     });
   }
 
-  const data = await loadReportsData(map, api, state);
-  setData(map, data);
+  await refresh(map, api, state);
 
   return { id, layerIds };
 }

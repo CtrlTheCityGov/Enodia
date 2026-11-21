@@ -41,15 +41,14 @@ function toFeatureCollection(res) {
   return emptyFeatureCollection();
 }
 
-async function loadAccessData(api, state) {
+async function loadAccessData(api) {
   if (!api || typeof api.access !== "function") {
     return emptyFeatureCollection();
   }
   try {
     const res = await api.access();
-    if (res?.source && res.source !== "live" && typeof state?.onOffline === "function") {
-      state.onOffline();
-    }
+    // Static pre-downloaded OSM accessibility data (SPEC.md "Εξωτερικές πηγές", TASKS_A.md A6):
+    // source === "mock" is expected by design and must not trigger the offline badge.
     return toFeatureCollection(res);
   } catch {
     return emptyFeatureCollection();
@@ -117,7 +116,7 @@ export async function register(map, api, state = {}) {
     });
   }
 
-  const data = await loadAccessData(api, state);
+  const data = await loadAccessData(api);
   const src = typeof map.getSource === "function" ? map.getSource(SOURCE_ID) : null;
   if (src && typeof src.setData === "function") {
     src.setData(data);
