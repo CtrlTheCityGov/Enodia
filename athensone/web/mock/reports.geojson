@@ -14,7 +14,7 @@
       },
       "properties": {
         "id": "R-MOCK-01",
-        "category": "εμπόδιο",
+        "category": "obstacle",
         "created_at": "2026-11-21T09:15:00Z",
         "confirmations": 4,
         "description": "Κώνοι και περίφραξη έργου στενεύουν το πεζοδρόμιο στην Ερμού.",
@@ -32,7 +32,7 @@
       },
       "properties": {
         "id": "R-MOCK-02",
-        "category": "πρόοδος έργου",
+        "category": "work_progress",
         "created_at": "2026-11-21T10:05:00Z",
         "confirmations": 6,
         "description": "Τοποθετήθηκαν νέες πλάκες και οδηγός όδευσης τυφλών.",
@@ -50,7 +50,7 @@
       },
       "properties": {
         "id": "R-MOCK-03",
-        "category": "συμφόρηση",
+        "category": "congestion",
         "created_at": "2026-11-21T11:20:00Z",
         "confirmations": 7,
         "description": "Αυξημένη κίνηση οχημάτων στη Σταδίου προς Ομόνοια."
@@ -67,7 +67,7 @@
       },
       "properties": {
         "id": "R-MOCK-04",
-        "category": "ζημιά",
+        "category": "damage",
         "created_at": "2026-11-21T08:40:00Z",
         "confirmations": 3,
         "description": "Σπασμένη πλάκα πεζοδρομίου κοντά στη διάβαση Μητροπόλεως.",
@@ -85,7 +85,7 @@
       },
       "properties": {
         "id": "R-MOCK-05",
-        "category": "συμβάν",
+        "category": "incident",
         "created_at": "2026-11-21T12:10:00Z",
         "confirmations": 2,
         "description": "Σταθμευμένο φορτηγό κλείνει τη ράμπα ΑμεΑ στην Αθηνάς."
@@ -102,7 +102,7 @@
       },
       "properties": {
         "id": "R-MOCK-06",
-        "category": "πρόοδος έργου",
+        "category": "work_progress",
         "created_at": "2026-11-21T12:45:00Z",
         "confirmations": 5,
         "description": "Συνεργείο εργάζεται στα κράσπεδα επί της Πανεπιστημίου.",
@@ -120,7 +120,7 @@
       },
       "properties": {
         "id": "R-MOCK-07",
-        "category": "ζημιά",
+        "category": "damage",
         "created_at": "2026-11-21T07:55:00Z",
         "confirmations": 2,
         "description": "Καμένο φωτιστικό δρόμου στη γωνία με την πλατεία Βαρνάβα."
@@ -137,7 +137,7 @@
       },
       "properties": {
         "id": "R-MOCK-08",
-        "category": "εμπόδιο",
+        "category": "obstacle",
         "created_at": "2026-11-21T13:15:00Z",
         "confirmations": 3,
         "description": "Κλαδιά και κάδος εμποδίζουν διέλευση καροτσιού στη Φιλελλήνων."
@@ -154,7 +154,7 @@
       },
       "properties": {
         "id": "R-MOCK-09",
-        "category": "συμφόρηση",
+        "category": "congestion",
         "created_at": "2026-11-21T13:40:00Z",
         "confirmations": 5,
         "description": "Καθυστέρηση λεωφορείων στη Βασιλίσσης Σοφίας προς Ευαγγελισμό."
@@ -171,7 +171,7 @@
       },
       "properties": {
         "id": "R-MOCK-10",
-        "category": "πρόοδος έργου",
+        "category": "work_progress",
         "created_at": "2026-11-21T14:00:00Z",
         "confirmations": 4,
         "description": "Η αποκατάσταση οδοστρώματος στην Υμηττού παραδόθηκε καθαρή.",

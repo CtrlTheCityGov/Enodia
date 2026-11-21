@@ -385,6 +385,7 @@ def build_env(ckan_dir: Path | None) -> dict:
                         "neighbourhood": nname,
                         "temp_c": round(float(r["temperature"]), 2),
                         "aqi": int(r["aqi"]),
+                        "aqi_scale": "city_1_6",  # AthensGov CKAN env-all-stations, AQI class 1-6 (A-37)
                         "pm25": round(float(r["pm2_5"]), 1),
                         "updated_at": ts,
                         "location_precision": "neighbourhood_centre",
@@ -418,6 +419,7 @@ def build_env(ckan_dir: Path | None) -> dict:
                     "properties": {
                         "temp_c": temp,
                         "aqi": aqi,
+                        "aqi_scale": "city_1_6",  # AthensGov CKAN env-all-stations, AQI class 1-6 (A-37)
                         "pm25": pm25,
                         "updated_at": f"{SNAPSHOT_DATE}T14:00:00Z",
                     },
@@ -959,19 +961,20 @@ def build_health(fetch_phones: bool = True) -> dict:
 def build_reports() -> dict:
     """Build web/mock/reports.geojson: anonymized citizen reports rounded to 4 decimals (~10 m)."""
     # All coordinates explicitly rounded to 4 decimal places per SPEC «Privacy (GDPR)».
-    # Categories from SPEC.md F3 & TASKS_B.md B0: συμφόρηση, συμβάν, εμπόδιο, ζημιά, πρόοδος έργου.
+    # Category ids as in B6 (/api/map/reports): congestion συμφόρηση, incident συμβάν, obstacle εμπόδιο, damage ζημιά,
+    # work_progress πρόοδος έργου (Greek labels live in ui/report.js).
     # Source: simulated demo citizen reports. Certainty: mock.
     items = [
-        {"id": "R-MOCK-01", "category": "εμπόδιο", "created_at": f"{SNAPSHOT_DATE}T09:15:00Z", "confirmations": 4, "description": "Κώνοι και περίφραξη έργου στενεύουν το πεζοδρόμιο στην Ερμού.", "work_id": "W-DIAV-001", "coords": [23.7322, 37.9758]},
-        {"id": "R-MOCK-02", "category": "πρόοδος έργου", "created_at": f"{SNAPSHOT_DATE}T10:05:00Z", "confirmations": 6, "description": "Τοποθετήθηκαν νέες πλάκες και οδηγός όδευσης τυφλών.", "work_id": "W-DIAV-001", "coords": [23.7302, 37.9760]},
-        {"id": "R-MOCK-03", "category": "συμφόρηση", "created_at": f"{SNAPSHOT_DATE}T11:20:00Z", "confirmations": 7, "description": "Αυξημένη κίνηση οχημάτων στη Σταδίου προς Ομόνοια.", "work_id": None, "coords": [23.7318, 37.9792]},
-        {"id": "R-MOCK-04", "category": "ζημιά", "created_at": f"{SNAPSHOT_DATE}T08:40:00Z", "confirmations": 3, "description": "Σπασμένη πλάκα πεζοδρομίου κοντά στη διάβαση Μητροπόλεως.", "work_id": "W-SEED-001", "coords": [23.7312, 37.9753]},
-        {"id": "R-MOCK-05", "category": "συμβάν", "created_at": f"{SNAPSHOT_DATE}T12:10:00Z", "confirmations": 2, "description": "Σταθμευμένο φορτηγό κλείνει τη ράμπα ΑμεΑ στην Αθηνάς.", "work_id": None, "coords": [23.7269, 37.9798]},
-        {"id": "R-MOCK-06", "category": "πρόοδος έργου", "created_at": f"{SNAPSHOT_DATE}T12:45:00Z", "confirmations": 5, "description": "Συνεργείο εργάζεται στα κράσπεδα επί της Πανεπιστημίου.", "work_id": "W-DIAV-003", "coords": [23.7336, 37.9794]},
-        {"id": "R-MOCK-07", "category": "ζημιά", "created_at": f"{SNAPSHOT_DATE}T07:55:00Z", "confirmations": 2, "description": "Καμένο φωτιστικό δρόμου στη γωνία με την πλατεία Βαρνάβα.", "work_id": None, "coords": [23.7437, 37.9667]},
-        {"id": "R-MOCK-08", "category": "εμπόδιο", "created_at": f"{SNAPSHOT_DATE}T13:15:00Z", "confirmations": 3, "description": "Κλαδιά και κάδος εμποδίζουν διέλευση καροτσιού στη Φιλελλήνων.", "work_id": None, "coords": [23.7341, 37.9735]},
-        {"id": "R-MOCK-09", "category": "συμφόρηση", "created_at": f"{SNAPSHOT_DATE}T13:40:00Z", "confirmations": 5, "description": "Καθυστέρηση λεωφορείων στη Βασιλίσσης Σοφίας προς Ευαγγελισμό.", "work_id": None, "coords": [23.7448, 37.9762]},
-        {"id": "R-MOCK-10", "category": "πρόοδος έργου", "created_at": f"{SNAPSHOT_DATE}T14:00:00Z", "confirmations": 4, "description": "Η αποκατάσταση οδοστρώματος στην Υμηττού παραδόθηκε καθαρή.", "work_id": "W-SEED-002", "coords": [23.7462, 37.9693]},
+        {"id": "R-MOCK-01", "category": "obstacle", "created_at": f"{SNAPSHOT_DATE}T09:15:00Z", "confirmations": 4, "description": "Κώνοι και περίφραξη έργου στενεύουν το πεζοδρόμιο στην Ερμού.", "work_id": "W-DIAV-001", "coords": [23.7322, 37.9758]},
+        {"id": "R-MOCK-02", "category": "work_progress", "created_at": f"{SNAPSHOT_DATE}T10:05:00Z", "confirmations": 6, "description": "Τοποθετήθηκαν νέες πλάκες και οδηγός όδευσης τυφλών.", "work_id": "W-DIAV-001", "coords": [23.7302, 37.9760]},
+        {"id": "R-MOCK-03", "category": "congestion", "created_at": f"{SNAPSHOT_DATE}T11:20:00Z", "confirmations": 7, "description": "Αυξημένη κίνηση οχημάτων στη Σταδίου προς Ομόνοια.", "work_id": None, "coords": [23.7318, 37.9792]},
+        {"id": "R-MOCK-04", "category": "damage", "created_at": f"{SNAPSHOT_DATE}T08:40:00Z", "confirmations": 3, "description": "Σπασμένη πλάκα πεζοδρομίου κοντά στη διάβαση Μητροπόλεως.", "work_id": "W-SEED-001", "coords": [23.7312, 37.9753]},
+        {"id": "R-MOCK-05", "category": "incident", "created_at": f"{SNAPSHOT_DATE}T12:10:00Z", "confirmations": 2, "description": "Σταθμευμένο φορτηγό κλείνει τη ράμπα ΑμεΑ στην Αθηνάς.", "work_id": None, "coords": [23.7269, 37.9798]},
+        {"id": "R-MOCK-06", "category": "work_progress", "created_at": f"{SNAPSHOT_DATE}T12:45:00Z", "confirmations": 5, "description": "Συνεργείο εργάζεται στα κράσπεδα επί της Πανεπιστημίου.", "work_id": "W-DIAV-003", "coords": [23.7336, 37.9794]},
+        {"id": "R-MOCK-07", "category": "damage", "created_at": f"{SNAPSHOT_DATE}T07:55:00Z", "confirmations": 2, "description": "Καμένο φωτιστικό δρόμου στη γωνία με την πλατεία Βαρνάβα.", "work_id": None, "coords": [23.7437, 37.9667]},
+        {"id": "R-MOCK-08", "category": "obstacle", "created_at": f"{SNAPSHOT_DATE}T13:15:00Z", "confirmations": 3, "description": "Κλαδιά και κάδος εμποδίζουν διέλευση καροτσιού στη Φιλελλήνων.", "work_id": None, "coords": [23.7341, 37.9735]},
+        {"id": "R-MOCK-09", "category": "congestion", "created_at": f"{SNAPSHOT_DATE}T13:40:00Z", "confirmations": 5, "description": "Καθυστέρηση λεωφορείων στη Βασιλίσσης Σοφίας προς Ευαγγελισμό.", "work_id": None, "coords": [23.7448, 37.9762]},
+        {"id": "R-MOCK-10", "category": "work_progress", "created_at": f"{SNAPSHOT_DATE}T14:00:00Z", "confirmations": 4, "description": "Η αποκατάσταση οδοστρώματος στην Υμηττού παραδόθηκε καθαρή.", "work_id": "W-SEED-002", "coords": [23.7462, 37.9693]},
     ]
 
     features = []
@@ -1070,8 +1073,8 @@ def build_stoa() -> list[dict]:
                 "*Σημείωση: οι εφημερίες στο mock αρχείο είναι ενδεικτικές — επιβεβαιώστε στον Φαρμακευτικό Σύλλογο Αττικής.*"
             ),
             "citations": [
-                {"label": "Καραγιώργη Σερβίας 4", "lon": p1["coords"][0], "lat": p1["coords"][1], "kind": "health"},
-                {"label": "Μητροπόλεως 27", "lon": p2["coords"][0], "lat": p2["coords"][1], "kind": "health"},
+                {"label": "Καραγιώργη Σερβίας 4", "lon": p1["coords"][0], "lat": p1["coords"][1], "kind": "pharmacy"},
+                {"label": "Μητροπόλεως 27", "lon": p2["coords"][0], "lat": p2["coords"][1], "kind": "pharmacy"},
             ],
         },
         {

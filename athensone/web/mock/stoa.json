@@ -7,13 +7,13 @@
         "label": "Καραγιώργη Σερβίας 4",
         "lon": 23.734,
         "lat": 37.97638,
-        "kind": "health"
+        "kind": "pharmacy"
       },
       {
         "label": "Μητροπόλεως 27",
         "lon": 23.73118,
         "lat": 37.97527,
-        "kind": "health"
+        "kind": "pharmacy"
       }
     ]
   },
