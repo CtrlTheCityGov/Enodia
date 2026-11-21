@@ -58,6 +58,7 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
 }
 
 .hud {
@@ -820,20 +821,20 @@ body {
   /* Bottom corners: Waze '+' button (left) and Stoa AI bubble (right) stay unobstructed. */
   #hud-report.hud-bottom-left {
     left: var(--hud-gap);
-    bottom: var(--hud-gap);
+    bottom: calc(var(--hud-gap) + env(safe-area-inset-bottom, 0px));
     z-index: 13;
   }
 
   #hud-stoa.hud-bottom-right {
     right: var(--hud-gap);
-    bottom: var(--hud-gap);
+    bottom: calc(var(--hud-gap) + env(safe-area-inset-bottom, 0px));
     max-width: calc(100vw - 2 * var(--hud-gap));
     z-index: 14;
   }
 
   /* Bottom center: collapsed routing handle sits between '+' and Stoa; expanded drawer lifts above both FABs. */
   #hud-routing.hud-bottom-center {
-    bottom: var(--hud-gap);
+    bottom: calc(var(--hud-gap) + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 12;
@@ -841,13 +842,14 @@ body {
 
   #hud-routing.is-routing-expanded,
   #hud-routing:has(.routing-drawer:not(.is-collapsed)) {
-    bottom: calc(var(--hud-gap) * 2 + 56px); /* Clears 56 px bottom FAB row for '+' and Stoa (certainty: design default). */
+    bottom: calc(var(--hud-gap) * 2 + 56px + env(safe-area-inset-bottom, 0px)); /* Clears 56 px bottom FAB row for '+' and Stoa (certainty: design default). */
     z-index: 15;
   }
 
   .routing-drawer {
     width: calc(100vw - 2 * var(--hud-gap));
     max-height: calc(100vh - 184px);
+    max-height: calc(100dvh - 184px - env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     padding: 4px 10px 10px;
     gap: 6px;

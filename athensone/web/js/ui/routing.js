@@ -1379,6 +1379,29 @@ export function initRouting(container, map, api, options = {}) {
     pickBtn.textContent = "Χάρτης";
 
     inputWrap.appendChild(input);
+    if (kind === "from" && typeof globalThis.navigator?.geolocation?.getCurrentPosition === "function") {
+      const gpsBtn = doc.createElement("button");
+      gpsBtn.type = "button";
+      gpsBtn.className = "routing-pick-btn";
+      gpsBtn.setAttribute("aria-label", "Χρήση τρέχουσας θέσης GPS");
+      gpsBtn.textContent = "Θέση";
+      gpsBtn.addEventListener("click", () => {
+        gpsBtn.disabled = true;
+        globalThis.navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            gpsBtn.disabled = false;
+            const pt = [Number(pos.coords.longitude.toFixed(5)), Number(pos.coords.latitude.toFixed(5))];
+            coords.from = pt;
+            input.value = `GPS (${pt[1]}, ${pt[0]})`;
+          },
+          () => {
+            gpsBtn.disabled = false;
+          },
+          { enableHighAccuracy: true, timeout: 8000 },
+        );
+      });
+      inputWrap.appendChild(gpsBtn);
+    }
     inputWrap.appendChild(pickBtn);
     row.appendChild(label);
     row.appendChild(inputWrap);
@@ -1849,26 +1872,49 @@ export function initRouting(container, map, api, options = {}) {
     // Start real GPS tracking if browser geolocation is available (graceful indoors).
     const geo = globalThis.navigator?.geolocation;
     if (geo && typeof geo.watchPosition === "function") {
+      let prevGps = null;
       try {
         navWatchId = geo.watchPosition(
           (pos) => {
             if (!navActive || navSimRunning) return;
             const lon = pos.coords.longitude;
             const lat = pos.coords.latitude;
-            const heading = Number.isFinite(pos.coords.heading)
-              ? pos.coords.heading
-              : (navCurrentPos?.bearing ?? 0);
+            let heading = Number.isFinite(pos.coords.heading) ? pos.coords.heading : null;
+            if (heading === null && prevGps && haversineMeters(prevGps, [lon, lat]) > 2) {
+              const dLon = ((lon - prevGps[0]) * Math.PI) / 180;
+              const lat1 = (prevGps[1] * Math.PI) / 180;
+              const lat2 = (lat * Math.PI) / 180;
+              const y = Math.sin(dLon) * Math.cos(lat2);
+              const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+              heading = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+            }
+            if (heading === null) heading = navCurrentPos?.bearing ?? 0;
+            prevGps = [lon, lat];
+
+            // Snap to nearest route vertex to compute real remaining route distance & upcoming turn.
+            let bestDistAlong = 0;
+            let bestGap = Infinity;
+            let cum = 0;
+            for (let i = 0; i < navRouteCoords.length; i += 1) {
+              if (i > 0) cum += haversineMeters(navRouteCoords[i - 1], navRouteCoords[i]);
+              const d = haversineMeters([lon, lat], navRouteCoords[i]);
+              if (d < bestGap) {
+                bestGap = d;
+                bestDistAlong = cum;
+              }
+            }
+            const snapped = sampleRouteAtDistance(navRouteCoords, bestDistAlong);
             const destPt = navRouteCoords[navRouteCoords.length - 1];
-            const remM = haversineMeters([lon, lat], destPt);
+            const remM = snapped ? snapped.remainingM : haversineMeters([lon, lat], destPt);
             updateNavHudReadout({
               lon,
               lat,
               bearing: heading,
               remainingM: remM,
-              distToTurnM: Math.round(Math.min(remM, 80)),
+              distToTurnM: snapped ? snapped.distToTurnM : Math.round(Math.min(remM, 80)),
               turn: remM < 18
                 ? { icon: "🏁", text: "Φτάσατε στον προορισμό" }
-                : { icon: "⬆️", text: "Ακολουθήστε τη διαδρομή" },
+                : (snapped?.turn || { icon: "⬆️", text: "Ακολουθήστε τη διαδρομή" }),
               arrived: remM < 18,
             });
           },
