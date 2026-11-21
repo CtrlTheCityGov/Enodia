@@ -71,8 +71,15 @@
   of A-22–A-25 and A-23's module discovery; T11–T23 cards are dropped. `PROPOSAL.pdf`, `BUILD_PLAN.pdf`, `PLAN.md`,
   `TASKS.md`, `STOA_MERGE.md` and `DEMO_SCRIPT.md` were removed as superseded; code comments that cite them still
   resolve in git history (`git show 18e6f2f:athensone/docs/TASKS.md`).
-- **Q-1** (open, both owners) Path for the SPEC's new `GET /health` (on-duty pharmacies/hospitals): `/api/health`
+- **Q-1** (closed by A-33) Path for the SPEC's new `GET /health` (on-duty pharmacies/hospitals): `/api/health`
   is already the server-status route used by tests. Proposal: `GET /api/onduty?date=`.
 - **A-31** (Sat 21 Nov, night) Track B may use Claude (Claude Code CLI, Opus) for the **code** step of some tasks:
   `CLAUDE_STEPS=code agents/drive.sh B<n>`. Tests and review stay on Gemini in Antigravity. Default picks: B1 `api.js`,
   B6 report flow (privacy), B8 Stoa citations, B9 route cost per profile; the rest run fully in Antigravity.
+- **A-32** (Sat 21 Nov, night) New track-B endpoints live in their own module `app/routers/<name>.py` with
+  `router = APIRouter()`; `app/main.py` includes every module there automatically (block `# --- B: routers`).
+  Tasks never edit `main.py` for a new endpoint, so B2–B5 can run in parallel. Shared helpers they need go in
+  their own `app/<name>.py`, not in `main.py`.
+- **A-33** (advisor default, closes Q-1) Endpoints with the SPEC's shapes live under `/api/map/`: `/api/map/works`,
+  `/api/map/transit`, `/api/map/health` (on-duty pharmacies/hospitals), `/api/map/env`. `/api/health` stays the
+  server status. Existing routes keep their shapes; `api.js` (B1) picks the `/api/map/` route where one exists.

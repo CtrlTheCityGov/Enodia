@@ -743,3 +743,14 @@ app.mount("/web", StaticFiles(directory=config.ROOT / "web", html=True), name="w
 @app.get("/")
 def root():
     return RedirectResponse("/web/citizen.html")
+
+
+# --- B: routers discovered from app/routers/ (A-32) ---
+import importlib as _importlib
+import pkgutil as _pkgutil
+
+from . import routers as _routers
+
+for _m in sorted(_pkgutil.iter_modules(_routers.__path__), key=lambda m: m.name):
+    app.include_router(_importlib.import_module(f"{_routers.__name__}.{_m.name}").router)
+# --- /B ---
