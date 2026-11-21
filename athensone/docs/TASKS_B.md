@@ -12,7 +12,7 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | Task | Phase | What | State |
 |---|---|---|---|
 | B0 Contracts + first mocks | 0 | Lock the SPEC contracts against the Παράρτημα; `web/mock/*` (env, access, works with 10–15 real works, transit, health, points, stoa) realistic enough for the demo; offline boundary + main roads for A1 | **merged** into `dev-b` |
-| B1 `api.js` | 1 | Only door to the backend; live → `localStorage` cache → `mock/`; `source: live\|cache\|mock`; maps the real routes to SPEC shapes; offline report queue sent on `online` | card to write |
+| B1 `api.js` | 1 | Only door to the backend; live → `localStorage` cache → `mock/`; `source: live\|cache\|mock`; maps the real routes to SPEC shapes; offline report queue sent on `online` | **running** |
 | B2 Works adapters | 2 | Διαύγεια + ΚΗΜΔΗΣ, join on ΑΔΑ/ΑΔΑΜ, curated geocoding; `/api/map/works` with every SPEC field | **running** |
 | B3 `/api/map/transit` | 2 | ΟΑΣΑ telematics (buses), GTFS/OSM metro + suburban lines and stations | **running** |
 | B4 On-duty pharmacies/hospitals | 2 | `/api/map/health` (A-33) | **running** |
@@ -312,3 +312,41 @@ SPEC F5, «Routing», contract `POST /routing`.
 | `test_bad_profile_422` | profile `car` | 422 |
 | `test_reasons_point_at_real_features` | any reasons | every `feature_id` exists in its layer's data |
 | `test_existing_navigate_unchanged` | `/api/navigate` as in existing tests | same keys |
+
+### B1: `api.js` — the only door to the backend (phase 1)
+SPEC «Αρχιτεκτονική» (`api.js`), «Offline fallback» 3–4, «Backend contracts»; A-33, A-34, A-37.
+**Files:** `web/js/api.js`, `web/package.json` (exactly `{"type": "module", "private": true}` + newline, same as A0,
+so the two tracks add an identical file), `web/tests/B1_api.test.js`.
+- One exported async function per contract, each resolving to the SPEC shape **plus** a top-level `source`
+  (`live` | `cache` | `mock`): `env(bbox)`, `works({bbox, status})`, `transit(bbox)`, `health(date)`,
+  `reports({bbox, since})`, `sendReport(fields)`, `points()`, `redeem(rewardId)`, `stoaAsk(question, center,
+  history)`, `routing(from, to, profile)`, plus `access()` and `base()` (mock files only, always `source: "mock"`).
+- Order (SPEC): live `/api/map/…` (A-33; `fetch` with a 5 s timeout, `credentials: "same-origin"`, never a
+  `user_id` in the URL, A-34) → the last good live answer for the same key in `localStorage` (`cache`) → the file in
+  `mock/` (`mock`). An HTTP error, a timeout or a 404 (endpoint not merged yet) counts as a failure.
+- Mock fallbacks without a 1:1 file: `stoaAsk` answers from `mock/stoa.json` by accent- and case-insensitive match
+  on `question`, else the refusal «Δεν βρήκα τεκμηριωμένα στοιχεία για αυτό.» with no citations; `routing` returns a
+  straight line from → to with `legs [{mode: "walk"}]` and the reason «Χωρίς σύνδεση: ευθεία γραμμή, χωρίς
+  υπολογισμό εμποδίων»; `redeem` and `sendReport` don't fall back: offline → `{ok: false, error: "offline"}` /
+  a thrown `OfflineError` (the report queue lives in `ui/report.js`, B6).
+- `export const status` is an `EventTarget`: every call dispatches `source` `{key, source}`; `isOffline()` is true
+  while the latest answer of any key isn't `live` (drives the «Offline λειτουργία» badge, Dev A).
+- `configure({fetch, storage, base, mockBase, timeoutMs})` for tests and for `main.js`; defaults are the browser's.
+- No DOM, no `maplibregl`, no other module imports it except through `ctx.api` (A-35).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_live_answer_has_source_live` | fake fetch returns a works FeatureCollection | same object + `source: "live"`; URL `/api/map/works` |
+| `test_live_answer_cached` | one live call, then fetch fails | second call returns the first answer with `source: "cache"` |
+| `test_no_cache_falls_back_to_mock` | fetch fails, empty storage | answer from `mock/works.geojson`, `source: "mock"` |
+| `test_404_counts_as_failure` | fetch returns 404 | `cache` or `mock`, never the 404 body |
+| `test_timeout_5s` | fetch never resolves, mocked timers +5 s | falls back, no hang |
+| `test_query_params_spec_format` | `env([23.72,37.97,23.74,37.98])`, `works({status:"in_progress"})` | `bbox=23.72,37.97,23.74,37.98`, `status=in_progress` |
+| `test_no_user_id_in_urls` | every function called | no URL contains `user_id` or the cookie value; `credentials: "same-origin"` |
+| `test_stoa_mock_match_accent_insensitive` | fetch fails, question «ποιο φαρμακειο εφημερευει κοντα μου» | the stoa.json pharmacy answer with its citations |
+| `test_stoa_mock_no_match_refuses` | fetch fails, unknown question | refusal text, `citations: []` |
+| `test_routing_offline_straight_line` | fetch fails | LineString from → to, `legs [{mode:"walk"}]`, the offline reason, `source: "mock"` |
+| `test_redeem_offline_not_faked` | fetch fails | `{ok: false, error: "offline"}`, no voucher |
+| `test_send_report_offline_throws` | fetch fails | rejects with `OfflineError` |
+| `test_status_events_and_is_offline` | one live call, one mock call | two `source` events; `isOffline()` true, then false after a live call for that key |
+| `test_import_has_no_dom` | import in Node | no error, no global touched |
