@@ -12,6 +12,7 @@ import os
 import re
 import unicodedata
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 import httpx
 
@@ -44,7 +45,7 @@ STATUS_ORDER: dict[str, int] = {"ACTIVE": 0, "UNKNOWN": 1, "ENDED": 2}
 # Generic Greek/English street-type prefixes that must not trigger a street match on their own.
 # Source: standard Greek/English street naming + test_ask_unknown_street_refuses ("Οδός Ανύπαρκτη 12"); certainty: verified.
 STREET_PREFIXES: frozenset[str] = frozenset({
-    "οδοσ", "οδου", "οδο",
+    "οδοσ", "οδου", "οδο", "οδων",
     "πλατεια", "πλατειασ",
     "λεωφοροσ", "λεωφορου",
     "δρομοσ", "δρομου",
@@ -54,9 +55,11 @@ STREET_PREFIXES: frozenset[str] = frozenset({
 # Common Greek question words ignored when checking if query tokens form a subset of a street name.
 # Source: common Greek interrogatives/articles/prepositions; certainty: unverified heuristic.
 QUERY_STOPWORDS: frozenset[str] = frozenset({
-    "τι", "ποιοσ", "ποια", "ποιο", "που", "ποτε", "ποσο",
-    "εγινε", "εργα", "εργο", "στη", "στην", "στο", "στον", "στισ", "στουσ",
-    "τη", "την", "το", "τον", "τησ", "του", "των", "τα",
+    "τι", "ποιοσ", "ποια", "ποιο", "ποιεσ", "ποιοι", "που", "ποτε", "ποσο",
+    "εγινε", "εγιναν", "υπαρχει", "υπαρχουν", "εχουν",
+    "εργα", "εργο", "εργασια", "εργασιεσ",
+    "στη", "στην", "στο", "στον", "στισ", "στουσ",
+    "ο", "η", "οι", "τη", "την", "το", "τον", "τησ", "του", "των", "τα",
     "για", "με", "και", "σε", "απο", "εχει", "ειναι",
     "εγγυηση", "εγγυησησ", "αναδοχοσ", "κοστοσ", "ημερομηνια",
 })
@@ -77,9 +80,41 @@ EVIDENCE_FIELDS: tuple[str, ...] = (
     "street", "title", "contractor", "amount_paid_eur", "completion_date", "guarantee_months",
 )
 
-# Greek legal/reference abbreviations containing a period that do not end a sentence.
-# Source: app/works.py:93 ("άρθ. 171 ν. 4412/2016") and app/works.py:205 ("σελ."); certainty: verified.
-_SENTENCE_ABBREV: frozenset[str] = frozenset({"άρθ", "σελ", "αρ", "ν"})
+# --- T9: Ask Stoa verify fixes ---
+# Accent-folded Greek legal/reference/title abbreviations ending in a period that do not end a sentence.
+# Source: app/works.py:93 ("άρθ. 171 ν. 4412/2016"), app/works.py:205 ("σελ."),
+# docs/TASKS.md T9 card, and standard Athens street/title prefixes; certainty: verified.
+_SENTENCE_ABBREV: frozenset[str] = frozenset({
+    "αρθ", "σελ", "αρ", "ν",
+    "αγ", "βασ", "λεωφ", "πλ", "ελ", "εθν", "στρ", "δρ", "καθ",
+    "δηλ", "βλ", "κλπ",
+})
+
+# Multi-part dotted abbreviations (e.g. Α.Ε., Ο.Ε., Ε.Π.Ε., Ι.Κ.Ε., Α.Τ.Ε., π.χ., κ.λπ.).
+# Source: docs/TASKS.md T9 card ("Α.Ε., Ο.Ε., initials") and Greek corporate forms; certainty: verified.
+_DOTTED_ABBREV_RE = re.compile(r"(?<!\w)(?:[A-Za-zΑ-Ωα-ωάέήίόύώϊϋΐΰ]{1,4}\.){2,}$")
+
+# Whole-date patterns (ISO YYYY-MM-DD / YYYY/MM/DD and Greek DD/MM/YYYY / DD-MM-YYYY / DD.MM.YYYY)
+# with matching separators so dates are verified whole rather than split into digit pieces.
+# Source: docs/TASKS.md T9 card and app/works.py:95,97,119-122; certainty: verified.
+_ISO_DATE_RE = re.compile(r"(?<!\d)(\d{4})([/-])(\d{1,2})\2(\d{1,2})(?!\d)")
+_DMY_DATE_RE = re.compile(r"(?<!\d)(\d{1,2})([/.-])(\d{1,2})\2(\d{4})(?!\d)")
+
+# Currency amount patterns (number next to €, ευρώ/ευρω, or EUR) so amounts are verified against
+# card amounts only, never against date years or other card numbers.
+# Source: docs/TASKS.md T9 card and app/stoa_ask.py:217 ("_fmt_eur(amt) €"); certainty: verified.
+_CURRENCY_PAT = r"(?:\u20ac|ευρ[ωώ](?!\w)|(?<![A-Za-z])eur(?![A-Za-z]))"
+_AMOUNT_AFTER_RE = re.compile(rf"(?<!\d)(\d+(?:[.,]\d+)*)\s*{_CURRENCY_PAT}", re.IGNORECASE)
+_AMOUNT_BEFORE_RE = re.compile(rf"{_CURRENCY_PAT}\s*(\d+(?:[.,]\d+)*)(?!\d)", re.IGNORECASE)
+
+# Slash-joined numeric identifiers (e.g. Greek law number 4412/2016) kept whole instead of split.
+# Source: app/works.py:93 ("άρθ. 171 ν. 4412/2016"); certainty: verified.
+_SLASH_NUM_RE = re.compile(r"(?<!\d)\d+/\d+(?!\d)")
+
+# Normalized mandatory hedging phrase for ACTIVE guarantee cards ("πιθανώς εντός").
+# Source: CLAUDE.md hard rule, docs/TASKS.md T9 card, and app/works.py:121-122; certainty: exact requirement.
+_GUARANTEE_CAUTION_NORM = "πιθανωσ εντοσ"
+# --- end T9 ---
 
 _CITATION_RE = re.compile(r"\[ΑΔΑ\s+([^\]]+)\]")
 _END_CITATION_RE = re.compile(r"\[ΑΔΑ\s+[^\]]+\]\.?$")
@@ -144,6 +179,31 @@ def _fmt_iso_date(iso_str: str) -> str:
         return iso_str
 
 
+# --- T9: Ask Stoa verify fixes ---
+def _works_type_vocab(cards: list[dict]) -> set[str]:
+    """Normalized works-type tokens across known works labels and loaded cards."""
+    vocab: set[str] = set()
+    for wtype, label in works.WORKS_EL.items():
+        vocab.add(normalize(wtype))
+        vocab.update(normalize(label).split())
+    for card in cards:
+        wt = normalize(card.get("works_type") or "")
+        if wt:
+            vocab.add(wt)
+        wt_el = normalize(card.get("works_type_el") or "")
+        if wt_el:
+            vocab.update(wt_el.split())
+    return vocab
+
+
+def _is_works_type_token(tok: str, vocab: set[str]) -> bool:
+    """True if a normalized query token refers to a works type rather than a street/location."""
+    if tok in vocab:
+        return True
+    return any(tok.startswith(stem) for stems in WORKS_TYPE_TERMS.values() for stem in stems)
+# --- end T9 ---
+
+
 def retrieve(q: str, cards: list[dict] | None = None, limit: int = MAX_CARDS) -> list[dict]:
     """Accent-insensitive retrieval on street names and works types, capped at `limit` cards."""
     qn = normalize(q)
@@ -154,27 +214,40 @@ def retrieve(q: str, cards: list[dict] | None = None, limit: int = MAX_CARDS) ->
     q_core = [t for t in q_tokens if t not in STREET_PREFIXES and t not in QUERY_STOPWORDS]
 
     all_items = works.all_cards() if cards is None else cards
+    # --- T9: Ask Stoa verify fixes ---
+    wtype_vocab = _works_type_vocab(all_items)
+    q_street_tokens = [t for t in q_core if not _is_works_type_token(t, wtype_vocab)]
+    has_street_target = bool(q_street_tokens)
+    # --- end T9 ---
     scored: list[tuple[int, int, int, dict]] = []
 
     for idx, card in enumerate(all_items):
         if not _card_adas(card):
             continue
-        score = 0
+        street_score = 0
 
         street = normalize(_field_val(card, "street") or "")
         street_tokens = street.split()
         street_core = [t for t in street_tokens if t not in STREET_PREFIXES]
         if street and re.search(rf"(?<!\w){re.escape(street)}(?!\w)", qn):
-            score += 100
+            street_score = 100
         elif street_core and set(street_core).issubset(q_token_set):
-            score += 80
+            street_score = 80
         elif (
-            q_core
+            q_street_tokens
             and street_core
-            and set(q_core).issubset(set(street_core))
-            and any(len(t) >= MIN_PARTIAL_TOKEN_LEN for t in q_core)
+            and set(q_street_tokens).issubset(set(street_core))
+            and any(len(t) >= MIN_PARTIAL_TOKEN_LEN for t in q_street_tokens)
         ):
-            score += 60
+            street_score = 60
+
+        # --- T9: Ask Stoa verify fixes ---
+        # If the query specifies a street/location name, do not match a card on works type alone.
+        if has_street_target and street_score == 0:
+            continue
+        # --- end T9 ---
+
+        score = street_score
 
         wtype = normalize(card.get("works_type") or "")
         wtype_el = normalize(card.get("works_type_el") or "")
@@ -295,9 +368,13 @@ def _sentences(text: str) -> list[str]:
                 continue
             if i + 1 < len(line) and not line[i + 1].isspace():
                 continue
-            word = re.findall(r"([A-Za-zΑ-Ωα-ωάέήίόύώϊϋΐΰ]+)$", line[:i])
-            if word and word[0].lower() in _SENTENCE_ABBREV:
+            # --- T9: Ask Stoa verify fixes ---
+            if _DOTTED_ABBREV_RE.search(line[: i + 1]):
                 continue
+            word = re.findall(r"([A-Za-zΑ-Ωα-ωάέήίόύώϊϋΐΰ]+)$", line[:i])
+            if word and (len(word[0]) == 1 or normalize(word[0]) in _SENTENCE_ABBREV):
+                continue
+            # --- end T9 ---
             seg = line[start : i + 1].strip()
             if seg:
                 out.append(seg)
@@ -314,49 +391,131 @@ def _canonical_num(tok: str) -> str:
         s = tok.replace(".", "").replace(",", ".") if tok.rfind(",") > tok.rfind(".") else tok.replace(",", "")
     elif "." in tok:
         parts = tok.split(".")
-        s = "".join(parts) if len(parts) >= 2 and all(len(p) == 3 for p in parts[1:]) and len(parts[0]) <= 3 else tok
+        s = (
+            "".join(parts)
+            if len(parts) >= 2 and all(len(p) == 3 for p in parts[1:]) and len(parts[0]) <= 3 and not parts[0].startswith("0")
+            else tok
+        )
     elif "," in tok:
         parts = tok.split(",")
-        s = "".join(parts) if len(parts) >= 2 and all(len(p) == 3 for p in parts[1:]) and len(parts[0]) <= 3 else tok.replace(",", ".")
+        s = (
+            "".join(parts)
+            if len(parts) >= 2 and all(len(p) == 3 for p in parts[1:]) and len(parts[0]) <= 3 and not parts[0].startswith("0")
+            else tok.replace(",", ".")
+        )
     else:
         s = tok
     try:
-        val = float(s)
-        return str(int(val)) if val.is_integer() else f"{val:g}"
-    except ValueError:
+        d = Decimal(s)
+        if d == d.to_integral_value():
+            return str(int(d))
+        return format(d, "f").rstrip("0").rstrip(".")
+    except InvalidOperation:
         return tok
 
 
-def _extract_numbers(text: str) -> set[str]:
-    """Extract canonical numbers from text after removing `[ΑΔΑ …]` citation blocks."""
-    without_cites = _CITATION_RE.sub("", text)
-    return {_canonical_num(m.group(0)) for m in _NUM_RE.finditer(without_cites)}
+# --- T9: Ask Stoa verify fixes ---
+def _extract_facts(text: str) -> tuple[set[str], set[str], set[str]]:
+    """Extract (whole_dates, whole_amounts, other_numbers) after removing `[ΑΔΑ …]` citation blocks."""
+    s = _CITATION_RE.sub(" ", text)
+    dates: set[str] = set()
+    amounts: set[str] = set()
+    others: set[str] = set()
+
+    def _take_iso(m: re.Match[str]) -> str:
+        y, mo, d = int(m.group(1)), int(m.group(3)), int(m.group(4))
+        dates.add(f"{y:04d}-{mo:02d}-{d:02d}")
+        return " "
+
+    def _take_dmy(m: re.Match[str]) -> str:
+        d, mo, y = int(m.group(1)), int(m.group(3)), int(m.group(4))
+        dates.add(f"{y:04d}-{mo:02d}-{d:02d}")
+        return " "
+
+    def _take_amount(m: re.Match[str]) -> str:
+        amounts.add(_canonical_num(m.group(1)))
+        return " "
+
+    def _take_slash(m: re.Match[str]) -> str:
+        others.add(m.group(0))
+        return " "
+
+    s = _ISO_DATE_RE.sub(_take_iso, s)
+    s = _DMY_DATE_RE.sub(_take_dmy, s)
+    s = _AMOUNT_AFTER_RE.sub(_take_amount, s)
+    s = _AMOUNT_BEFORE_RE.sub(_take_amount, s)
+    s = _SLASH_NUM_RE.sub(_take_slash, s)
+    for m in _NUM_RE.finditer(s):
+        others.add(_canonical_num(m.group(0)))
+    return dates, amounts, others
 
 
 def _allowed_adas(cards: list[dict]) -> set[str]:
     return {ada for card in cards for ada in _card_adas(card)}
 
 
-def _allowed_numbers(cards: list[dict]) -> set[str]:
-    """Numbers grounded in the matched cards' evidence fields and deterministic guarantee clock."""
-    nums: set[str] = set()
+def _allowed_facts(cards: list[dict]) -> tuple[set[str], set[str], set[str]]:
+    """Allowed (whole_dates, whole_amounts, other_numbers) grounded in the matched cards."""
+    dates: set[str] = set()
+    amounts: set[str] = set()
+    others: set[str] = set()
     for card in cards:
-        for key in EVIDENCE_FIELDS:
+        amt = _field_val(card, "amount_paid_eur")
+        if amt is not None:
+            amounts.add(_canonical_num(str(amt)))
+
+        comp = card.get("completion_date") or {}
+        if comp.get("value") and comp.get("label") != "UNKNOWN":
+            d, a, o = _extract_facts(str(comp["value"]))
+            dates |= d
+            amounts |= a
+            others |= o
+
+        gm = _field_val(card, "guarantee_months")
+        if gm is not None:
+            others.add(_canonical_num(str(gm)))
+
+        for key in ("street", "title", "contractor"):
             val = _field_val(card, key)
             if val is not None:
-                nums |= _extract_numbers(str(val))
-        clk = card.get("clock") or {}
-        for k in ("until", "days_left", "formula"):
+                d, a, o = _extract_facts(str(val))
+                dates |= d
+                amounts |= a
+                others |= o
+
+        clk = card.get("clock") or works.clock(card)
+        for k in ("until", "formula"):
             if clk.get(k) is not None:
-                nums |= _extract_numbers(str(clk[k]))
-        for k in ("headline_el", "works_type_el"):
-            if card.get(k):
-                nums |= _extract_numbers(str(card[k]))
-    return nums
+                d, a, o = _extract_facts(str(clk[k]))
+                dates |= d
+                amounts |= a
+                others |= o
+
+        hl = card.get("headline_el") or works.headline(card, clk)
+        for s in (hl, card.get("works_type_el")):
+            if s:
+                d, a, o = _extract_facts(str(s))
+                dates |= d
+                amounts |= a
+                others |= o
+
+    return dates, amounts, others
+
+
+def _required_guarantee_cautions(cards: list[dict]) -> int:
+    """Count matched cards whose deterministic headline carries the mandatory 'πιθανώς εντός' wording."""
+    count = 0
+    for card in cards:
+        clk = card.get("clock") or works.clock(card)
+        hl = card.get("headline_el") or works.headline(card, clk)
+        if _GUARANTEE_CAUTION_NORM in normalize(hl):
+            count += 1
+    return count
+# --- end T9 ---
 
 
 def verify(text: str, cards: list[dict]) -> bool:
-    """Verify every sentence is cited and every ΑΔΑ and number exists in `cards`."""
+    """Verify every sentence is cited, ΑΔΑs/dates/amounts/numbers match `cards`, and guarantee hedging stays."""
     if not text or not text.strip():
         return False
     sents = _sentences(text)
@@ -380,10 +539,22 @@ def verify(text: str, cards: list[dict]) -> bool:
         if match.group(1).strip() not in allowed_a:
             return False
 
-    allowed_n = _allowed_numbers(cards)
-    found_n = _extract_numbers(text)
-    if not found_n.issubset(allowed_n):
+    # --- T9: Ask Stoa verify fixes ---
+    allowed_d, allowed_amt, allowed_other = _allowed_facts(cards)
+    found_d, found_amt, found_other = _extract_facts(text)
+    if not found_d.issubset(allowed_d):
         return False
+    if not found_amt.issubset(allowed_amt):
+        return False
+    if not found_other.issubset(allowed_other):
+        return False
+
+    required_cautions = _required_guarantee_cautions(cards)
+    if required_cautions > 0:
+        found_cautions = len(re.findall(rf"(?<!\w){_GUARANTEE_CAUTION_NORM}(?!\w)", normalize(text)))
+        if found_cautions < required_cautions:
+            return False
+    # --- end T9 ---
     return True
 
 
