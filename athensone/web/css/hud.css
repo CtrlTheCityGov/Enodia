@@ -1862,4 +1862,12 @@ body {
     padding: 12px;
   }
 }
+
+/* Lift HUD containers with an open dropdown/panel above passive sibling pills (A6 review finding #1, certainty: verified). */
+#hud-tabs:has(.workstab-panel:not([hidden])),
+#hud-points:has(.points-panel:not([hidden])),
+#hud-report:has(.report-panel:not([hidden]), .report-menu:not([hidden])),
+#hud-stoa:has(.stoa-bubble[aria-expanded="true"]) {
+  z-index: 25;
+}
 /* --- /A6 --- */
