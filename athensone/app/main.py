@@ -26,7 +26,7 @@ from . import points
 from . import map_reports
 # --- /B6 ---
 
-app = FastAPI(title="AthensOne AI", version="0.1")
+app = FastAPI(title="Enodia", version="0.1")
 sb = Sandbox()
 
 OPEN = ("submitted", "received", "in_progress")

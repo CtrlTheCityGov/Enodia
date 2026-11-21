@@ -108,7 +108,7 @@ def dcat_catalog(base: str) -> dict:
 
     def ds(ident, title, desc, url, fmt, theme):
         return {"@type": "dcat:Dataset", "dct:identifier": ident, "dct:title": {"@language": "el", "@value": title},
-                "dct:description": desc, "dct:publisher": {"foaf:name": "Δήμος Αθηναίων (AthensOne pilot)"},
+                "dct:description": desc, "dct:publisher": {"foaf:name": "Δήμος Αθηναίων (Enodia)"},
                 "dct:modified": now, "dct:license": lic, "dcat:theme": theme,
                 "dct:spatial": "https://www.geonames.org/264371/athens.html",
                 "dcat:distribution": [{"@type": "dcat:Distribution", "dcat:accessURL": url, "dct:format": fmt,
@@ -120,7 +120,7 @@ def dcat_catalog(base: str) -> dict:
     return {
         "@context": {"dcat": "http://www.w3.org/ns/dcat#", "dct": "http://purl.org/dc/terms/",
                      "foaf": "http://xmlns.com/foaf/0.1/"},
-        "@type": "dcat:Catalog", "dct:title": "AthensOne open data", "dct:language": "el",
+        "@type": "dcat:Catalog", "dct:title": "Enodia open data", "dct:language": "el",
         "dct:license": lic, "dct:modified": now,
         "dcat:dataset": [
             ds("athensone-service-requests", "Αναφορές πολιτών (Open311)",

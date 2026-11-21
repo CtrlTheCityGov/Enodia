@@ -126,3 +126,35 @@ def test_map_reports_syncs_city_request_status(monkeypatch):
     assert r.status_code == 200
     feats = r.json()["features"]
     assert feats[0]["properties"]["status"] == "in_progress"
+
+
+def test_three_act_demo_loop(monkeypatch):
+    from app import main as app_main, map_reports
+    from app.routers import routing_map
+
+    # Act 1: Stoa natural Greek query resolves to a cited work (works_seed.json in pytest)
+    client = TestClient(app)
+    stoa = client.post("/api/map/stoa_ask", json={"question": "Πότε τελειώνει το έργο στην Δείγμα Οδός Α;"})
+    assert stoa.status_code == 200
+    assert any(c["kind"] == "work" for c in stoa.json().get("citations", []))
+
+    # Act 2 & 3: Active obstacle appears in routing_map._open_reports() and disappears once resolved
+    map_reports.clear()
+    saved = map_reports.create("acct-2", "obstacle", 23.732, 37.9757, "blocked sidewalk", None, None)
+    map_reports.link_city_request(saved["id"], "CITY-200")
+
+    monkeypatch.setattr(
+        app_main.sb,
+        "list_requests",
+        lambda mine=True: {"items": [{"id": "CITY-200", "status": "in_progress"}]},
+    )
+    assert any(r["id"] == saved["id"] for r in routing_map._open_reports())
+    assert client.get("/api/map/reports").json()["features"][0]["properties"]["status"] == "in_progress"
+
+    monkeypatch.setattr(
+        app_main.sb,
+        "list_requests",
+        lambda mine=True: {"items": [{"id": "CITY-200", "status": "resolved"}]},
+    )
+    assert not any(r["id"] == saved["id"] for r in routing_map._open_reports())
+    assert client.get("/api/map/reports").json()["features"][0]["properties"]["status"] == "resolved"
