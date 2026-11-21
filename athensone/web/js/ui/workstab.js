@@ -193,7 +193,8 @@ export function formatWorkCard(feature) {
 // ---------------------------------------------------------------- UI (browser / fake DOM, called by main.js)
 
 /** Mount the top-left «Χάρτης» / «Έργα» tabs and glass works panel into ctx.root (A-35). */
-export async function mount({ map, api, root, bus }) {
+export async function mount({ map, api, root, container, bus }) {
+  root = container || root;
   const doc = root.ownerDocument || globalThis.document;
   const el = (tag, attrs = {}, text) => {
     const node = doc.createElement(tag);
@@ -219,8 +220,13 @@ export async function mount({ map, api, root, bus }) {
   };
 
   // --- Top-left pill bar: «Χάρτης» / «Έργα» tabs (SPEC HUD «Πάνω αριστερά»)
+  // Reuse existing #tab-map / #tab-works buttons if citizen.html already rendered them in #hud-tabs.
+  const existingMapTab = root.querySelector?.("#tab-map") || doc.getElementById?.("tab-map") || null;
+  const existingWorksTab = root.querySelector?.("#tab-works") || doc.getElementById?.("tab-works") || null;
+  const hasExistingTabs = Boolean(existingMapTab && existingWorksTab);
+
   const tablist = el("div", { class: "glass workstab-tabs", role: "tablist", "aria-label": "Προβολή" });
-  const mapTab = el(
+  const mapTab = existingMapTab || el(
     "button",
     {
       type: "button",
@@ -233,7 +239,7 @@ export async function mount({ map, api, root, bus }) {
     },
     "Χάρτης",
   );
-  const worksTab = el(
+  const worksTab = existingWorksTab || el(
     "button",
     {
       type: "button",
@@ -246,7 +252,9 @@ export async function mount({ map, api, root, bus }) {
     },
     "Έργα",
   );
-  tablist.append(mapTab, worksTab);
+  if (!hasExistingTabs) {
+    tablist.append(mapTab, worksTab);
+  }
 
   // --- Glass panel with filters, search, status line, and works list
   const panel = el("section", {
@@ -311,7 +319,11 @@ export async function mount({ map, api, root, bus }) {
   const list = el("ul", { class: "workstab-list" });
 
   panel.append(header, filterBar, searchWrap, statusLine, list);
-  root.append(tablist, panel);
+  if (hasExistingTabs) {
+    root.append(panel);
+  } else {
+    root.append(tablist, panel);
+  }
 
   function renderCard(feature) {
     const card = formatWorkCard(feature);
