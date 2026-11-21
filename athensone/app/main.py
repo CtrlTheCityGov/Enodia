@@ -457,6 +457,20 @@ def dossier(rid: str):
     return {"text": works.dossier(r, r["guarantee"]), "sent": False}
 
 
+# --- T4: Ask Stoa, cited answers ---
+from . import stoa_ask  # noqa: E402
+
+
+class StoaAskIn(BaseModel):
+    q: str
+
+
+@app.post("/api/stoa/ask")
+def api_stoa_ask(body: StoaAskIn):
+    return stoa_ask.ask(body.q)
+# --- /T4 ---
+
+
 # ------------------------------------------------------------------ smart map layers
 @app.get("/api/layers")
 def layers():
