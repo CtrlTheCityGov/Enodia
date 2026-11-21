@@ -6,6 +6,10 @@ and is never sent to the AthensGov Sandbox or logged.
 """
 from __future__ import annotations
 
+# --- T7: Points fixes ---
+import os
+import re
+# --- /T7 ---
 import secrets
 
 from fastapi import Request, Response
@@ -19,6 +23,14 @@ COOKIE_NAME = "ao_token"
 # Random byte length passed to secrets.token_urlsafe (~192 bits of entropy, 32 chars).
 # Source: Python stdlib secrets recommendation (standard 192-bit opaque token). Certainty: verified.
 TOKEN_BYTES = 24
+# --- T7: Points fixes ---
+# Exact length of secrets.token_urlsafe(24): 24 bytes * 4/3 = 32 base64url chars, no '=' padding.
+# Source: Python stdlib secrets.token_urlsafe / RFC 4648 §5. Certainty: verified.
+TOKEN_LEN = 32
+# Matches only the exact URL-safe base64 token format minted by new_token().
+# Source: athensone/docs/TASKS.md (T7 card) and Python stdlib secrets.token_urlsafe(24). Certainty: verified.
+_TOKEN_RE = re.compile(rf"[A-Za-z0-9_-]{{{TOKEN_LEN}}}")
+# --- /T7 ---
 
 # Cookie max-age in seconds (365 days, matching the 12-month tier window).
 # Source: athensone/docs/PROPOSAL.pdf p. 6 ("Points expire after 12 months"). Certainty: derived.
@@ -58,9 +70,9 @@ TIER_WINDOW_DAYS = 365
 # Source: athensone/docs/TASKS.md (T2 card: "last 10 entries"). Certainty: verified.
 RECENT_ENTRIES_LIMIT = 10
 
-# Shared collective points target per Δημοτική Κοινότητα.
-# Source: derived from athensone/docs/PROPOSAL.pdf p. 6 example ("500 verified fixes in a quarter")
-# multiplied by 10 pts/report; unverified (illustrative target until the City sets official goals).
+# Default shared collective points target per Δημοτική Κοινότητα (overridden by DISTRICT_TARGET env var).
+# Source: athensone/docs/DECISIONS.md (A-9) and TASKS.md (T7 card); 5000 derived from PROPOSAL.pdf p. 6.
+# Certainty: verified (default value); official city targets remain to be set by the Municipality.
 DISTRICT_TARGET = 5000
 
 # Fallback district label when AthensGov CKAN districts are off or unavailable.
@@ -73,9 +85,23 @@ def new_token() -> str:
     return secrets.token_urlsafe(TOKEN_BYTES)
 
 
+# --- T7: Points fixes ---
 def is_valid_token(token: str | None) -> bool:
-    """Return True if token is a non-empty printable ASCII cookie token."""
-    return bool(token) and 1 <= len(token) <= 128 and all(33 <= ord(c) <= 126 for c in token)
+    """Return True only if token matches the exact 32-char URL-safe base64 format minted by new_token()."""
+    return isinstance(token, str) and bool(_TOKEN_RE.fullmatch(token))
+
+
+def district_target() -> int:
+    """Return the collective district points target from DISTRICT_TARGET env var (default 5000)."""
+    raw = os.getenv("DISTRICT_TARGET")
+    if not raw:
+        return DISTRICT_TARGET
+    try:
+        value = int(raw.strip())
+    except ValueError:
+        return DISTRICT_TARGET
+    return value if value > 0 else DISTRICT_TARGET
+# --- /T7 ---
 
 
 def tier_for(points_12m: int) -> str:
@@ -174,5 +200,7 @@ def districts() -> dict:
     """Return aggregated point totals per Δημοτική Κοινότητα vs the shared target (no account IDs)."""
     return {
         "items": store.points_by_district(fallback=UNKNOWN_DISTRICT),
-        "target": DISTRICT_TARGET,
+        # --- T7: Points fixes ---
+        "target": district_target(),
+        # --- /T7 ---
     }

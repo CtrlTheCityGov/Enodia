@@ -658,7 +658,10 @@ def dossier(rid: str):
     if not r.get("guarantee"):
         raise HTTPException(404, "no works record linked to this report")
     # --- T2: Points wallet, earn side ---
-    points.grant_for_report(rid, action="guarantee_claim", verified_by="engineer", district=r.get("district_name"))
+    # --- T7: Points fixes ---
+    if r.get("status") != "rejected":
+        points.grant_for_report(rid, action="guarantee_claim", verified_by="engineer", district=r.get("district_name"))
+    # --- /T7 ---
     # --- /T2 ---
     return {"text": works.dossier(r, r["guarantee"]), "sent": False}
 
