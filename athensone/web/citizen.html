@@ -12,7 +12,7 @@
   <h1>Η Γειτονιά μου AI</h1>
   <span id="mode" class="pill">…</span>
   <!-- --- T2: Points wallet, earn side --- -->
-  <a id="pointsChip" href="#pointsCard" class="pill" style="background:#e8f0fb;color:#0b5cad;text-decoration:none;font-weight:600;white-space:nowrap" aria-label="Πόντοι Γειτονιάς">⭐ 0 π.</a>
+  <a id="pointsChip" href="#pointsCard" class="pill" style="background:#e8f0fb;color:#0b5cad;text-decoration:none;font-weight:600;white-space:nowrap" aria-label="0 π. Πόντοι Γειτονιάς">⭐ 0 π.</a>
   <!-- --- /T2 --- -->
   <button id="bigBtn" class="ghost" aria-pressed="false" title="Μεγάλα γράμματα και φωνή">Aa Μεγάλα</button>
 </header>
@@ -475,7 +475,7 @@ async function loadPoints() {
   try {
     const [me, dist] = await Promise.all([api("/api/points/me"), api("/api/points/districts")]);
     $("#pointsChip").textContent = `⭐ ${me.balance} π.`;
-    $("#pointsChip").setAttribute("aria-label", `Πόντοι Γειτονιάς: ${me.balance} πόντοι, επίπεδο ${me.tier}`);
+    $("#pointsChip").setAttribute("aria-label", `${me.balance} π. Πόντοι Γειτονιάς, επίπεδο ${me.tier}`);  // starts with the visible text (WCAG 2.5.3, axe label-content-name-mismatch)
     $("#ptsTier").textContent = me.tier;
     $("#ptsSummary").textContent = `${me.balance} πόντοι · Επίπεδο: ${me.tier} · Έγκριση αναφοράς +10 (έως 3/ημέρα), φάκελος εγγύησης +30.`;
     const box = $("#districtProgress"); box.innerHTML = "";
