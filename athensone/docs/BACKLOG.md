@@ -45,3 +45,6 @@ Later improvements, not work to do now. Each with its reason.
   `routing.candidates()` call for the `reasons` baseline doubles live Valhalla latency.
 - B10: `formatEur(value)` formats `0` or negative amounts if passed (backend and mocks use `null` for unknown); `Escape`
   listener on `root` only fires when focus is inside `root`.
+- B11: `works_map._open_reports()` counts sandbox requests only (not SQLite-only `work_progress` rows in `map_reports`);
+  `routing_map._open_reports()` reads legacy `store.all_reports()` rather than `map_reports`; offline queue `flush()` in
+  `ui/report.js` emits `points:earned` on `bus` but not `report:created`.
