@@ -120,6 +120,70 @@ test("test_3d_buildings_light_and_dark_themes_and_2d_toggle", () => {
   assert.deepEqual(fakeMap.easeCalls.at(-1), mapMod.CAMERA_3D);
 });
 
+test("test_set_theme_light_3d_to_dark_keeps_3d_buildings_with_diff_false", () => {
+  const listeners = new Map();
+  const onceListeners = new Map();
+  const layers = new Map();
+  const layoutProps = new Map();
+  const setStyleArgs = [];
+
+  // Start in Liberty (light) which has a native building-3d layer.
+  let currentStyle = {
+    version: 8,
+    sources: { openmaptiles: { type: "vector" } },
+    layers: [{ id: "building-3d", type: "fill-extrusion" }],
+  };
+  layers.set("building-3d", currentStyle.layers[0]);
+
+  const fakeMap = {
+    on(ev, fn) {
+      listeners.set(ev, [...(listeners.get(ev) ?? []), fn]);
+      return this;
+    },
+    once(ev, fn) {
+      onceListeners.set(ev, [...(onceListeners.get(ev) ?? []), fn]);
+      return this;
+    },
+    getStyle: () => currentStyle,
+    getSource: (id) => currentStyle.sources[id],
+    getLayer: (id) => layers.get(id),
+    addLayer(layer) {
+      layers.set(layer.id, layer);
+      currentStyle.layers.push(layer);
+      return this;
+    },
+    setLayoutProperty(id, prop, val) {
+      layoutProps.set(`${id}:${prop}`, val);
+      return this;
+    },
+    setStyle(url, opts) {
+      setStyleArgs.push([url, opts]);
+      // Simulate Fiord (dark): no fill-extrusion layer in base style.
+      layers.clear();
+      layoutProps.clear();
+      currentStyle = {
+        version: 8,
+        sources: { openmaptiles: { type: "vector" } },
+        layers: [{ id: "building", type: "fill" }],
+      };
+      layers.set("building", currentStyle.layers[0]);
+      return this;
+    },
+  };
+
+  const state = { theme: "light", is3D: true, visible: {} };
+  mapMod.setTheme(fakeMap, "dark", state);
+
+  assert.equal(setStyleArgs.length, 1);
+  assert.equal(setStyleArgs[0][0], mapMod.STYLES.dark);
+  assert.deepEqual(setStyleArgs[0][1], { diff: false });
+
+  for (const fn of onceListeners.get("style.load") ?? []) fn();
+  assert.equal(state.is3D, true);
+  assert.ok(fakeMap.getLayer(mapMod.BUILDINGS_LAYER_ID), "Dark mode must immediately inject 3d-buildings");
+  assert.equal(layoutProps.get(`${mapMod.BUILDINGS_LAYER_ID}:visibility`), "visible");
+});
+
 test("test_layerbar_adds_2d_3d_toggle_without_altering_six_chips", () => {
   assert.equal(layerbar.CHIPS.length, 6);
 

@@ -133,6 +133,7 @@ export function buildingsLayer(theme = "light", sourceId = BUILDINGS_SOURCE) {
     source: sourceId || BUILDINGS_SOURCE,
     "source-layer": BUILDINGS_SOURCE_LAYER,
     minzoom: BUILDINGS_MINZOOM,
+    filter: ["!", ["has", "hide_3d"]],
     paint: {
       "fill-extrusion-color": isDark ? BUILDINGS_COLOR_DARK : BUILDINGS_COLOR_LIGHT,
       "fill-extrusion-height": ["coalesce", ["get", "render_height"], 0],
@@ -320,10 +321,13 @@ export function setTheme(map, theme, state) {
     });
   }
 
+  // Use { diff: false } so MapLibre always performs a clean style reload and fires `style.load`
+  // when switching between OpenFreeMap Liberty (has building-3d) and Fiord (no fill-extrusion),
+  // preventing style-diffing from dropping 3D buildings and overlays without firing `style.load`.
   if (state?.offline) {
-    map.setStyle(offlineStyle(state.offlineGeo, nextTheme));
+    map.setStyle(offlineStyle(state.offlineGeo, nextTheme), { diff: false });
   } else {
-    map.setStyle(STYLES[nextTheme]);
+    map.setStyle(STYLES[nextTheme], { diff: false });
   }
 }
 
