@@ -130,8 +130,9 @@ def create(
     rid = f"MR-{uuid.uuid4().hex[:12]}"
     since = (now - DUPLICATE_WINDOW).isoformat(timespec="microseconds")
     recent = _rows("SELECT category, lon, lat, created_at FROM map_reports WHERE created_at >= ?", (since,))
+    dup = is_duplicate(category, lon, lat, recent, now)
     awarded = 0
-    if not is_duplicate(category, lon, lat, recent, now) and _rewarded_today(account, now) < MAP_REPORTS_DAILY_CAP:
+    if not dup and _rewarded_today(account, now) < MAP_REPORTS_DAILY_CAP:
         action = points_action(category, photo is not None)
         if points.grant(account, action, ref_id=rid, verified_by="map_report", district=district):
             awarded = points.ACTION_POINTS[action]
@@ -142,7 +143,7 @@ def create(
             (rid, account, category, lon, lat, note, work_id, photo, awarded, now.isoformat(timespec="microseconds")),
         )
         _conn.commit()
-    return {"id": rid, "points_awarded": awarded, "lon": lon, "lat": lat}
+    return {"id": rid, "points_awarded": awarded, "lon": lon, "lat": lat, "duplicate": dup}
 
 
 def link_city_request(report_id: str, city_request_id: str) -> None:

@@ -32,7 +32,7 @@ def _city_request(category: str, lon: float, lat: float, note: str, photo_url: s
     if photo_url:
         desc += f"\nΦωτογραφία (θολωμένα πρόσωπα και πινακίδες): {photo_url}"
     req = _sandbox().create_request(category=map_reports.CITY_CATEGORIES[category], title=f"{label} (αναφορά χάρτη)",
-                                    address=f"{lat:.5f}, {lon:.5f}", description=desc, lat=lat, lng=lon)
+                                    address=f"{lat:.4f}, {lon:.4f}", description=desc, lat=lat, lng=lon)
     return req["id"]
 
 
@@ -66,9 +66,9 @@ async def create_map_report(
     token = points.ensure_token(request, response)
     saved = map_reports.create(token, category, lon, lat, note, work_id or None, name,
                                district=ckan.district_of(lat, lon))
-    if category in map_reports.CITY_CATEGORIES:
+    if category in map_reports.CITY_CATEGORIES and not saved["duplicate"]:
         absolute = f"{str(request.base_url).rstrip('/')}{photo_url}" if photo_url else None
-        map_reports.link_city_request(saved["id"], _city_request(category, lon, lat, note, absolute))
+        map_reports.link_city_request(saved["id"], _city_request(category, saved["lon"], saved["lat"], note, absolute))
     return {"id": saved["id"], "photo_url_blurred": photo_url, "points_awarded": saved["points_awarded"],
             "blur": blur}
 
