@@ -8,3 +8,4 @@ import os
 from pathlib import Path
 
 os.environ.setdefault("ENV_FEATURES_PATH", str(Path(__file__).resolve().parent.parent / "data" / "env_seed.json"))
+os.environ.setdefault("STOA_WORKS_PATH", str(Path(__file__).resolve().parent.parent / "data" / "works_seed.json"))

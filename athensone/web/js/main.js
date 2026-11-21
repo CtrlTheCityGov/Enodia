@@ -299,6 +299,11 @@ export async function bootstrap(
         reportsLayer.refresh(map, api, state);
       }
     });
+    bus.addEventListener("report:created", () => {
+      if (map) {
+        reportsLayer.refresh(map, api, state);
+      }
+    });
     /* --- /A6 --- */
   }
 

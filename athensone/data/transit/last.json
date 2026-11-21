@@ -1,0 +1,41 @@
+{
+  "updated_at": "2026-11-21T20:41:32.736837+00:00",
+  "by_route": {
+    "3922": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.644562,
+            37.940088
+          ]
+        },
+        "properties": {
+          "vehicle_id": "44538",
+          "line": "040",
+          "route_code": "3922",
+          "bearing": 52.0,
+          "updated_at": "2026-11-21T20:40:54+02:00"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            23.723087,
+            37.961672
+          ]
+        },
+        "properties": {
+          "vehicle_id": "44542",
+          "line": "040",
+          "route_code": "3922",
+          "bearing": 51.0,
+          "updated_at": "2026-11-21T20:41:06+02:00"
+        }
+      }
+    ]
+  }
+}

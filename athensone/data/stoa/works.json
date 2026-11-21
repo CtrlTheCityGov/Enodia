@@ -1,0 +1,1152 @@
+{
+  "source": "DIAVGEIA+SEED",
+  "snapshot": "2026-11-21",
+  "organisation": "Δήμος Αθηναίων",
+  "note": "10 real Municipality of Athens (org 6013) public-works decisions verified live on diavgeia.gov.gr on 2026-11-21 (real ADA, source_url, contractor, payment amount, ADAM and contract date where published; district-wide framework contracts are mapped to representative street segments, and fields absent from Diavgeia metadata remain null) plus 2 clearly marked SEED works (ada='SEED-*', seed=true) with complete contract/guarantee figures for UI demo testing.",
+  "works": [
+    {
+      "id": "W-DIAV-001",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Ενεργειακή αναβάθμιση και βελτίωση προσβασιμότητας πεζοδρομίων στην 1η, 2η & 3η Δ.Κ. (τμήμα Ερμού)",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ενεργειακή αναβάθμιση και βελτίωση προσβασιμότητας πεζοδρομίων στην 1η, 2η & 3η Δ.Κ. (τμήμα Ερμού)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΩΡΙΩΝ Α.Τ.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 200023.43,
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2025-11-28",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "25SYMV018045625",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ0ΣΝΩ6Μ-5ΙΖ",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7341,
+            37.9756
+          ],
+          [
+            23.7322,
+            37.9758
+          ],
+          [
+            23.7302,
+            37.976
+          ],
+          [
+            23.7283,
+            37.9762
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-002",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Ολοκληρωμένο σύστημα ελέγχου πρόσβασης οχημάτων στο Εμπορικό Τρίγωνο και σε πεζοδρόμους (Υποέργο 8)",
+        "label": "CITED",
+        "source": {
+          "ada": "9ΤΠΜΩ6Μ-ΩΥΚ",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ολοκληρωμένο σύστημα ελέγχου πρόσβασης οχημάτων στο Εμπορικό Τρίγωνο και σε πεζοδρόμους (Υποέργο 8)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "9ΤΠΜΩ6Μ-ΩΥΚ",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΓΚΛΟΜΠΙΣΜΑΡΤ Α.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "9ΤΠΜΩ6Μ-ΩΥΚ",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 1439806.2,
+        "label": "CITED",
+        "source": {
+          "ada": "9ΤΠΜΩ6Μ-ΩΥΚ",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "9ΤΠΜΩ6Μ-ΩΥΚ",
+        "label": "CITED",
+        "source": {
+          "ada": "9ΤΠΜΩ6Μ-ΩΥΚ",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.733,
+            37.9776
+          ],
+          [
+            23.7311,
+            37.9775
+          ],
+          [
+            23.7294,
+            37.9774
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-003",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Άρση επικινδυνότητας σε οδοστρώματα, πεζοδρόμια και κοινόχρηστους χώρους του Δ.Α. (τμήμα Πανεπιστημίου)",
+        "label": "CITED",
+        "source": {
+          "ada": "65ΨΟΩ6Μ-675",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Άρση επικινδυνότητας σε οδοστρώματα, πεζοδρόμια και κοινόχρηστους χώρους του Δ.Α. (τμήμα Πανεπιστημίου)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "65ΨΟΩ6Μ-675",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΔΟΜΙΚΗ ΑΘΗΝΩΝ Α.Τ.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "65ΨΟΩ6Μ-675",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 51835.5,
+        "label": "CITED",
+        "source": {
+          "ada": "65ΨΟΩ6Μ-675",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2026-07-14",
+        "label": "CITED",
+        "source": {
+          "ada": "65ΨΟΩ6Μ-675",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "65ΨΟΩ6Μ-675",
+        "label": "CITED",
+        "source": {
+          "ada": "65ΨΟΩ6Μ-675",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "26SYMV019449260",
+        "label": "CITED",
+        "source": {
+          "ada": "65ΨΟΩ6Μ-675",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7351,
+            37.9773
+          ],
+          [
+            23.7336,
+            37.9794
+          ],
+          [
+            23.7322,
+            37.9814
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-004",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Λειτουργική και ενεργειακή αναβάθμιση πεζοδρομίων σε όλες τις Δ.Κ. του Δ.Α. (τμήμα Σταδίου)",
+        "label": "CITED",
+        "source": {
+          "ada": "91Π7Ω6Μ-ΠΕ8",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Λειτουργική και ενεργειακή αναβάθμιση πεζοδρομίων σε όλες τις Δ.Κ. του Δ.Α. (τμήμα Σταδίου)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "91Π7Ω6Μ-ΠΕ8",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΟΔΟΣ Α.Τ.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "91Π7Ω6Μ-ΠΕ8",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 985371.42,
+        "label": "CITED",
+        "source": {
+          "ada": "91Π7Ω6Μ-ΠΕ8",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2023-10-25",
+        "label": "CITED",
+        "source": {
+          "ada": "91Π7Ω6Μ-ΠΕ8",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "91Π7Ω6Μ-ΠΕ8",
+        "label": "CITED",
+        "source": {
+          "ada": "91Π7Ω6Μ-ΠΕ8",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "23SYMV013654256",
+        "label": "CITED",
+        "source": {
+          "ada": "91Π7Ω6Μ-ΠΕ8",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7337,
+            37.9768
+          ],
+          [
+            23.7318,
+            37.9792
+          ],
+          [
+            23.7297,
+            37.9818
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-005",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Ενεργειακή αναβάθμιση και βελτίωση προσβασιμότητας πεζοδρομίων στην 4η και 5η Δ.Κ. (τμήμα Πατησίων)",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ενεργειακή αναβάθμιση και βελτίωση προσβασιμότητας πεζοδρομίων στην 4η και 5η Δ.Κ. (τμήμα Πατησίων)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΕΡΓΟΡΟΗ Α.Τ.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 155332.03,
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2025-11-28",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "25SYMV018041517",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΠΟ8Ω6Μ-ΟΥΟ",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7327,
+            37.9975
+          ],
+          [
+            23.7336,
+            38.002
+          ],
+          [
+            23.7347,
+            38.0068
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-006",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Ανακατασκευή οδοστρωμάτων με αντιολισθηρό σκυρόδεμα και εγκάρσιων ρείθρων (τμήμα Αθηνάς)",
+        "label": "CITED",
+        "source": {
+          "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ανακατασκευή οδοστρωμάτων με αντιολισθηρό σκυρόδεμα και εγκάρσιων ρείθρων (τμήμα Αθηνάς)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΜΑΖΑΡΑΚΗΣ ΗΛΙΑΣ",
+        "label": "CITED",
+        "source": {
+          "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 228763.79,
+        "label": "CITED",
+        "source": {
+          "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2024-12-12",
+        "label": "CITED",
+        "source": {
+          "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "6ΔΩ6Ω6Μ-2ΘΖ",
+        "label": "CITED",
+        "source": {
+          "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "24SYMV015992336",
+        "label": "CITED",
+        "source": {
+          "ada": "6ΔΩ6Ω6Μ-2ΘΖ",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7261,
+            37.977
+          ],
+          [
+            23.7269,
+            37.9798
+          ],
+          [
+            23.7276,
+            37.9826
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-007",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Ενεργειακή αναβάθμιση & αυτοματοποίηση του συστήματος οδοφωτισμού του Δ.Α. (τμήμα Λεωφ. Αλεξάνδρας)",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ15ΕΩ6Μ-4Γ0",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ενεργειακή αναβάθμιση & αυτοματοποίηση του συστήματος οδοφωτισμού του Δ.Α. (τμήμα Λεωφ. Αλεξάνδρας)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "Ψ15ΕΩ6Μ-4Γ0",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "METLEN ENERGY & METALS ΜΟΝΟΠΡΟΣΩΠΗ Α.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ15ΕΩ6Μ-4Γ0",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 370026.02,
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ15ΕΩ6Μ-4Γ0",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2022-07-14",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ15ΕΩ6Μ-4Γ0",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "Ψ15ΕΩ6Μ-4Γ0",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ15ΕΩ6Μ-4Γ0",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "22SYMV010935743",
+        "label": "CITED",
+        "source": {
+          "ada": "Ψ15ΕΩ6Μ-4Γ0",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7398,
+            37.9906
+          ],
+          [
+            23.7475,
+            37.9896
+          ],
+          [
+            23.7556,
+            37.988
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-008",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Έργα οδοποιίας και κατασκευή δικτύων ομβρίων και αποχέτευσης στην περιοχή του Ελαιώνα (Υποέργο 1)",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΔΦΨΩ6Μ-ΥΘ4",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Έργα οδοποιίας και κατασκευή δικτύων ομβρίων και αποχέτευσης στην περιοχή του Ελαιώνα (Υποέργο 1)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "ΡΔΦΨΩ6Μ-ΥΘ4",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΖΙΤΑΚΑΤ Α.Τ.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΔΦΨΩ6Μ-ΥΘ4",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": 1769478.05,
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΔΦΨΩ6Μ-ΥΘ4",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "ΡΔΦΨΩ6Μ-ΥΘ4",
+        "label": "CITED",
+        "source": {
+          "ada": "ΡΔΦΨΩ6Μ-ΥΘ4",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.688,
+            37.9825
+          ],
+          [
+            23.6945,
+            37.9815
+          ],
+          [
+            23.701,
+            37.9804
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-009",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "completed",
+      "title": {
+        "value": "Ενεργειακή αναβάθμιση μέσω της αναβάθμισης βατότητας πεζοδρομίων και οδών (επιστροφή εγγυήσεων)",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ενεργειακή αναβάθμιση μέσω της αναβάθμισης βατότητας πεζοδρομίων και οδών (επιστροφή εγγυήσεων)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "start_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "end_date": {
+        "value": "2026-11-17",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        }
+      },
+      "completion_date": {
+        "value": "2026-11-17",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        }
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "ΨΓΟ3Ω6Μ-ΔΚ6",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7346,
+            37.9746
+          ],
+          [
+            23.7339,
+            37.9729
+          ],
+          [
+            23.7333,
+            37.9712
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-DIAV-010",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "planned",
+      "title": {
+        "value": "Έγκριση τοπικής διαπλάτυνσης πεζοδρομίων στις διαβάσεις επί της οδού Παπανικολάου (Ο.Τ. 471)",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΣ9ΧΩ6Μ-6ΚΨ",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Έγκριση τοπικής διαπλάτυνσης πεζοδρομίων στις διαβάσεις επί της οδού Παπανικολάου (Ο.Τ. 471)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "ΨΣ9ΧΩ6Μ-6ΚΨ",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "start_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "end_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "ΨΣ9ΧΩ6Μ-6ΚΨ",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΣ9ΧΩ6Μ-6ΚΨ",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.764,
+            37.989
+          ],
+          [
+            23.7656,
+            37.9896
+          ],
+          [
+            23.7672,
+            37.9901
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-SEED-001",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Ανακατασκευή πεζοδρομίων και ραμπών ΑμεΑ οδού Μητροπόλεως (δείγμα SEED)",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ανακατασκευή πεζοδρομίων και ραμπών ΑμεΑ οδού Μητροπόλεως (δείγμα SEED)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "Ανάδοχος Δείγματος Α (SEED)",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": 185000.0,
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "amount_paid_eur": {
+        "value": 118400.0,
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2026-06-01",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": "2026-12-20",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": 15,
+        "label": "INFERRED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "SEED-ΑΔΑ-001",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "SEED-26SYMV-001",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-001",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7336,
+            37.9756
+          ],
+          [
+            23.7312,
+            37.9758
+          ],
+          [
+            23.7289,
+            37.976
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-SEED-002",
+      "works_type": "sidewalk",
+      "resolution": "street",
+      "status": "completed",
+      "title": {
+        "value": "Ασφαλτόστρωση και αποκατάσταση πεζοδρομίων οδού Υμηττού (δείγμα SEED)",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Ασφαλτόστρωση και αποκατάσταση πεζοδρομίων οδού Υμηττού (δείγμα SEED)",
+        "label": "INFERRED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "Ανάδοχος Δείγματος Β (SEED)",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": 96000.0,
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "amount_paid_eur": {
+        "value": 92400.0,
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "start_date": {
+        "value": "2025-05-10",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "end_date": {
+        "value": "2026-02-15",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "completion_date": {
+        "value": "2026-02-15",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "guarantee_months": {
+        "value": 15,
+        "label": "INFERRED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "final_acceptance": false,
+      "ada": {
+        "value": "SEED-ΑΔΑ-002",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "adam": {
+        "value": "SEED-25SYMV-002",
+        "label": "CITED",
+        "source": {
+          "ada": "SEED-ΑΔΑ-002",
+          "page": 1
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7438,
+            37.9688
+          ],
+          [
+            23.7462,
+            37.9693
+          ],
+          [
+            23.7486,
+            37.9698
+          ]
+        ]
+      }
+    }
+  ]
+}

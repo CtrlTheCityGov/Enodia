@@ -119,6 +119,11 @@ body {
   right: var(--hud-gap);
 }
 
+/* Keep MapLibre's attribution control clear of the bottom-right Stoa FAB for WCAG target-size. */
+.maplibregl-ctrl-bottom-right {
+  bottom: calc(var(--hud-gap) + 52px);
+}
+
 .hud-tabs {
   display: inline-flex;
   align-items: center;
@@ -588,7 +593,8 @@ body {
   border: none;
   background: transparent;
   width: 100%;
-  padding: 6px 0;
+  min-height: 24px;
+  padding: 10px 0;
   display: flex;
   align-items: center;
   justify-content: center;
