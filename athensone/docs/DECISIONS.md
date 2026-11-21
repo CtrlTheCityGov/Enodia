@@ -61,3 +61,6 @@
   English, accent-insensitive) in the DB, plus our own layers (cool places, works, services). Rejected for now:
   public Nominatim/Photon as the main search (rate limits, every query leaves our servers); Photon self-hosted is the
   scale-up path.
+- **A-29** (advisor default, T11 questions) `test_routes_unchanged` checks the live routes through `/openapi.json`
+  plus direct requests for routes outside the schema (FastAPI 0.165 wraps included routers in `app.routes`); the
+  test writer changes it. `psycopg[binary]` (LGPL-3.0, library use) is added with T13, not T11.
