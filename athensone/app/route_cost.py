@@ -170,3 +170,103 @@ def reasons(profile: str, best: dict, baseline: dict | None, works_list: list[di
             out.append({"text": f"λιγότερο δίπλα σε δρόμους με κίνηση: {b['busy_pct']}% αντί {s['busy_pct']}%",
                         "layer": "env", "feature_id": "busy_road"})
     return out
+
+
+def _work_ada(work: dict) -> str | None:
+    """Extract the first cited ADA from a works card, or None."""
+    for field in ("street", "title", "contractor", "amount_paid_eur"):
+        val = work.get(field)
+        if isinstance(val, dict):
+            src = val.get("source")
+            if isinstance(src, dict) and src.get("ada"):
+                return str(src["ada"])
+    return None
+
+
+def compare(
+    profile: str,
+    best: dict,
+    baseline: dict | None,
+    works_list: list[dict],
+    reports: list[dict],
+    env_sample: dict | None = None,
+) -> dict:
+    """Build structured best-vs-baseline comparison metrics and avoided hazards for HUD/AI explanations."""
+    bco = best["geojson"]["coordinates"]
+    best_m = best.get("metrics") or env.score_line(bco) or {"shade_pct": 0, "busy_pct": 0}
+    best_dist_m = round(best["distance_km"] * 1000)
+    best_dur_s = round(best["duration_min"] * 60)
+
+    best_works_hits, best_report_hits = _hits(bco, works_list, reports)
+
+    same_as_baseline = baseline is None or bco == baseline["geojson"]["coordinates"]
+    baseline_block = None
+    avoided_works: list[dict] = []
+    avoided_reports: list[dict] = []
+
+    if baseline is not None:
+        sco = baseline["geojson"]["coordinates"]
+        base_m = env.score_line(sco) or {"shade_pct": 0, "busy_pct": 0}
+        base_dist_m = round(baseline["distance_km"] * 1000)
+        base_dur_s = round(baseline["duration_min"] * 60)
+        baseline_block = {
+            "geometry": baseline["geojson"],
+            "distance_m": base_dist_m,
+            "duration_s": base_dur_s,
+            "shade_pct": int(base_m.get("shade_pct", 0)),
+            "busy_pct": int(base_m.get("busy_pct", 0)),
+        }
+        if not same_as_baseline:
+            for w in works_list:
+                line = w["geometry"]["coordinates"]
+                if touches_line(sco, line) and not touches_line(bco, line):
+                    pt = work_point(line)
+                    street_obj = w.get("street")
+                    title_obj = w.get("title")
+                    avoided_works.append({
+                        "id": w["id"],
+                        "street": street_obj.get("value") if isinstance(street_obj, dict) else street_obj,
+                        "title": title_obj.get("value") if isinstance(title_obj, dict) else title_obj,
+                        "ada": _work_ada(w),
+                        "lon": pt["lng"],
+                        "lat": pt["lat"],
+                    })
+            for r in reports:
+                if touches_point(sco, r["lng"], r["lat"]) and not touches_point(bco, r["lng"], r["lat"]):
+                    avoided_reports.append({
+                        "id": r["id"],
+                        "category": r.get("category") or "obstacle",
+                        "lon": r["lng"],
+                        "lat": r["lat"],
+                    })
+    else:
+        base_m = best_m
+        base_dist_m = best_dist_m
+        base_dur_s = best_dur_s
+
+    sample = env_sample or {}
+    return {
+        "profile": profile,
+        "same_as_baseline": same_as_baseline,
+        "baseline": baseline_block,
+        "best": {
+            "shade_pct": int(best_m.get("shade_pct", 0)),
+            "busy_pct": int(best_m.get("busy_pct", 0)),
+            "steps_excluded": profile in ("wheelchair", "stroller"),
+        },
+        "deltas": {
+            "distance_m": best_dist_m - base_dist_m,
+            "duration_s": best_dur_s - base_dur_s,
+            "shade_pct": int(best_m.get("shade_pct", 0)) - int(base_m.get("shade_pct", 0)),
+            "busy_pct": int(best_m.get("busy_pct", 0)) - int(base_m.get("busy_pct", 0)),
+        },
+        "env": {
+            "aqi": sample.get("aqi"),
+            "temp_c": sample.get("temp_c"),
+            "uv_index": sample.get("uv_index"),
+        },
+        "avoided_works": avoided_works,
+        "avoided_reports": avoided_reports,
+        "on_route_works": len(best_works_hits),
+        "on_route_reports": len(best_report_hits),
+    }

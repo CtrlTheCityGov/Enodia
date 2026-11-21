@@ -2358,7 +2358,220 @@ body {
   color: #ffffff;
 }
 
+/* --- Route Intelligence Card ("Γιατί αυτή η διαδρομή;") + Ghost Baseline Legend + Stoa AI CTA --- */
+.routing-why {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--hud-divider);
+  background: rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: macos-unfold-up 240ms var(--spring-open) both;
+}
+
+[data-theme="dark"] .routing-why {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.routing-why.hidden {
+  display: none;
+}
+
+.routing-why__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.routing-why__title {
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: var(--hud-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.routing-why__detour {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--glass-radius-pill);
+  background: rgba(37, 99, 235, 0.14);
+  color: var(--hud-active-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="dark"] .routing-why__detour {
+  background: rgba(96, 165, 250, 0.18);
+  color: #93c5fd;
+}
+
+.routing-why__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.routing-why__tile {
+  padding: 7px 8px;
+  border-radius: 11px;
+  border: 1px solid var(--hud-divider);
+  background: rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+[data-theme="dark"] .routing-why__tile {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.routing-why__tile.is-good {
+  border-color: rgba(16, 185, 129, 0.38);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.routing-why__tile.is-warn {
+  border-color: rgba(245, 158, 11, 0.42);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.routing-why__tile-label {
+  font-size: 0.67rem;
+  font-weight: 600;
+  opacity: 0.76;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.routing-why__tile-val {
+  font-size: 0.84rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.routing-why__tile-delta {
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.routing-why__tile.is-good .routing-why__tile-delta {
+  color: #059669;
+}
+
+[data-theme="dark"] .routing-why__tile.is-good .routing-why__tile-delta {
+  color: #34d399;
+}
+
+.routing-why__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.routing-why__chip {
+  appearance: none;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.73rem;
+  font-weight: 650;
+  padding: 4px 10px;
+  border-radius: var(--glass-radius-pill);
+  cursor: pointer;
+  transition: transform 140ms var(--spring-open), background-color 140ms ease;
+}
+
+.routing-why__chip:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.routing-why__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.routing-why__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.82;
+}
+
+.routing-why__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.routing-why__swatch {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.routing-why__swatch--solid {
+  background: var(--route-accent, #2563eb);
+}
+
+.routing-why__swatch--ghost {
+  background: repeating-linear-gradient(
+    to right,
+    #94a3b8 0 5px,
+    transparent 5px 9px
+  );
+}
+
+.routing-why__ai-btn {
+  appearance: none;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.16), rgba(14, 165, 233, 0.16));
+  color: var(--hud-text);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--glass-radius-pill);
+  cursor: pointer;
+  margin-left: auto;
+  transition: transform 140ms var(--spring-open), background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.routing-why__ai-btn:hover {
+  background: linear-gradient(135deg, #4f46e5, #0284c7);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+}
+
+.routing-drawer.is-collapsed .routing-why {
+  display: none;
+}
+
 @media (max-width: 600px) {
+  .routing-why__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .hud-toast {
     top: calc(var(--hud-gap) * 3 + var(--hud-top-row-height) * 2);
   }

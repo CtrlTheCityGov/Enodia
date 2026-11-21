@@ -15,6 +15,18 @@ export const PROFILES = [
 export const ROUTE_SOURCE_ID = "route";
 export const ROUTE_LAYER_ID = "route-line";
 export const ROUTE_GLOW_LAYER_ID = "route-glow";
+export const ROUTE_BASELINE_SOURCE_ID = "route-baseline";
+export const ROUTE_BASELINE_LAYER_ID = "route-baseline-line";
+export const ROUTE_AVOIDED_SOURCE_ID = "route-avoided";
+export const ROUTE_AVOIDED_LAYER_ID = "route-avoided-pins";
+const ROUTE_AVOIDED_LABEL_LAYER_ID = "route-avoided-labels";
+
+// Profile-specific route palettes so switching wheelchair/stroller/cool visually morphs the glowing route.
+export const PROFILE_PALETTES = Object.freeze({
+  wheelchair: Object.freeze({ start: "#2563eb", end: "#38bdf8", accent: "#2563eb" }),
+  stroller: Object.freeze({ start: "#0d9488", end: "#2dd4bf", accent: "#0d9488" }),
+  cool: Object.freeze({ start: "#059669", end: "#34d399", accent: "#059669" }),
+});
 
 // MapLibre source & layer IDs for live/simulated GPS directional puck (UI/UX upgrade #6).
 const NAV_GPS_SOURCE_ID = "nav-gps-source";
@@ -111,8 +123,9 @@ const ATHENS_PLACES = {
   serafio: [23.7115, 37.9776],
 };
 
-// Per-map active route and reasons highlight state so Light/Dark setStyle() switches restore them without leaking fake maps in tests.
+// Per-map active route, ghost baseline, avoided hazards, and reasons highlight state so Light/Dark setStyle() restores them.
 const routeStateByMap = new WeakMap();
+const baselineStateByMap = new WeakMap();
 const reasonsHighlightByMap = new WeakMap();
 
 function isValidProfileId(id) {
@@ -213,9 +226,15 @@ export function routeSource(geojson) {
   };
 }
 
-export function gradientAt(progress) {
+function paletteForProfile(profileId) {
+  return PROFILE_PALETTES[profileId] ?? PROFILE_PALETTES.wheelchair;
+}
+
+export function gradientAt(progress, palette = null) {
   const numeric = Number(progress);
   const p = Number.isFinite(numeric) ? Math.max(0, Math.min(1, numeric)) : 0;
+  const startColor = palette?.start ?? ROUTE_COLOR_START;
+  const endColor = palette?.end ?? ROUTE_COLOR_END;
 
   if (p <= 0) {
     return [
@@ -235,9 +254,9 @@ export function gradientAt(progress) {
       ["linear"],
       ["line-progress"],
       0,
-      ROUTE_COLOR_START,
+      startColor,
       1,
-      ROUTE_COLOR_END,
+      endColor,
     ];
   }
 
@@ -247,9 +266,9 @@ export function gradientAt(progress) {
     ["linear"],
     ["line-progress"],
     0,
-    ROUTE_COLOR_START,
+    startColor,
     p,
-    ROUTE_COLOR_END,
+    endColor,
     fadeStop,
     ROUTE_COLOR_TRANSPARENT,
   ];
@@ -265,6 +284,7 @@ export function animateRoute(map, layerId = ROUTE_LAYER_ID, onComplete = null, o
       ? options.durationMs
       : ROUTE_ANIMATION_MS;
   const onProgress = typeof options?.onProgress === "function" ? options.onProgress : null;
+  const palette = options?.palette ?? null;
   const raf = globalThis.requestAnimationFrame;
   const cancelRaf = globalThis.cancelAnimationFrame;
 
@@ -277,7 +297,7 @@ export function animateRoute(map, layerId = ROUTE_LAYER_ID, onComplete = null, o
       onProgress(progress);
     }
     if (map && typeof map.setPaintProperty === "function") {
-      const grad = gradientAt(progress);
+      const grad = gradientAt(progress, palette);
       // Update outer glow BEFORE core layerId so setPaintCalls.at(-1) stays on route-line (A4_routing.test.js).
       if (layerId === ROUTE_LAYER_ID && typeof map.getLayer === "function" && map.getLayer(ROUTE_GLOW_LAYER_ID)) {
         map.setPaintProperty(ROUTE_GLOW_LAYER_ID, "line-gradient", grad);
@@ -488,7 +508,7 @@ function toRouteFeature(routeOrGeojson) {
   };
 }
 
-function routeGlowLayerSpec(progress) {
+function routeGlowLayerSpec(progress, palette = null) {
   return {
     id: ROUTE_GLOW_LAYER_ID,
     type: "line",
@@ -501,12 +521,12 @@ function routeGlowLayerSpec(progress) {
       "line-width": ROUTE_LINE_WIDTH_PX + 10,
       "line-blur": 9,
       "line-opacity": 0.42,
-      "line-gradient": gradientAt(progress),
+      "line-gradient": gradientAt(progress, palette),
     },
   };
 }
 
-function routeLayerSpec(progress) {
+function routeLayerSpec(progress, palette = null) {
   return {
     id: ROUTE_LAYER_ID,
     type: "line",
@@ -517,12 +537,12 @@ function routeLayerSpec(progress) {
     },
     paint: {
       "line-width": ROUTE_LINE_WIDTH_PX,
-      "line-gradient": gradientAt(progress),
+      "line-gradient": gradientAt(progress, palette),
     },
   };
 }
 
-function ensureRouteOverlayOnMap(map, geojson, progress) {
+function ensureRouteOverlayOnMap(map, geojson, progress, palette = null) {
   if (!map || !geojson) {
     return;
   }
@@ -535,16 +555,16 @@ function ensureRouteOverlayOnMap(map, geojson, progress) {
 
   const hasGlowLayer = typeof map.getLayer === "function" ? Boolean(map.getLayer(ROUTE_GLOW_LAYER_ID)) : false;
   if (!hasGlowLayer && typeof map.addLayer === "function") {
-    map.addLayer(routeGlowLayerSpec(progress));
+    map.addLayer(routeGlowLayerSpec(progress, palette));
   } else if (hasGlowLayer && typeof map.setPaintProperty === "function") {
-    map.setPaintProperty(ROUTE_GLOW_LAYER_ID, "line-gradient", gradientAt(progress));
+    map.setPaintProperty(ROUTE_GLOW_LAYER_ID, "line-gradient", gradientAt(progress, palette));
   }
 
   const hasLayer = typeof map.getLayer === "function" ? Boolean(map.getLayer(ROUTE_LAYER_ID)) : false;
   if (!hasLayer && typeof map.addLayer === "function") {
-    map.addLayer(routeLayerSpec(progress));
+    map.addLayer(routeLayerSpec(progress, palette));
   } else if (hasLayer && typeof map.setPaintProperty === "function") {
-    map.setPaintProperty(ROUTE_LAYER_ID, "line-gradient", gradientAt(progress));
+    map.setPaintProperty(ROUTE_LAYER_ID, "line-gradient", gradientAt(progress, palette));
   }
 }
 
@@ -553,10 +573,323 @@ function reapplyRouteOverlay(targetMap) {
   if (!routeState || !routeState.geojson) {
     return null;
   }
-  ensureRouteOverlayOnMap(targetMap, routeState.geojson, routeState.progress);
+  ensureRouteOverlayOnMap(targetMap, routeState.geojson, routeState.progress, routeState.palette ?? null);
   return {
     id: ROUTE_SOURCE_ID,
     layerIds: [ROUTE_GLOW_LAYER_ID, ROUTE_LAYER_ID],
+  };
+}
+
+function buildBaselineOverlayData(comparison) {
+  const empty = { type: "FeatureCollection", features: [] };
+  if (!comparison || comparison.same_as_baseline) {
+    return { baselineFC: empty, avoidedFC: empty };
+  }
+  const baseGeom = comparison.baseline?.geometry;
+  const baselineFC = baseGeom
+    ? { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: baseGeom }] }
+    : empty;
+
+  const avoidedFeatures = [];
+  for (const w of comparison.avoided_works ?? []) {
+    if (Number.isFinite(Number(w?.lon)) && Number.isFinite(Number(w?.lat))) {
+      avoidedFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [Number(w.lon), Number(w.lat)] },
+        properties: {
+          kind: "work",
+          badge: w.street ? `🚧 Αποφεύχθηκε: ${w.street}` : "🚧 Αποφεύχθηκε έργο",
+        },
+      });
+    }
+  }
+  for (const r of comparison.avoided_reports ?? []) {
+    if (Number.isFinite(Number(r?.lon)) && Number.isFinite(Number(r?.lat))) {
+      const badge = r.category === "congestion" ? "🚗 Αποφεύχθηκε συμφόρηση" : "⛔ Αποφεύχθηκε εμπόδιο";
+      avoidedFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [Number(r.lon), Number(r.lat)] },
+        properties: { kind: "report", badge },
+      });
+    }
+  }
+  return {
+    baselineFC,
+    avoidedFC: { type: "FeatureCollection", features: avoidedFeatures },
+  };
+}
+
+function ensureBaselineAndAvoidedOnMap(map, comparison) {
+  if (!map) return;
+  const { baselineFC, avoidedFC } = buildBaselineOverlayData(comparison);
+
+  const baseSrc = typeof map.getSource === "function" ? map.getSource(ROUTE_BASELINE_SOURCE_ID) : null;
+  if (baseSrc && typeof baseSrc.setData === "function") {
+    baseSrc.setData(baselineFC);
+  } else if (typeof map.addSource === "function") {
+    map.addSource(ROUTE_BASELINE_SOURCE_ID, { type: "geojson", data: baselineFC });
+  }
+
+  const hasBaseLayer =
+    typeof map.getLayer === "function" ? Boolean(map.getLayer(ROUTE_BASELINE_LAYER_ID)) : false;
+  if (!hasBaseLayer && typeof map.addLayer === "function") {
+    const beforeId =
+      typeof map.getLayer === "function" && map.getLayer(ROUTE_GLOW_LAYER_ID)
+        ? ROUTE_GLOW_LAYER_ID
+        : undefined;
+    const spec = {
+      id: ROUTE_BASELINE_LAYER_ID,
+      type: "line",
+      source: ROUTE_BASELINE_SOURCE_ID,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": "#94a3b8",
+        "line-width": 4,
+        "line-opacity": 0.72,
+        "line-dasharray": [2.2, 2.2],
+      },
+    };
+    if (beforeId) map.addLayer(spec, beforeId);
+    else map.addLayer(spec);
+  }
+
+  const avSrc = typeof map.getSource === "function" ? map.getSource(ROUTE_AVOIDED_SOURCE_ID) : null;
+  if (avSrc && typeof avSrc.setData === "function") {
+    avSrc.setData(avoidedFC);
+  } else if (typeof map.addSource === "function") {
+    map.addSource(ROUTE_AVOIDED_SOURCE_ID, { type: "geojson", data: avoidedFC });
+  }
+
+  const hasAvPins =
+    typeof map.getLayer === "function" ? Boolean(map.getLayer(ROUTE_AVOIDED_LAYER_ID)) : false;
+  if (!hasAvPins && typeof map.addLayer === "function") {
+    map.addLayer({
+      id: ROUTE_AVOIDED_LAYER_ID,
+      type: "circle",
+      source: ROUTE_AVOIDED_SOURCE_ID,
+      paint: {
+        "circle-radius": 9,
+        "circle-color": "#ef4444",
+        "circle-opacity": 0.9,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2.5,
+      },
+    });
+  }
+
+  const hasAvLabels =
+    typeof map.getLayer === "function" ? Boolean(map.getLayer(ROUTE_AVOIDED_LABEL_LAYER_ID)) : false;
+  if (!hasAvLabels && typeof map.addLayer === "function") {
+    map.addLayer({
+      id: ROUTE_AVOIDED_LABEL_LAYER_ID,
+      type: "symbol",
+      source: ROUTE_AVOIDED_SOURCE_ID,
+      layout: {
+        "text-field": ["get", "badge"],
+        "text-size": 12,
+        "text-offset": [0, -1.45],
+        "text-anchor": "bottom",
+        "text-allow-overlap": true,
+      },
+      paint: {
+        "text-color": "#ffffff",
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 2,
+      },
+    });
+  }
+}
+
+function reapplyBaselineOverlay(targetMap) {
+  const cmp = baselineStateByMap.get(targetMap);
+  if (!cmp) return null;
+  ensureBaselineAndAvoidedOnMap(targetMap, cmp);
+  return {
+    id: ROUTE_BASELINE_SOURCE_ID,
+    layerIds: [ROUTE_BASELINE_LAYER_ID, ROUTE_AVOIDED_LAYER_ID, ROUTE_AVOIDED_LABEL_LAYER_ID],
+  };
+}
+
+// Pure route-comparison insight builder (Layer B: works with live backend `comparison` or graceful offline fallback).
+export function buildRouteInsight(route, profile = "wheelchair") {
+  const cmp = route?.comparison ?? null;
+  const palette = paletteForProfile(profile);
+  const reasons = Array.isArray(route?.reasons) ? route.reasons : [];
+
+  const profileMeta =
+    profile === "wheelchair"
+      ? { icon: "♿", headline: "Γιατί για Αμαξίδιο" }
+      : profile === "stroller"
+        ? { icon: "🍼", headline: "Γιατί για Καρότσι" }
+        : { icon: "🌳", headline: "Γιατί Δροσερότερη" };
+
+  const avoidedItems = [];
+  if (cmp) {
+    for (const w of cmp.avoided_works ?? []) {
+      avoidedItems.push({
+        icon: "🚧",
+        label: w.street ? `Αποφεύχθηκε: ${w.street}` : `Αποφεύχθηκε έργο ${w.id}`,
+        lon: Number(w.lon),
+        lat: Number(w.lat),
+        kind: "work",
+        ada: w.ada ?? null,
+      });
+    }
+    for (const r of cmp.avoided_reports ?? []) {
+      avoidedItems.push({
+        icon: r.category === "congestion" ? "🚗" : "⛔",
+        label: r.category === "congestion" ? "Αποφεύχθηκε συμφόρηση" : "Αποφεύχθηκε εμπόδιο",
+        lon: Number(r.lon),
+        lat: Number(r.lat),
+        kind: "report",
+        ada: null,
+      });
+    }
+  }
+
+  let detourText = "Βέλτιστη επιλογή";
+  const showGhostLegend = Boolean(cmp && !cmp.same_as_baseline && cmp.baseline?.geometry);
+  if (cmp) {
+    if (cmp.same_as_baseline) {
+      detourText = "Ίδια με τη συντομότερη ✓";
+    } else {
+      const dMin = Math.round((cmp.deltas?.duration_s ?? 0) / 60);
+      const dM = Math.round(cmp.deltas?.distance_m ?? 0);
+      const parts = [];
+      if (dMin > 0) parts.push(`+${dMin}′`);
+      else if (dMin < 0) parts.push(`${dMin}′`);
+      if (dM > 0) parts.push(`+${dM} m`);
+      else if (dM < 0) parts.push(`${dM} m`);
+      detourText = parts.length > 0 ? `${parts.join(" · ")} vs συντομότερη` : "Ίδιος χρόνος ✓";
+    }
+  }
+
+  const metrics = [];
+  if (cmp) {
+    const bestM = cmp.best || {};
+    const baseM = cmp.baseline || null;
+    const deltas = cmp.deltas || {};
+    const envInfo = cmp.env || {};
+    const avoidedCount = avoidedItems.length;
+    const onRouteCount = (cmp.on_route_works ?? 0) + (cmp.on_route_reports ?? 0);
+
+    if (profile === "wheelchair") {
+      metrics.push({
+        label: "Έργα & Εμπόδια",
+        value: avoidedCount > 0 ? `Αποφυγή ${avoidedCount}` : onRouteCount === 0 ? "0 εμπόδια" : `${onRouteCount} κοντά`,
+        delta: avoidedCount > 0 ? "εκτός διαδρομής ✓" : onRouteCount === 0 ? "καθαρή όδευση ✓" : "προσοχή",
+        tone: onRouteCount === 0 ? "good" : "warn",
+      });
+      metrics.push({
+        label: "Προσβασιμότητα",
+        value: "Χωρίς σκαλιά",
+        delta: "προφίλ αμαξιδίου",
+        tone: "good",
+      });
+      metrics.push({
+        label: "Σκιά / Κίνηση",
+        value: `${bestM.shade_pct ?? 0}% σκιά`,
+        delta: `${bestM.busy_pct ?? 0}% κεντρικοί`,
+        tone: (bestM.busy_pct ?? 100) <= 30 ? "good" : "neutral",
+      });
+    } else if (profile === "stroller") {
+      const busyDelta = !cmp.same_as_baseline && baseM && deltas.busy_pct < 0
+        ? `${deltas.busy_pct}% vs ${baseM.busy_pct}%`
+        : "ήπιοι δρόμοι";
+      metrics.push({
+        label: "Έντονη κίνηση",
+        value: `${bestM.busy_pct ?? 0}%`,
+        delta: busyDelta,
+        tone: (deltas.busy_pct ?? 0) < 0 || (bestM.busy_pct ?? 100) <= 30 ? "good" : "neutral",
+      });
+      metrics.push({
+        label: "Έργα & Συμφόρηση",
+        value: avoidedCount > 0 ? `Αποφυγή ${avoidedCount}` : onRouteCount === 0 ? "Καθαρή" : `${onRouteCount} σημεία`,
+        delta: avoidedCount > 0 ? "παράκαμψη ✓" : "χωρίς εμπόδια",
+        tone: onRouteCount === 0 ? "good" : "warn",
+      });
+      if (envInfo.aqi !== null && envInfo.aqi !== undefined) {
+        metrics.push({
+          label: "Ποιότητα αέρα",
+          value: `AQI ${envInfo.aqi}`,
+          delta: envInfo.temp_c != null ? `${envInfo.temp_c}°C` : "σταθμός Αθήνας",
+          tone: Number(envInfo.aqi) <= 40 ? "good" : "neutral",
+        });
+      } else {
+        metrics.push({
+          label: "Κάλυψη σκιάς",
+          value: `${bestM.shade_pct ?? 0}%`,
+          delta: "πεζόδρομοι & δέντρα",
+          tone: (bestM.shade_pct ?? 0) >= 40 ? "good" : "neutral",
+        });
+      }
+    } else {
+      // cool profile
+      const shadeDelta = !cmp.same_as_baseline && baseM && deltas.shade_pct > 0
+        ? `+${deltas.shade_pct}% vs ${baseM.shade_pct}%`
+        : "δέντρα & πάρκα";
+      metrics.push({
+        label: "Κάλυψη σκιάς",
+        value: `${bestM.shade_pct ?? 0}%`,
+        delta: shadeDelta,
+        tone: (deltas.shade_pct ?? 0) > 0 || (bestM.shade_pct ?? 0) >= 40 ? "good" : "neutral",
+      });
+      const busyDelta = !cmp.same_as_baseline && baseM && deltas.busy_pct < 0
+        ? `${deltas.busy_pct}% vs ${baseM.busy_pct}%`
+        : "χαμηλά καυσαέρια";
+      metrics.push({
+        label: "Δρόμοι κίνησης",
+        value: `${bestM.busy_pct ?? 0}%`,
+        delta: busyDelta,
+        tone: (deltas.busy_pct ?? 0) < 0 || (bestM.busy_pct ?? 100) <= 30 ? "good" : "neutral",
+      });
+      if (envInfo.temp_c !== null && envInfo.temp_c !== undefined) {
+        metrics.push({
+          label: "Μικροκλίμα",
+          value: `${envInfo.temp_c}°C`,
+          delta: envInfo.uv_index != null ? `UV ${envInfo.uv_index}` : envInfo.aqi != null ? `AQI ${envInfo.aqi}` : "Αθήνα",
+          tone: "neutral",
+        });
+      } else if (envInfo.aqi !== null && envInfo.aqi !== undefined) {
+        metrics.push({
+          label: "Ποιότητα αέρα",
+          value: `AQI ${envInfo.aqi}`,
+          delta: "καθαρότερη όδευση",
+          tone: Number(envInfo.aqi) <= 40 ? "good" : "neutral",
+        });
+      } else {
+        metrics.push({
+          label: "Θερμική άνεση",
+          value: "Δροσερή",
+          delta: "υπολογισμός σκιάς",
+          tone: "good",
+        });
+      }
+    }
+  } else {
+    // Graceful offline / mock fallback (never invents numbers)
+    metrics.push({
+      label: "Προφίλ",
+      value: PROFILES.find((p) => p.id === profile)?.label ?? profile,
+      delta: reasons.length > 0 ? `${reasons.length} κριτήρια` : "εκτός σύνδεσης",
+      tone: "neutral",
+    });
+    metrics.push({
+      label: "Αιτιολόγηση",
+      value: reasons.length > 0 ? "Ενεργή" : "Ευθεία γραμμή",
+      delta: reasons[0]?.text ?? "χωρίς ζωντανά εμπόδια",
+      tone: reasons.length > 0 ? "good" : "neutral",
+    });
+  }
+
+  return {
+    icon: profileMeta.icon,
+    headline: profileMeta.headline,
+    accent: palette.accent,
+    detourText,
+    showGhostLegend,
+    metrics,
+    avoidedItems,
   };
 }
 
@@ -1119,6 +1452,136 @@ export function initRouting(container, map, api, options = {}) {
   summaryEl.setAttribute("aria-live", "polite");
   drawer.appendChild(summaryEl);
 
+  // Layer B + C: "Γιατί αυτή η διαδρομή;" Comparison Scoreboard + Interactive Fly-To Chips + Stoa AI Button.
+  const whyEl = doc.createElement("div");
+  whyEl.className = "routing-why hidden";
+  whyEl.setAttribute("aria-label", "Ανάλυση διαδρομής");
+  drawer.appendChild(whyEl);
+
+  function renderWhyCard(route) {
+    if (!route || !whyEl) {
+      whyEl?.classList?.add("hidden");
+      return;
+    }
+    const insight = buildRouteInsight(route, activeProfile);
+    if (whyEl.style && typeof whyEl.style.setProperty === "function") {
+      whyEl.style.setProperty("--route-accent", insight.accent);
+    }
+
+    const header = doc.createElement("div");
+    header.className = "routing-why__header";
+    const titleEl = doc.createElement("span");
+    titleEl.className = "routing-why__title";
+    titleEl.textContent = `${insight.icon} ${insight.headline}`;
+    const detourEl = doc.createElement("span");
+    detourEl.className = "routing-why__detour";
+    detourEl.textContent = insight.detourText;
+    header.appendChild(titleEl);
+    header.appendChild(detourEl);
+
+    const grid = doc.createElement("div");
+    grid.className = "routing-why__grid";
+    for (const m of insight.metrics) {
+      const tile = doc.createElement("div");
+      tile.className = `routing-why__tile${m.tone === "good" ? " is-good" : m.tone === "warn" ? " is-warn" : ""}`;
+      const lbl = doc.createElement("span");
+      lbl.className = "routing-why__tile-label";
+      lbl.textContent = m.label;
+      const val = doc.createElement("span");
+      val.className = "routing-why__tile-val";
+      val.textContent = m.value;
+      const dlt = doc.createElement("span");
+      dlt.className = "routing-why__tile-delta";
+      dlt.textContent = m.delta;
+      tile.appendChild(lbl);
+      tile.appendChild(val);
+      tile.appendChild(dlt);
+      grid.appendChild(tile);
+    }
+
+    const nodes = [header, grid];
+
+    if (insight.avoidedItems.length > 0) {
+      const chipsWrap = doc.createElement("div");
+      chipsWrap.className = "routing-why__chips";
+      for (const item of insight.avoidedItems) {
+        const chip = doc.createElement("button");
+        chip.type = "button";
+        chip.className = "routing-why__chip";
+        chip.textContent = `${item.icon} ${item.label}`;
+        chip.addEventListener("click", () => {
+          if (Number.isFinite(item.lon) && Number.isFinite(item.lat)) {
+            bus?.dispatchEvent(
+              new CustomEvent("map:flyto", {
+                detail: { lon: item.lon, lat: item.lat, label: item.label },
+              }),
+            );
+          }
+        });
+        chipsWrap.appendChild(chip);
+      }
+      nodes.push(chipsWrap);
+    }
+
+    const footer = doc.createElement("div");
+    footer.className = "routing-why__footer";
+    if (insight.showGhostLegend) {
+      const legend = doc.createElement("div");
+      legend.className = "routing-why__legend";
+      const solidItem = doc.createElement("span");
+      solidItem.className = "routing-why__legend-item";
+      const solidSwatch = doc.createElement("span");
+      solidSwatch.className = "routing-why__swatch routing-why__swatch--solid";
+      const solidLbl = doc.createElement("span");
+      solidLbl.textContent = "Επιλεγμένη";
+      solidItem.appendChild(solidSwatch);
+      solidItem.appendChild(solidLbl);
+
+      const ghostItem = doc.createElement("span");
+      ghostItem.className = "routing-why__legend-item";
+      const ghostSwatch = doc.createElement("span");
+      ghostSwatch.className = "routing-why__swatch routing-why__swatch--ghost";
+      const ghostLbl = doc.createElement("span");
+      ghostLbl.textContent = "Συντομότερη";
+      ghostItem.appendChild(ghostSwatch);
+      ghostItem.appendChild(ghostLbl);
+
+      legend.appendChild(solidItem);
+      legend.appendChild(ghostItem);
+      footer.appendChild(legend);
+    }
+
+    const aiBtn = doc.createElement("button");
+    aiBtn.type = "button";
+    aiBtn.className = "routing-why__ai-btn";
+    aiBtn.textContent = "✨ Εξήγηση από Stoa AI";
+    aiBtn.addEventListener("click", () => {
+      const profileLabel = PROFILES.find((p) => p.id === activeProfile)?.label ?? activeProfile;
+      bus?.dispatchEvent(
+        new CustomEvent("stoa:analyze-route", {
+          detail: {
+            profile: activeProfile,
+            profileLabel,
+            fromLabel: fromField.input.value.trim() || "Αφετηρία",
+            toLabel: toField.input.value.trim() || "Προορισμός",
+            route,
+            insight,
+          },
+        }),
+      );
+    });
+    footer.appendChild(aiBtn);
+    nodes.push(footer);
+
+    if (typeof whyEl.replaceChildren === "function") {
+      whyEl.replaceChildren(...nodes);
+    } else {
+      whyEl.textContent = "";
+      for (const n of nodes) whyEl.appendChild(n);
+    }
+    whyEl.classList?.remove("hidden");
+  }
+
   // ---------- Live GPS Turn-by-Turn Navigation + Simulate GPS + Instant Waze "⚡ Αναφορά εδώ" ----------
   let navActive = false;
   let navWatchId = null;
@@ -1547,11 +2010,22 @@ export function initRouting(container, map, api, options = {}) {
       cancelAnimation = null;
     }
 
+    const palette = paletteForProfile(activeProfile);
     mapState.geojson = feature;
     mapState.progress = 0;
+    mapState.palette = palette;
 
     if (map) {
-      ensureRouteOverlayOnMap(map, feature, 0);
+      if (routeData?.comparison) {
+        baselineStateByMap.set(map, routeData.comparison);
+        registerOverlay(reapplyBaselineOverlay);
+        ensureBaselineAndAvoidedOnMap(map, routeData.comparison);
+      } else {
+        baselineStateByMap.delete(map);
+        ensureBaselineAndAvoidedOnMap(map, null);
+      }
+
+      ensureRouteOverlayOnMap(map, feature, 0, palette);
       cancelAnimation = animateRoute(
         map,
         ROUTE_LAYER_ID,
@@ -1561,6 +2035,7 @@ export function initRouting(container, map, api, options = {}) {
           fitRouteBounds(map, feature, drawer);
         },
         {
+          palette,
           onProgress: (p) => {
             mapState.progress = p;
           },
@@ -1617,6 +2092,7 @@ export function initRouting(container, map, api, options = {}) {
             ? `${labelText} (cache)`
             : labelText;
 
+      renderWhyCard(route);
       drawRoute(route);
       if (map) {
         const lookup =

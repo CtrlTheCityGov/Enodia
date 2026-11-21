@@ -85,6 +85,112 @@ function mapCenter(map) {
   return c ? [c.lng, c.lat] : undefined;
 }
 
+/** Build a strictly data-grounded Greek route explanation + map citations (Layer C). */
+export function buildRouteAnalysisAnswer(detail = {}) {
+  const profile = detail.profile || "wheelchair";
+  const profileLabel =
+    detail.profileLabel ||
+    (profile === "wheelchair" ? "Αμαξίδιο" : profile === "stroller" ? "Καρότσι" : "Δροσερότερη διαδρομή");
+  const route = detail.route || {};
+  const cmp = route.comparison || null;
+  const reasons = Array.isArray(route.reasons) ? route.reasons : [];
+  const citations = [];
+  const bullets = [];
+
+  const fromLbl = detail.fromLabel || "Αφετηρία";
+  const toLbl = detail.toLabel || "Προορισμός";
+  const distM = Number(route.distance_m);
+  const durS = Number(route.duration_s);
+  const distStr = Number.isFinite(distM)
+    ? distM >= 1000
+      ? `${(distM / 1000).toFixed(1).replace(".", ",")} χλμ.`
+      : `${Math.round(distM)} μ.`
+    : "άγνωστη απόσταση";
+  const durStr = Number.isFinite(durS) ? `${Math.max(1, Math.round(durS / 60))} λεπτά` : "άγνωστη διάρκεια";
+
+  const lines = [`Ανάλυση διαδρομής ${fromLbl} → ${toLbl} (${profileLabel}: ${durStr}, ${distStr}):`];
+
+  if (cmp) {
+    const avoidedWorks = Array.isArray(cmp.avoided_works) ? cmp.avoided_works : [];
+    const avoidedReports = Array.isArray(cmp.avoided_reports) ? cmp.avoided_reports : [];
+    for (const w of avoidedWorks) {
+      const label = w.street ? `Έργο ${w.street}` : `Έργο ${w.id}`;
+      const adaPart = w.ada ? ` [ΑΔΑ ${w.ada}]` : "";
+      bullets.push(`• Αποφεύγει ενεργό δημοτικό έργο: ${label}${adaPart}.`);
+      if (Number.isFinite(Number(w.lon)) && Number.isFinite(Number(w.lat))) {
+        citations.push({ label, lon: Number(w.lon), lat: Number(w.lat), kind: "work" });
+      }
+    }
+    for (const r of avoidedReports) {
+      const catText = r.category === "congestion" ? "σημείο συμφόρησης" : "αναφερμένο εμπόδιο";
+      const label = `Αναφορά ${r.id}`;
+      bullets.push(`• Παρακάμπτει ${catText} πολιτών (${label}).`);
+      if (Number.isFinite(Number(r.lon)) && Number.isFinite(Number(r.lat))) {
+        citations.push({ label, lon: Number(r.lon), lat: Number(r.lat), kind: "report" });
+      }
+    }
+
+    const bestM = cmp.best || {};
+    const baseM = cmp.baseline || null;
+    const deltas = cmp.deltas || {};
+
+    if (profile === "wheelchair") {
+      bullets.push("• Χρησιμοποιεί προφίλ προσβασιμότητας χωρίς σκαλιά (Valhalla wheelchair) και αποφεύγει κλειστά έργα.");
+    } else if (profile === "stroller") {
+      bullets.push("• Προτιμά ήπιους δρόμους χωρίς απότομα εμπόδια, έργα και έντονη κυκλοφορία.");
+    }
+
+    if (Number.isFinite(bestM.shade_pct)) {
+      if (baseM && !cmp.same_as_baseline && deltas.shade_pct > 0) {
+        bullets.push(`• Περισσότερη σκιά: ${bestM.shade_pct}% έναντι ${baseM.shade_pct}% στη συντομότερη (+${deltas.shade_pct}%).`);
+      } else {
+        bullets.push(`• Κάλυψη σκιάς κατά μήκος της διαδρομής: ${bestM.shade_pct}%.`);
+      }
+    }
+
+    if (Number.isFinite(bestM.busy_pct)) {
+      if (baseM && !cmp.same_as_baseline && deltas.busy_pct < 0) {
+        bullets.push(`• Λιγότεροι δρόμοι υψηλής κυκλοφορίας: ${bestM.busy_pct}% αντί ${baseM.busy_pct}% (${deltas.busy_pct}%).`);
+      } else {
+        bullets.push(`• Έκθεση σε δρόμους με έντονη κίνηση: ${bestM.busy_pct}%.`);
+      }
+    }
+
+    const envInfo = cmp.env || {};
+    const envParts = [];
+    if (envInfo.temp_c !== null && envInfo.temp_c !== undefined) envParts.push(`θερμοκρασία ${envInfo.temp_c}°C`);
+    if (envInfo.aqi !== null && envInfo.aqi !== undefined) envParts.push(`δείκτης αέρα AQI ${envInfo.aqi}`);
+    if (envInfo.uv_index !== null && envInfo.uv_index !== undefined) envParts.push(`δείκτης UV ${envInfo.uv_index}`);
+    if (envParts.length > 0) {
+      bullets.push(`• Τρέχουσες συνθήκες περιοχής: ${envParts.join(", ")}.`);
+    }
+
+    if (cmp.same_as_baseline) {
+      if ((cmp.on_route_works ?? 0) === 0 && (cmp.on_route_reports ?? 0) === 0) {
+        bullets.push("• Η συντομότερη διαδρομή είναι ήδη καθαρή από ενεργά έργα και αναφερμένα εμπόδια.");
+      }
+    } else if (Number.isFinite(deltas.duration_s) && Number.isFinite(deltas.distance_m)) {
+      const extraMin = Math.round(deltas.duration_s / 60);
+      const timeNote = extraMin > 0 ? `+${extraMin} λεπτά` : "ίδιος χρόνος";
+      const distNote = deltas.distance_m > 0 ? `+${deltas.distance_m} μ.` : `${deltas.distance_m} μ.`;
+      bullets.push(`• Κόστος παράκαμψης έναντι της συντομότερης: ${timeNote} (${distNote}).`);
+    }
+  } else if (reasons.length > 0) {
+    for (const r of reasons) {
+      const txt = typeof r === "string" ? r : r?.text;
+      if (txt) bullets.push(`• ${txt}.`);
+    }
+  } else {
+    bullets.push("• Επιλέχθηκε βάσει των διαθέσιμων δεδομένων προσβασιμότητας και περιβάλλοντος.");
+  }
+
+  return {
+    question: `Γιατί αυτή η διαδρομή είναι καλύτερη για ${profileLabel} (${fromLbl} → ${toLbl});`,
+    answer_md: [...lines, ...bullets].join("\n"),
+    citations,
+  };
+}
+
 /**
  * Mount the bubble + panel into ctx.root (A-35: ctx = {map, api, root, bus}).
  * Expects `ctx.api.stoaAsk({question, center, history})` → `{answer_md, citations}` (B1, api.js).
@@ -202,6 +308,45 @@ export function mount({ map, api, root, container, bus }) {
     addMessage("bot", renderAnswerHtml(answerMd, res?.citations || []), answerMd.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
     history.push({ question, answer_md: answerMd });
   });
+
+  // Layer C: 1-tap "✨ Εξήγηση από Stoa AI" from the routing comparison card.
+  if (bus && typeof bus.addEventListener === "function") {
+    bus.addEventListener("stoa:analyze-route", async (event) => {
+      const detail = event?.detail || {};
+      setOpen(true);
+      const built = buildRouteAnalysisAnswer(detail);
+      addMessage("user", escapeHtml(built.question));
+
+      let finalMd = built.answer_md;
+      const mergedCitations = [...built.citations];
+
+      // Enrich with verified Diavgeia / Stoa records if an avoided municipal work names a street.
+      const avoidedWorks = detail?.route?.comparison?.avoided_works;
+      const firstStreet = Array.isArray(avoidedWorks)
+        ? avoidedWorks.find((w) => typeof w?.street === "string" && w.street.trim())?.street?.trim()
+        : null;
+      if (firstStreet && api && typeof api.stoaAsk === "function") {
+        try {
+          const extra = await api.stoaAsk({
+            question: `Τι έργα γίνονται στην ${firstStreet};`,
+            center: mapCenter(map),
+            history: [],
+          });
+          if (extra?.answer_md && extra.answer_md !== REFUSAL) {
+            finalMd += `\n\nΕπίσημα στοιχεία Διαύγειας (${firstStreet}):\n${extra.answer_md}`;
+            if (Array.isArray(extra.citations)) {
+              mergedCitations.push(...extra.citations);
+            }
+          }
+        } catch {
+          // Offline / unavailable: the telemetry-grounded route analysis already stands on its own.
+        }
+      }
+
+      addMessage("bot", renderAnswerHtml(finalMd, mergedCitations), finalMd.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"));
+      history.push({ question: built.question, answer_md: finalMd });
+    });
+  }
 
   return { open: () => setOpen(true), close: () => setOpen(false) };
 }

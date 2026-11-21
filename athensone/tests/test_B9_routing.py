@@ -302,3 +302,21 @@ def test_existing_navigate_unchanged():
             "chosen",
             "fastest",
         } <= set(cand)
+
+
+def test_routing_comparison_payload_reports_avoided_work_and_metrics(monkeypatch, tmp_path):
+    # Checks that POST /api/map/routing returns a structured `comparison` payload with baseline & avoided works.
+    work_id = _write_seed_with_in_progress_work(monkeypatch, tmp_path)
+
+    r = c.post("/api/map/routing", json={"from": SYNTAGMA, "to": MONASTIRAKI, "profile": "wheelchair"})
+    assert r.status_code == 200
+    data = r.json()
+    cmp = data.get("comparison")
+    assert isinstance(cmp, dict)
+    assert cmp["profile"] == "wheelchair"
+    assert cmp["same_as_baseline"] is False
+    assert cmp["baseline"]["geometry"]["type"] == "LineString"
+    assert cmp["best"]["steps_excluded"] is True
+    assert {"distance_m", "duration_s", "shade_pct", "busy_pct"} <= set(cmp["deltas"])
+    assert any(w["id"] == work_id and w["ada"] == "SEED-ΑΔΑ-099" for w in cmp["avoided_works"])
+    assert cmp["on_route_works"] == 0

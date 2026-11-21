@@ -16,6 +16,7 @@ import * as mapMod from "../js/map.js";
 import * as layerbar from "../js/ui/layerbar.js";
 import * as reportsLayer from "../js/layers/reports.js";
 import * as routing from "../js/ui/routing.js";
+import * as stoa from "../js/ui/stoa.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIR = path.resolve(__dirname, "..");
@@ -317,4 +318,65 @@ test("test_hud_css_and_citizen_html_include_ux_upgrade_hooks", () => {
   assert.match(css, /\.hud-toast\b/);
   assert.match(css, /\.nav-hud\b/);
   assert.match(css, /\.nav-quick-report\b/);
+  assert.match(css, /\.routing-why\b/);
+  assert.match(css, /\.routing-why__ai-btn\b/);
+});
+
+test("test_route_insight_and_stoa_route_analysis_layers_a_b_c", () => {
+  assert.equal(Object.keys(routing.PROFILE_PALETTES).length, 3);
+  assert.notEqual(routing.PROFILE_PALETTES.wheelchair.start, routing.PROFILE_PALETTES.cool.start);
+
+  const sampleRoute = {
+    distance_m: 920,
+    duration_s: 720,
+    reasons: [{ text: "αποφεύγει έργο σε εξέλιξη (Ερμού)", layer: "works", feature_id: "W-1" }],
+    comparison: {
+      profile: "wheelchair",
+      same_as_baseline: false,
+      baseline: {
+        geometry: { type: "LineString", coordinates: [[23.734, 37.975], [23.726, 37.976]] },
+        distance_m: 840,
+        duration_s: 660,
+        shade_pct: 28,
+        busy_pct: 58,
+      },
+      best: { shade_pct: 62, busy_pct: 14, steps_excluded: true },
+      deltas: { distance_m: 80, duration_s: 60, shade_pct: 34, busy_pct: -44 },
+      env: { aqi: 28, temp_c: 21.5, uv_index: 3 },
+      avoided_works: [
+        { id: "W-1", street: "Ερμού", title: "Ανάπλαση", ada: "Ψ123-ΑΒΓ", lon: 23.73, lat: 37.976 },
+      ],
+      avoided_reports: [{ id: "R-7", category: "obstacle", lon: 23.731, lat: 37.976 }],
+      on_route_works: 0,
+      on_route_reports: 0,
+    },
+  };
+
+  const wc = routing.buildRouteInsight(sampleRoute, "wheelchair");
+  assert.equal(wc.showGhostLegend, true);
+  assert.equal(wc.avoidedItems.length, 2);
+  assert.equal(wc.metrics.length, 3);
+  assert.match(wc.detourText, /\+1′/);
+
+  const cool = routing.buildRouteInsight(sampleRoute, "cool");
+  assert.equal(cool.metrics[0].value, "62%");
+  assert.match(cool.metrics[0].delta, /\+34%/);
+
+  const stroller = routing.buildRouteInsight(sampleRoute, "stroller");
+  assert.equal(stroller.metrics[0].value, "14%");
+  assert.match(stroller.metrics[0].delta, /-44%/);
+
+  // Layer C: Stoa AI route analysis generates strictly data-grounded Greek explanation + clickable citations
+  const analysis = stoa.buildRouteAnalysisAnswer({
+    profile: "wheelchair",
+    profileLabel: "Αμαξίδιο",
+    fromLabel: "Σύνταγμα",
+    toLabel: "Μοναστηράκι",
+    route: sampleRoute,
+  });
+  assert.match(analysis.answer_md, /Ερμού/);
+  assert.match(analysis.answer_md, /Ψ123-ΑΒΓ/);
+  assert.match(analysis.answer_md, /62%/);
+  assert.equal(analysis.citations.length, 2);
+  assert.equal(analysis.citations[0].lon, 23.73);
 });

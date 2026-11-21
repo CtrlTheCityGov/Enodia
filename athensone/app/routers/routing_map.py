@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import ckan, env, map_reports, route_cost, routing, store, works
+from .. import ckan, env, envgrid_src, map_reports, route_cost, routing, store, works
 from ..sandbox import SandboxError
 
 router = APIRouter()
@@ -52,6 +52,37 @@ def _in_bbox(line: list, bbox: tuple) -> bool:
     return any(bbox[0] <= x <= bbox[2] and bbox[1] <= y <= bbox[3] for x, y in line)
 
 
+def _nearest_env_sample(lon: float, lat: float, bbox: tuple, air: dict | None) -> dict:
+    """Pick real microclimate values (temp_c, aqi, uv_index) near route midpoint without inventing numbers."""
+    out: dict = {"aqi": (air or {}).get("aqi"), "temp_c": None, "uv_index": None}
+    try:
+        grid = envgrid_src.get_env_grid(bbox)
+        feats = grid.get("features") or []
+        if not feats:
+            grid = envgrid_src.get_env_grid(None)
+            feats = grid.get("features") or []
+        best_props = None
+        best_d2 = float("inf")
+        for f in feats:
+            coords = (f.get("geometry") or {}).get("coordinates")
+            if not isinstance(coords, list) or len(coords) < 2:
+                continue
+            d2 = (coords[0] - lon) ** 2 + (coords[1] - lat) ** 2
+            if d2 < best_d2:
+                best_d2 = d2
+                best_props = f.get("properties") or {}
+        if best_props:
+            if out["aqi"] is None and best_props.get("aqi") is not None:
+                out["aqi"] = best_props.get("aqi")
+            if best_props.get("temp_c") is not None:
+                out["temp_c"] = best_props.get("temp_c")
+            if best_props.get("uv_index") is not None:
+                out["uv_index"] = best_props.get("uv_index")
+    except Exception:
+        pass
+    return out
+
+
 @router.post("/api/map/routing")
 def map_routing(req: RoutingRequest) -> dict:
     (flng, flat), (tlng, tlat) = req.frm, req.to
@@ -85,10 +116,13 @@ def map_routing(req: RoutingRequest) -> dict:
     plain = routing.candidates(frm, to, [], costing, None)
     baseline = min(plain, key=lambda c: c["distance_km"]) if plain else None
 
-    air = ckan.nearest_air((flat + tlat) / 2, (flng + tlng) / 2)
+    mid_lon, mid_lat = (flng + tlng) / 2, (flat + tlat) / 2
+    air = ckan.nearest_air(mid_lat, mid_lon)
+    env_sample = _nearest_env_sample(mid_lon, mid_lat, bbox, air)
     best = route_cost.choose(profile, cands, hard_works, hard_reports, soft_works, soft_reports,
-                             (air or {}).get("aqi"))
+                             env_sample.get("aqi"))
     why = route_cost.reasons(profile, best, baseline, hard_works or soft_works, reason_reports)
+    comparison = route_cost.compare(profile, best, baseline, live_works, soft, env_sample)
 
     return {
         "geometry": best["geojson"],
@@ -96,6 +130,7 @@ def map_routing(req: RoutingRequest) -> dict:
         "duration_s": round(best["duration_min"] * 60),
         "legs": [{"mode": "walk"}],  # metro/bus legs are a later card (TASKS_B B9)
         "reasons": why,
+        "comparison": comparison,
         # extra keys (not in the SPEC contract): where the line came from, so the UI can label a fallback
         "source": best["source"],
         "label": best.get("label"),
