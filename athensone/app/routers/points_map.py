@@ -84,3 +84,21 @@ def map_points_redeem(body: RedeemIn, request: Request, response: Response) -> d
     if reward is None:
         raise HTTPException(status_code=404, detail="Άγνωστη ανταμοιβή")
     return rewards.redeem(account, reward)
+
+
+@router.get("/api/map/points/leaderboard")
+def map_points_leaderboard() -> dict:
+    """Ranked municipal-district civic points leaderboard."""
+    totals = points.districts()
+    goal = totals["target"]
+    ranked = sorted(totals["items"], key=lambda i: (-int(i.get("points", 0)), str(i.get("district", ""))))
+    items = [
+        {
+            "rank": idx + 1,
+            "district": row["district"],
+            "points": int(row["points"]),
+            "progress_pct": min(100, round(100 * int(row["points"]) / goal)) if goal else 0,
+        }
+        for idx, row in enumerate(ranked)
+    ]
+    return {"target": goal, "districts": items}

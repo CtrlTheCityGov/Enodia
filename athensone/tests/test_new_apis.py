@@ -57,3 +57,21 @@ def test_works_lookup_rejects_bad_ada():
     client = TestClient(app)
     r = client.get("/api/map/works/lookup?ada=bad/ada")
     assert r.status_code == 400
+
+
+def test_points_leaderboard_endpoint():
+    client = TestClient(app)
+    r = client.get("/api/map/points/leaderboard")
+    assert r.status_code == 200
+    body = r.json()
+    assert "target" in body and isinstance(body["districts"], list)
+
+
+def test_cool_spots_endpoint():
+    client = TestClient(app)
+    r = client.get("/api/map/cool-spots")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["type"] == "FeatureCollection"
+    assert len(body["features"]) >= 1
+    assert "uv_index" in open("app/envgrid_src.py", encoding="utf-8").read()

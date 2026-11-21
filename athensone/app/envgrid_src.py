@@ -27,7 +27,7 @@ COORD_DECIMALS = 5
 OPEN_METEO_TIMEZONE = "Europe/Athens"
 # Open-Meteo current-variable query strings (verified online 2026-11-21 on both v1 endpoints; certainty: verified).
 FORECAST_CURRENT_FIELDS = "temperature_2m"
-AIR_QUALITY_CURRENT_FIELDS = "european_aqi,pm2_5"
+AIR_QUALITY_CURRENT_FIELDS = "european_aqi,pm2_5,uv_index"
 # Disk snapshot location relative to config.DATA_DIR (source: docs/TASKS_B.md Common to B2–B5 &
 # tests/test_B5_envgrid.py:35; certainty: sure).
 SNAPSHOT_SUBDIR = "envgrid"
@@ -157,6 +157,7 @@ def build_features(
         temp_c = _opt_num(fc_cur.get("temperature_2m"))
         aqi = _opt_num(aq_cur.get("european_aqi"))
         pm25 = _opt_num(aq_cur.get("pm2_5"))
+        uv_index = _opt_num(aq_cur.get("uv_index"))
         point_updated = _valid_iso(fc_cur.get("time")) or _valid_iso(aq_cur.get("time")) or fetched_at
 
         props: dict[str, Any] = {
@@ -167,6 +168,7 @@ def build_features(
             # air-quality API docs, AthensGov CKAN env-all-stations (app/ckan.py). Certainty: sure.
             "aqi_scale": "eaqi" if aqi is not None else None,
             "pm25": pm25,
+            "uv_index": uv_index,
             "updated_at": point_updated,
         }
 
