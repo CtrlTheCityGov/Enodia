@@ -216,10 +216,12 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
     initWorkPopup(map, { reportModule: optional["./ui/report.js"] });
   }
 
+  /* --- A4 --- */
   const routingEl = root.getElementById("hud-routing");
-  if (routingEl) {
-    initRouting(routingEl, map, api);
-  }
+  const routing = routingEl
+    ? initRouting(routingEl, map, api, { onNonLiveSource: showOfflineBadge })
+    : null;
+  /* --- /A4 --- */
 
   return {
     map,
@@ -227,6 +229,7 @@ export async function bootstrap(root = typeof document !== "undefined" ? documen
     state,
     layers: LAYERS,
     optional,
+    routing,
     setTheme: applyTheme,
     selectTab,
   };
