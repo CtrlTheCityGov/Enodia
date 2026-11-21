@@ -31,10 +31,12 @@ const SEED_ADA_PREFIX = "SEED-";
 // Badge label for synthetic SEED works. Source: CLAUDE.md «Mock data is labelled», docs/TASKS_B.md B10. Certainty: verified.
 const SEED_BADGE = "SEED · δοκιμαστικό";
 
-// Badge text per non-live data source. Source: CLAUDE.md «Mock data is labelled». Certainty: verified.
+// Provenance badge text per data source (LIVE / CACHED / DEMO).
 const SOURCE_BADGE = {
-  mock: "δοκιμαστικό",
-  cache: "Offline λειτουργία",
+  live: "LIVE",
+  snapshot: "CACHED",
+  cache: "CACHED",
+  mock: "DEMO · δοκιμαστικό",
 };
 
 // Greek number formatting for EUR amounts. Standard BCP-47 locale "el-GR". Certainty: verified.
