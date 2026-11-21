@@ -19,6 +19,16 @@
 
 <nav class="layers" id="layers" aria-label="Επίπεδα χάρτη"></nav>
 <div id="databanner" class="databanner hidden"></div>
+<!-- --- T3: Heat alert banner --- -->
+<div id="heatBanner" class="hidden" role="region" aria-label="Ειδοποίηση καύσωνα"
+     style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;background:#fff4e5;color:#1b1f24;border-bottom:2px solid var(--warn)">
+  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px" aria-live="polite">
+    <strong id="heatText"></strong>
+    <span id="heatForced" class="badge hidden" style="background:#fff;color:var(--warn);border:1px solid var(--warn)">δοκιμαστικό</span>
+  </div>
+  <button id="heatGoBtn" type="button" class="hidden">Πήγαινέ με</button>
+</div>
+<!-- --- /T3 --- -->
 <div id="map" role="region" aria-label="Χάρτης"></div>
 
 <main>
@@ -503,6 +513,32 @@ async function loadPoints() {
 loadPoints();
 setInterval(() => { if (document.visibilityState === "visible") loadPoints(); }, 10000);
 // --- /T2 ---
+// --- T3: Heat alert banner ---
+async function loadHeat() {
+  try {
+    const h = await api(`/api/heat?lat=${START.lat}&lng=${START.lng}`);
+    if (!h.hot) return;
+    const parts = [h.temp_c != null ? `🌡 ${Math.round(h.temp_c)}°C τώρα.` : "🌡 Υψηλή θερμοκρασία τώρα."];
+    if (h.cool_place) {
+      const mins = h.minutes != null ? `, ${Math.round(h.minutes)}′ με σκιά` : "";
+      parts.push(`${h.cool_place.name}${mins}`);
+    }
+    if (h.source) parts.push(`(${h.source})`);
+    $("#heatText").textContent = parts.join(" ");
+    $("#heatForced").classList.toggle("hidden", !h.forced);
+    const go = $("#heatGoBtn");
+    if (h.cool_place) {
+      go.classList.remove("hidden");
+      go.onclick = () => {
+        $("#pHeat").checked = true;
+        setDest({ lat: h.cool_place.lat, lng: h.cool_place.lng });
+      };
+    }
+    $("#heatBanner").classList.remove("hidden");
+  } catch (_) {}
+}
+loadHeat();
+// --- /T3 ---
 </script>
 </body>
 </html>
