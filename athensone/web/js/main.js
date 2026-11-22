@@ -244,7 +244,16 @@ export async function bootstrap(
 
   const api = optional["./api.js"] ?? null;
   const offlineBadgeEl = root.getElementById("hud-offline");
-  const initialTheme = root.documentElement?.dataset?.theme === "dark" ? "dark" : "light";
+  let savedTheme = null;
+  try {
+    savedTheme = globalThis.localStorage?.getItem?.("athensone.theme");
+  } catch {
+    savedTheme = null;
+  }
+  const initialTheme = savedTheme === "dark" || root.documentElement?.dataset?.theme === "dark" ? "dark" : "light";
+  if (initialTheme === "dark" && root.documentElement?.dataset) {
+    root.documentElement.dataset.theme = "dark";
+  }
 
   function showOfflineBadge() {
     if (offlineBadgeEl?.classList) {
@@ -252,14 +261,12 @@ export async function bootstrap(
     }
   }
 
-  const offlineGeo = await loadOfflineBase(api);
-
   const state = {
     visible: {},
     theme: initialTheme,
     activeTab: "map",
     offline: false,
-    offlineGeo,
+    offlineGeo: null,
     // Shared event bus: layers dispatch "transit:updated", the layer bar "layer:toggle" (Wave 1).
     bus,
     onOffline: () => {
@@ -522,6 +529,11 @@ export async function bootstrap(
       btn.addEventListener("click", () => selectTab(id));
     }
   }
+
+  // Load offline GeoJSON fallback in background so createMap() starts MapLibre immediately.
+  loadOfflineBase(api).then((geo) => {
+    state.offlineGeo = geo;
+  });
 
   /* --- A2 --- */
   registerA2Overlays(api);
