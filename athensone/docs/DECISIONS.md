@@ -106,3 +106,7 @@
   the user's position and question). A write the server rejects (4xx other than 404) is not "offline": `sendReport`
   throws `RejectedError {status, detail}`, `redeem` returns `{ok: false, error: "rejected", …}`. The two static
   mock files (`access`, `base`) don't turn on the «Offline λειτουργία» badge.
+- **A-39** (Evgenii, B15 fix round) New `/api/map/*` answers built from sandbox data carry a top-level
+  `source: "mock" | "sandbox"` (from `sb.mock`), like `/api/map/reports`, so the UI shows «δοκιμαστικό» when the
+  City sandbox itself is the mock. Applied to `/api/map/resolved` (B15); B13 and B14 already had it. Resolved
+  requests with no usable date are left out of `/api/map/resolved` (can't be placed in the `days` window).

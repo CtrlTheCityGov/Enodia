@@ -24,6 +24,9 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B10 Works tab (F8) | 3 | `ui/workstab.js`, crowdsourced progress | **merged** into `dev-b` |
 | B11 Phase 4 integration & end-to-end demo rehearsal | 4 | Combine `dev-a` + `dev-b`, end-to-end tests of the 3-min demo script (`bootstrap`, `api.js`, all 4 Dev B HUD widgets + `bus` events, offline degradation) | **merged** into `dev-b` |
 | B12 Cross-module backend wiring (`works_map` + `routing_map` + `map_reports`) | 4 | `works_map._open_reports` and `routing_map._open_reports` include `map_reports`; `route_cost.in_progress` supports B2 evidence-wrapped dates via `works_src.status_of` | **merged** into `dev-b` |
+| B13 Service guide from the sandbox registry | 5 | `GET /api/map/services?category=` → the official municipal service for a report category (documents, cost, online link); `api.js serviceFor()` + `web/mock/services.json` | **merged** into `dev-b` |
+| B14 Official POI layer | 5 | `GET /api/map/pois` → sandbox POIs as GeoJSON with `official: true`; `api.js pois()` + `web/mock/pois.geojson` | **merged** into `dev-b` (fix round: finite bbox, ≤ 5 categories) |
+| B15 «Διορθώθηκαν κοντά σου» | 5 | `GET /api/map/resolved` → resolved sandbox requests as GeoJSON, hours to resolve, no personal fields; `api.js resolved()` | **merged** into `dev-b` (fix round: bad coords skipped, no negative hours, `source`, A-39) |
 
 ### B0: Contracts + first mocks (phase 0)
 SPEC «Backend contracts», «Εξωτερικές πηγές» (Fallback column), «Offline fallback», «Demo script». Every file in
@@ -477,3 +480,121 @@ SPEC F3, F4, F5, «Demo script» steps 3–4.
 | `test_obstacle_map_report_not_double_counted_on_work` | `POST /api/map/reports` with `category="obstacle"` on `W-SEED-001` (`lon=23.7420, lat=37.9660`) | `GET /api/map/works` shows `reports_count == 1` (not 2) for `W-SEED-001` |
 | `test_wheelchair_routing_avoids_map_report_obstacle` | `POST /api/map/reports` with `category="obstacle"` at Syntagma→Monastiraki midpoint (`lon=23.73025, lat=37.9758`) | `POST /api/map/routing` (`profile="wheelchair"`) avoids the midpoint (> 20 m) and includes a `reports` reason with that `MR-...` id |
 | `test_wheelchair_routing_avoids_b2_evidence_wrapped_in_progress_work` | B2-schema work with evidence-wrapped `start_date: {"value": "2026-10-01", "label": "CITED"}` and `end_date: {"value": "2026-12-31", "label": "CITED"}` (no top-level `status` key) on Syntagma→Monastiraki | `POST /api/map/routing` (`profile="wheelchair"`) avoids the work and includes a `works` reason with its id |
+
+## Phase 5: more from the AthensGov Sandbox
+
+B13–B15 use sandbox endpoints we already call (`app/sandbox.py`) but only thinly. They run in parallel: each one
+has its own router, module, test file and mock file. Shared files: `app/sandbox.py` (B13 touches only
+`_MockData.services/service`) and `web/js/api.js` (each task adds one exported function at the end of the reads
+section; nothing else in the file changes). No existing route changes (SPEC rule). The real sandbox response
+fields beyond the ones in `app/sandbox.py`'s mock are **not verified** (we have no OpenAPI copy yet): read every
+optional field with `.get()`, never crash on a missing one, and say in the report which fields you assumed.
+
+### B13: Service guide from the sandbox registry (phase 5)
+SPEC F5 (report flow) and the Stoa idea of «what do I do now». The 570-service registry is used today only by
+`POST /api/ask` (top hit). Here a report category gets its official service.
+**Files:** `app/service_guide.py` (new), `app/routers/service_guide.py` (new), `app/sandbox.py` (only
+`_MockData.services` and `_MockData.service`), `web/js/api.js` (new `serviceFor`), `web/mock/services.json` (new),
+`web/mock/README.md` (one row), `tests/test_B13_service_guide.py`, `web/tests/B13_service_guide.test.js`.
+- `app/service_guide.py`: `QUERIES: dict[str, str | None]`, one curated Greek registry query per sandbox category
+  (`categories.SANDBOX`): `pothole` «λακκούβα οδόστρωμα», `streetlight` «βλάβη ηλεκτροφωτισμού», `garbage`
+  «αποκομιδή απορριμμάτων», `bulky_waste` «αποκομιδή ογκωδών αντικειμένων», `graffiti` «καθαρισμός γκράφιτι»,
+  `tree` «κλάδεμα δέντρων», `sidewalk` «επισκευή πεζοδρομίου», `abandoned_vehicle` «εγκαταλελειμμένα οχήματα»,
+  `noise` «ηχορύπανση», `stray_animals` «αδέσποτα ζώα», `water_leak` «διαρροή νερού», `other` `None`.
+  `guide(sb, category) -> dict`: `sb.services(query, size=3)`, first item with `score > 0`, then
+  `sb.service(id)`. Returns `{category, label_el (categories.LABEL_EL), query, service, source}` where `service` is
+  `{id, title, documents: [], cost_eur, online_url, where, when, faq: []}` (missing fields → `None` / `[]`) or
+  `None` when there is no match or the category is `other`; `source` is `"mock"` when `sb.mock` else `"sandbox"`.
+- `app/routers/service_guide.py`: `GET /api/map/services?category=` (A-32 discovery). Unknown category → 422.
+  `SandboxError` → 503 (so `api.js` falls back to the mock).
+- `_MockData.services(q)`: a small fictional catalogue, every title ending in «(mock)», with entries for at least
+  `bulky_waste`, `streetlight`, `sidewalk`, `pothole`, `tree`, matched by a keyword of the query. A query that
+  matches nothing returns the existing `svc-mock-1` item (so `POST /api/ask` keeps working); a query from
+  `service_guide.QUERIES` that has no mock entry returns `items: []`. `_MockData.service(id)` returns the matching
+  entry, `svc-mock-1` otherwise. Existing tests keep passing.
+- `web/js/api.js`: `serviceFor(category)` → `read("service:"+category, "/api/map/services?category=…", …,
+  mock: the entry for that category in web/mock/services.json, or {category, service: null})`. Cached like other
+  reads (registry data is stable, not Stoa).
+- `web/mock/services.json`: `{ "<category>": {category, label_el, query, service, source: "mock"} }` for all 12
+  categories, same shape as the route.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_services_bulky_waste_returns_official_service` | mock sandbox, `GET /api/map/services?category=bulky_waste` | 200; `service.title` contains «ογκωδ» (case-insensitive); `documents` is a list; `source == "mock"`; `label_el == "Ογκώδη"` |
+| `test_services_every_category_has_query_except_other` | `service_guide.QUERIES` | keys == set(`categories.SANDBOX`); every value a non-empty str except `other` → `None` |
+| `test_services_other_returns_null_service` | `GET …?category=other` | 200, `service is None`, `sb.services` not called (monkeypatched spy) |
+| `test_services_unknown_category_422` | `GET …?category=spaceship` | 422 |
+| `test_services_no_match_returns_null` | monkeypatch `sb.services` → `{"items": []}` | 200, `service is None` |
+| `test_services_zero_score_ignored` | monkeypatch `sb.services` → one item with `score: 0` | `service is None`, `sb.service` not called |
+| `test_services_missing_fields_default` | monkeypatch `sb.service` → `{"id": "x", "title": "T"}` | `service == {id:"x", title:"T", documents:[], cost_eur:None, online_url:None, where:None, when:None, faq:[]}` |
+| `test_services_sandbox_error_503` | monkeypatch `sb.services` raising `SandboxError` | 503 |
+| `test_ask_still_returns_mock_service` | `POST /api/ask {"text": "βεβαίωση μόνιμης κατοικίας"}` | `service.id == "svc-mock-1"` (unchanged behaviour) |
+| `serviceFor: live answer marked live` (JS) | fake fetch → 200 JSON for `bulky_waste` | `source == "live"`, URL path `/api/map/services?category=bulky_waste` |
+| `serviceFor: offline falls back to mock file entry` (JS) | fetch rejects, fake mock loader returns services.json | `source == "mock"`, `category == "pothole"` |
+| `services.json has all 12 categories` (JS) | read `web/mock/services.json` | keys == the 12 sandbox categories; each `source == "mock"`; `other.service === null` |
+
+### B14: Official POI layer (phase 5)
+SPEC F2 layers. `/v1/pois` is used today only for Friendship Clubs and libraries (cool places, envgrid). This
+exposes the sandbox POIs as a map layer marked as the City's own data.
+**Files:** `app/routers/pois_map.py` (new), `web/js/api.js` (new `pois`), `web/mock/pois.geojson` (new),
+`web/mock/README.md` (one row), `tests/test_B14_pois.py`, `web/tests/B14_pois.test.js`.
+- `GET /api/map/pois?categories=friendship_club,library&bbox=minLon,minLat,maxLon,maxLat`. `categories` is
+  comma-separated, default `friendship_club,library` (the two verified categories; any other string is passed
+  through to the sandbox). `bbox` optional: centre = bbox centre, radius = half the bbox diagonal (haversine km),
+  capped at 5 km; no bbox → Σύνταγμα `[23.7348, 37.9755]`, 3 km. Bad bbox (not 4 floats, min > max) → 422.
+- One `sb.pois(category=c, lat, lng, radius_km, size=50)` call per category. A `SandboxError` on one category
+  skips it and lists it in top-level `errors: [category]`; all categories failing → 503.
+- Response: GeoJSON `FeatureCollection`; each Feature `id` = POI id, Point `[lng, lat]`, properties `{id, name,
+  category, address, open_now, distance_km, source: "sandbox"|"mock", official: true}`; duplicates (same id) once;
+  sorted by `distance_km`. POIs with no lat/lng are dropped.
+- `web/js/api.js`: `pois({ bbox, categories } = {})` → `read("pois", …, mock web/mock/pois.geojson)`.
+- `web/mock/pois.geojson`: the 3 fictional POIs of `_MockData` (names end in «(mock)»), same shape, `source: "mock"`.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_pois_default_returns_feature_collection` | mock sandbox, `GET /api/map/pois` | 200, `type == "FeatureCollection"`, 3 features, every `properties.official is True`, `source == "mock"` |
+| `test_pois_feature_coordinates_are_lng_lat` | same | feature `poi-mock-1` geometry `[23.7476, 37.9689]` |
+| `test_pois_single_category_filter` | `?categories=library` | only `library` features |
+| `test_pois_bbox_radius_excludes_far` | bbox of ~200 m around Σύνταγμα | 0 features (mock POIs are in Παγκράτι, > 1 km away) |
+| `test_pois_bbox_radius_capped_5km` | monkeypatched `sb.pois` spy, bbox spanning the whole Δήμος and more | spy saw `radius_km <= 5` |
+| `test_pois_bad_bbox_422` | `?bbox=1,2,3` and `?bbox=23.8,37.9,23.7,38.0` | 422 both |
+| `test_pois_one_category_error_listed` | `sb.pois` raises `SandboxError` for `library` only | 200, `errors == ["library"]`, friendship_club features present |
+| `test_pois_all_categories_error_503` | `sb.pois` always raises | 503 |
+| `test_pois_drops_missing_coordinates_and_duplicates` | `sb.pois` returns the same id twice + one item without lat | one feature |
+| `pois: live answer marked live` (JS) | fake fetch → 200 FeatureCollection | `source == "live"`, path starts `/api/map/pois` |
+| `pois: offline falls back to pois.geojson` (JS) | fetch rejects | `source == "mock"`, 3 features, all `official === true` |
+
+### B15: «Διορθώθηκαν κοντά σου» — resolved requests layer (phase 5)
+SPEC F5 (closing the loop) and the pitch: the City does fix things. Requests the sandbox marks `resolved` become a
+layer, with how long each took. `/api/equity` (per-district stats) already exists and is not touched.
+**Files:** `app/routers/resolved_map.py` (new), `web/js/api.js` (new `resolved`), `tests/test_B15_resolved.py`,
+`web/tests/B15_resolved.test.js`.
+- `GET /api/map/resolved?bbox=&days=30`. `sb.list_requests(status="resolved", lat, lng, radius_km, size=100)`
+  with the same bbox → centre/radius rule as B14 (no bbox: Σύνταγμα, 3 km; cap 5 km; bad bbox 422). `days` 1–365
+  (else 422). Today = `works.today()` (honours `STOA_TODAY`).
+- `resolved_at` = the `at` of the first `history` entry with status `resolved`, else `updated_at`. Requests with
+  `resolved_at` older than `days` before today are dropped. `hours_to_resolve` = hours from `created_at` to
+  `resolved_at`, 1 decimal, `None` if a timestamp is missing or unparsable.
+- Response: `FeatureCollection` + top-level `summary: {count, median_hours_to_resolve}` (median of non-null
+  values, `None` when none). Feature properties **only** `{id, category, label_el, resolved_at,
+  hours_to_resolve, district_name}`; coordinates rounded to 4 decimals (~10 m, SPEC privacy). Never `title`,
+  `description`, `address`, `note`, `history`, photos, persona or `created_by_you`. Requests without lat/lng are
+  dropped. `SandboxError` → 503.
+- `web/js/api.js`: `resolved({ bbox, days } = {})` → `read("resolved", …, mock: empty FeatureCollection with
+  summary {count: 0, median_hours_to_resolve: null})` (no mock file: we have no real resolved data to show).
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_resolved_lists_resolved_request` | mock sandbox: create a request at Σύνταγμα, PATCH it to `resolved` | `GET /api/map/resolved` has 1 feature with its id, `category`, `label_el`, `resolved_at` |
+| `test_resolved_excludes_open_requests` | one `submitted`, one `resolved` | only the resolved one |
+| `test_resolved_hours_to_resolve` | monkeypatched `list_requests`: `created_at` 2026-11-20T10:00Z, history resolved at 2026-11-21T16:30Z | `hours_to_resolve == 30.5`; `summary.median_hours_to_resolve == 30.5` |
+| `test_resolved_falls_back_to_updated_at` | no `resolved` history entry, `updated_at` set | `resolved_at == updated_at` |
+| `test_resolved_days_window` | `STOA_TODAY=2026-11-21`; one resolved 2026-11-19, one 2026-09-01; `days=30` | only the first |
+| `test_resolved_days_out_of_range_422` | `days=0` and `days=400` | 422 both |
+| `test_resolved_no_personal_fields` | request with title, description, address, note, history, `created_by_you` | feature properties keys == `{id, category, label_el, resolved_at, hours_to_resolve, district_name}` |
+| `test_resolved_coordinates_rounded` | lat `37.975512`, lng `23.734871` | geometry `[23.7349, 37.9755]` |
+| `test_resolved_bad_bbox_422` | `?bbox=a,b,c,d` | 422 |
+| `test_resolved_sandbox_error_503` | `list_requests` raises `SandboxError` | 503 |
+| `test_resolved_median_none_when_empty` | no resolved requests | `summary == {count: 0, median_hours_to_resolve: None}` |
+| `resolved: live answer marked live` (JS) | fake fetch → 200 | `source == "live"`, path starts `/api/map/resolved` |
+| `resolved: offline gives empty collection` (JS) | fetch rejects | `source == "mock"`, `features.length == 0`, `summary.count == 0` |

@@ -51,3 +51,9 @@ Later improvements, not work to do now. Each with its reason.
 - B12: when the sandbox is down, `routing_map._open_reports()` drops linked `obstacle` map reports (missing `"submitted"`
   default in `status.get(row["city_request_id"])`); duplicate `obstacle`/`damage` map reports within 50 m / 30 min have
   `city_request_id = None` and increment `works_map` `reports_count`.
+- B13: check the 11 `service_guide.QUERIES` against the live sandbox registry (top hit = right service?) once the key
+  is in; tests are offline. In mock mode `POST /api/ask` texts with a catalogue keyword (e.g. «δέντρο») now get that
+  mock service instead of `svc-mock-1`. No UI calls `api.serviceFor()` yet (report.js could show it after submit).
+- B14: only `friendship_club` and `library` POI categories are verified; get the sandbox OpenAPI spec for the rest.
+  No map layer calls `api.pois()` yet (Dev A).
+- B15: no map layer calls `api.resolved()` yet (Dev A); future-dated `resolved_at` values are kept.
