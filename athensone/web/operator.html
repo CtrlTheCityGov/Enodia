@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Enodia · Κέντρο Ελέγχου Δήμου Αθηναίων</title>
 <link rel="icon" href="/web/favicon.ico" type="image/x-icon">
+<script>
+  // Saved Light/Dark choice before first paint; same key as track.html (Wave 3).
+  try { var th = localStorage.getItem("enodia.theme"); if (th === "dark" || th === "light") document.documentElement.dataset.theme = th; } catch (e) {}
+</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.css">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="css/operator-case.css">
@@ -19,6 +23,7 @@
     <a href="/web/citizen.html" class="pill" style="text-decoration:none">Χάρτης Πολίτη</a>
     <a href="/web/ai-register.html" class="pill" style="text-decoration:none">AI Register</a>
     <button id="demoReset" type="button" class="pill hidden" title="Επαναφορά σεναρίου παρουσίασης (μόνο σε DEMO)">↺ Επαναφορά demo</button>
+    <button id="themeToggle" type="button" class="pill theme-toggle" aria-pressed="false">Σκοτεινό</button>
   </nav>
 </header>
 <div class="ops">
@@ -42,7 +47,25 @@
       <h2 id="eqH">Ισότητα εξυπηρέτησης ανά Δημοτική Κοινότητα</h2>
       <div id="equity" class="muted">…</div>
     </section>
-    <div style="margin:6px 0"><a href="/api/reports/export" download="athensone-reports.csv" style="font-size:.85em">Εξαγωγή αναφορών (CSV)</a></div>
+    <div style="margin:6px 0"><a id="csvExport" href="/api/reports/export" download="athensone-reports.csv" style="font-size:.85em">Εξαγωγή αναφορών (CSV)</a></div>
+    <!-- Wave 3: inbox KPIs, search and status filter (client-side; selection is kept). -->
+    <section class="inbox-tools" aria-label="Εργαλεία εισερχομένων">
+      <div class="kpis" role="group" aria-label="Σύνοψη αναφορών">
+        <div class="kpi"><span class="kpi__v" id="kpiTotal">—</span><span class="kpi__k">Σύνολο</span></div>
+        <div class="kpi kpi--warn"><span class="kpi__v" id="kpiPending">—</span><span class="kpi__k">Προς έλεγχο</span></div>
+        <div class="kpi kpi--info"><span class="kpi__v" id="kpiStoa">—</span><span class="kpi__k">🏛 Stoa</span></div>
+        <div class="kpi kpi--good"><span class="kpi__v" id="kpiResolved">—</span><span class="kpi__k">Επιλύθηκαν</span></div>
+      </div>
+      <input id="inboxSearch" type="search" placeholder="Αναζήτηση κωδικού, οδού ή τίτλου…" aria-label="Αναζήτηση αναφορών" autocomplete="off">
+      <div class="chips" role="group" aria-label="Φίλτρο κατάστασης">
+        <button type="button" class="chip is-active" data-filter="all" aria-pressed="true">Όλες</button>
+        <button type="button" class="chip" data-filter="pending" aria-pressed="false">Προς έλεγχο</button>
+        <button type="button" class="chip" data-filter="stoa" aria-pressed="false">🏛 Stoa</button>
+        <button type="button" class="chip" data-filter="in_progress" aria-pressed="false">Σε εξέλιξη</button>
+        <button type="button" class="chip" data-filter="resolved" aria-pressed="false">Επιλύθηκαν</button>
+      </div>
+      <p id="inboxCount" class="muted inbox-count" aria-live="polite"></p>
+    </section>
     <div id="list" role="region" aria-label="Λίστα αναφορών"></div>
   </div>
   <div class="detail">
@@ -115,17 +138,73 @@ const GBADGE = { ACTIVE: ["🏛 εγγύηση πιθανώς ενεργή", "go
 function badge(text, cls = "") { const b = document.createElement("span"); b.className = "badge " + cls; b.textContent = text;
   b.style.marginRight = "6px"; return b; }
 
+// --- Wave 3: inbox filter + search (client-side) ---
+let inboxFilter = "all", inboxQuery = "";
+const isPending = i => ["submitted", "received"].includes(i.status);
+const hasStoa = i => Boolean(i.case?.stoa?.best);
+const FILTERS = { all: () => true, pending: isPending, stoa: hasStoa,
+  in_progress: i => i.status === "in_progress", resolved: i => i.status === "resolved" };
+// Accent-insensitive, case-insensitive text match ("ερμου" finds "Ερμού").
+const fold = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+function matchesInbox(it) {
+  if (!(FILTERS[inboxFilter] || FILTERS.all)(it)) return false;
+  if (!inboxQuery) return true;
+  return [it.id, it.address, it.title, it.district_name].some(v => fold(v).includes(inboxQuery));
+}
+function updateKpis() {
+  $("#kpiTotal").textContent = items.length;
+  $("#kpiPending").textContent = items.filter(isPending).length;
+  $("#kpiStoa").textContent = items.filter(hasStoa).length;
+  $("#kpiResolved").textContent = items.filter(i => i.status === "resolved").length;
+}
+document.querySelectorAll(".chips .chip").forEach(btn => btn.addEventListener("click", () => {
+  inboxFilter = btn.dataset.filter;
+  document.querySelectorAll(".chips .chip").forEach(b => {
+    const on = b === btn; b.classList.toggle("is-active", on); b.setAttribute("aria-pressed", String(on)); });
+  renderList();
+}));
+let searchTimer = null;
+$("#inboxSearch").addEventListener("input", e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { inboxQuery = fold(e.target.value.trim()); renderList(); }, 120);
+});
+// --- /Wave 3 ---
+
 async function load() {
   const r = await api("/api/reports"); items = r.items; threshold = r.confidence_threshold;
-  $("#count").textContent = `${items.filter(i => ["submitted", "received"].includes(i.status)).length} προς έλεγχο`;
+  $("#count").textContent = `${items.filter(isPending).length} προς έλεγχο`;
+  updateKpis();
   // Rebuild the inbox only when something changed (a rebuild every 5 s made clicks miss).
   const sig = JSON.stringify(items.map(i => [i.id, i.status, i.case?.stage, i.case?.support_count, i.case?.stoa?.best?.accepted, i.upvotes]));
   if (sig === load._sig && markers.length === items.filter(i => i.lat != null && mapOk()).length) {
     if (sel) render(items.find(i => i.id === sel), false); return; }
   load._sig = sig;
+  renderList();
+  markers.forEach(m => m.remove()); markers = [];
+  for (const it of items.filter(i => i.lat != null && mapOk())) {
+    const color = { in_progress: "#0b5cad", resolved: "#1a7f37", rejected: "#888" }[it.status] || "#b42318";
+    const mk = new maplibregl.Marker({ color }).setLngLat([it.lng, it.lat]).addTo(map);
+    const me = mk.getElement(); me.onclick = () => select(it.id);
+    me.setAttribute("role", "button"); me.tabIndex = 0; me.setAttribute("aria-label", `Αναφορά ${it.id}: ${it.title}`);
+    me.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(it.id); } };
+    markers.push(mk);
+  }
+  if (sel) render(items.find(i => i.id === sel), false);
+}
+
+function renderList() {
   const list = $("#list"); list.innerHTML = "";
-  for (const it of items) {
+  const shown = items.filter(matchesInbox);
+  $("#inboxCount").textContent = shown.length === items.length ? `${items.length} αναφορές` : `${shown.length} από ${items.length} αναφορές`;
+  if (!shown.length) {
+    const p = document.createElement("p"); p.className = "muted inbox-empty";
+    p.textContent = items.length ? "Καμία αναφορά δεν ταιριάζει στο φίλτρο." : "Καμία αναφορά ακόμη.";
+    list.appendChild(p);
+  }
+  for (const it of shown) {
     const d = document.createElement("div"); d.className = "ticket" + (sel === it.id ? " sel" : "");
+    d.dataset.id = it.id; d.tabIndex = 0; d.setAttribute("role", "button");
+    d.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(it.id); } };
     const t = document.createElement("div"); t.className = "t"; t.textContent = it.title; d.appendChild(t);
     const m = document.createElement("div"); m.className = "muted"; m.textContent = `${it.id} · ${it.address}`; d.appendChild(m);
     const bs = document.createElement("div"); bs.style.marginTop = "6px";
@@ -142,20 +221,11 @@ async function load() {
     if (best) { const [t, c] = GBADGE[best.guarantee_state] || ["🏛 έργο", ""]; bs.appendChild(badge(t + (best.accepted ? " ✔" : ""), c)); }
     d.appendChild(bs); d.onclick = () => select(it.id); list.appendChild(d);
   }
-  markers.forEach(m => m.remove()); markers = [];
-  for (const it of items.filter(i => i.lat != null && mapOk())) {
-    const color = { in_progress: "#0b5cad", resolved: "#1a7f37", rejected: "#888" }[it.status] || "#b42318";
-    const mk = new maplibregl.Marker({ color }).setLngLat([it.lng, it.lat]).addTo(map);
-    const me = mk.getElement(); me.onclick = () => select(it.id);
-    me.setAttribute("role", "button"); me.tabIndex = 0; me.setAttribute("aria-label", `Αναφορά ${it.id}: ${it.title}`);
-    me.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(it.id); } };
-    markers.push(mk);
-  }
-  if (sel) render(items.find(i => i.id === sel), false);
 }
 
+// Tickets carry data-id, so the highlight stays right when the list is filtered.
 function select(id) { sel = id; render(items.find(i => i.id === id), true);
-  document.querySelectorAll(".ticket").forEach((el, i) => el.classList.toggle("sel", items[i].id === id)); }
+  document.querySelectorAll(".ticket").forEach(el => el.classList.toggle("sel", el.dataset.id === id)); }
 
 function render(it, fresh) {
   if (!it) return;
@@ -227,9 +297,46 @@ async function loadCase(id, fresh) {
   const sig = JSON.stringify([id, v.stage, v.events.length, v.support_count, v.dossiers.length, sessionStorage.getItem("op_role")]);
   if (!fresh && sig === caseSig) return;
   caseSig = sig;
-  window.renderCase(box, v, { post, toast, showWork, openDossier: (e) => {} });
+  window.renderCase(box, v, { post, toast, showWork, openDossier });
   if (fresh && v.stoa.best) showWork(v.stoa.best, v, false);
 }
+// --- Wave 3: downloads that need the operator key ---
+// A plain <a> can't send X-Operator-Key. Without a key (open demo server) the normal link is used, so the
+// dossier still opens in a new tab as before; with a key we fetch with the header and open/download a Blob.
+function authHeaders() {
+  const h = {}; const key = sessionStorage.getItem("op_key"); if (key) h["X-Operator-Key"] = key;
+  const who = sessionStorage.getItem("op_actor"); if (who) h["X-Operator-Name"] = encodeURIComponent(who);
+  return h;
+}
+async function fetchBlob(path, type) {
+  const r = await fetch(path, { headers: authHeaders() });
+  if (!r.ok) throw new Error(r.status === 403 ? "δεν επιτρέπεται (κλειδί υπαλλήλου)" : r.statusText || String(r.status));
+  return new Blob([await r.text()], { type });
+}
+async function openDossier(e, v, d) {
+  if (!sessionStorage.getItem("op_key")) return; // let <a target="_blank"> open it directly
+  e.preventDefault();
+  try {
+    const blob = await fetchBlob(`/api/cases/${encodeURIComponent(v.report.id)}/dossiers/${encodeURIComponent(d.id)}`,
+      "text/html;charset=utf-8");
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (err) { toast("Ο φάκελος δεν άνοιξε: " + err.message); }
+}
+$("#csvExport").addEventListener("click", async e => {
+  if (!sessionStorage.getItem("op_key")) return; // normal download link
+  e.preventDefault();
+  try {
+    const blob = await fetchBlob(e.currentTarget.getAttribute("href"), "text/csv;charset=utf-8");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "athensone-reports.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (err) { toast("Η εξαγωγή απέτυχε: " + err.message); }
+});
+// --- /Wave 3 ---
+
 function showWork(c, v, fly = true) {
   const g = c.work?.geometry; if (!g || !mapOk() || !map.getSource("cand")) return;
   map.getSource("cand").setData({ type: "FeatureCollection", features: [
@@ -353,7 +460,31 @@ $("#demoReset").onclick = async () => {
     $("#detail").classList.add("hidden"); $("#empty").classList.remove("hidden"); await load(); toast("Το demo επαναφέρθηκε."); }
   catch (e) { toast("Αποτυχία: " + e.message); } };
 if (map) map.on("load", () => { mapReady = true; addWorksLayer(); addCandLayer(); load(); });
-load(); loadRadar(); loadEquity(); setInterval(load, 5000); setInterval(loadEquity, 15000);
+// --- Wave 3: theme toggle (same key as track.html) ---
+const themeBtn = $("#themeToggle");
+function currentTheme() {
+  const t = document.documentElement.dataset.theme;
+  if (t === "dark" || t === "light") return t;
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function syncThemeBtn() {
+  const dark = currentTheme() === "dark";
+  themeBtn.setAttribute("aria-pressed", String(dark));
+  themeBtn.textContent = dark ? "Φωτεινό" : "Σκοτεινό";
+}
+themeBtn.addEventListener("click", () => {
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("enodia.theme", next); } catch {}
+  syncThemeBtn();
+});
+syncThemeBtn();
+
+// --- Wave 3: smart polling: nothing while the tab is hidden, an immediate refresh when it comes back ---
+const quiet = fn => () => { if (!document.hidden) Promise.resolve().then(fn).catch(() => {}); };
+load(); loadRadar(); loadEquity();
+setInterval(quiet(load), 5000); setInterval(quiet(loadEquity), 15000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { quiet(load)(); quiet(loadEquity)(); } });
 </script>
 </body>
 </html>

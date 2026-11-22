@@ -79,6 +79,12 @@ export function setChipState(chip, isVisible, state, options = {}) {
     onToggle(chip.id, next);
   }
 
+  // Tell other HUD parts (e.g. the transit menu, ui/transitmenu.js) which layer changed (Wave 1).
+  const bus = options.bus ?? state?.bus ?? null;
+  if (bus && typeof bus.dispatchEvent === "function" && typeof globalThis.CustomEvent === "function") {
+    bus.dispatchEvent(new CustomEvent("layer:toggle", { detail: { id: chip.id, visible: next } }));
+  }
+
   return next;
 }
 

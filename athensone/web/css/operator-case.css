@@ -73,3 +73,34 @@ button[disabled] { opacity: .45; cursor: not-allowed; }
 #dImg.photo { max-height: 280px; width: auto; max-width: 100%; object-fit: cover; }
 #dDesc { overflow-wrap: anywhere; }
 .case-sec .row { flex-wrap: wrap; }
+
+/* --- Wave 3: inbox KPIs, search, filter chips, inline validation, theme toggle --- */
+.inbox-tools { display: grid; gap: 8px; padding: 10px 14px 6px; border-bottom: 1px solid var(--line); }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.kpi { display: grid; gap: 1px; padding: 8px 10px; border-radius: 12px; background: var(--surface-subtle);
+  border: 1px solid var(--line); min-width: 0; }
+.kpi__v { font-size: 1.25em; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--ink); }
+.kpi__k { font-size: .72em; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi--warn .kpi__v { color: var(--warn); }
+.kpi--info .kpi__v { color: var(--accent); }
+.kpi--good .kpi__v { color: var(--good); }
+#inboxSearch { width: 100%; min-height: 38px; padding: 8px 12px; border-radius: 999px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 30px; padding: 4px 12px; border-radius: 999px; font-size: .8em; font-weight: 650; cursor: pointer;
+  background: var(--pill-bg); color: var(--ink); border: 1px solid var(--line);
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .12s ease; }
+.chip:hover { background: var(--hover-bg); }
+.chip:active { transform: scale(.96); }
+.chip.is-active, .chip[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: transparent; }
+[data-theme="dark"] .chip.is-active, [data-theme="dark"] .chip[aria-pressed="true"] { color: #0b1120; } /* #38bdf8 bg: dark ink for AA */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .chip.is-active, :root:not([data-theme="light"]) .chip[aria-pressed="true"] { color: #0b1120; }
+}
+.chip:focus-visible, .ticket:focus-visible, #inboxSearch:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.inbox-count { margin: 0; font-size: .78em; }
+.inbox-empty { padding: 14px; }
+.decide textarea.is-invalid { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(180, 35, 24, .18); animation: op-shake .32s ease; }
+@keyframes op-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.theme-toggle { cursor: pointer; }
+@media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .chip, .decide textarea.is-invalid { transition: none; animation: none; } }

@@ -201,7 +201,11 @@ async function read(key, path, init, fallback, { cache = true } = {}) {
     const data = await liveJson(path, init);
     if (cache) writeCache(path, data);
     report(key, "live");
-    return { ...data, source: "live" };
+    // `source` stays "live" (the HTTP call succeeded); the backend's own provenance (e.g. transit
+    // "snapshot" = last good OASA answer from disk) is kept as `backend_source` so the UI can label it.
+    const backendSource =
+      data && typeof data === "object" && "source" in data ? { backend_source: data.source ?? null } : {};
+    return { ...data, ...backendSource, source: "live" };
   } catch {
     // fall through to the cache
   }
@@ -247,6 +251,12 @@ export function reports({ bbox, since } = {}) {
 // The SPEC's ?user_id= is not sent: the backend reads the ao_token cookie (A-34).
 export function points() {
   return read("points", "/api/map/points", undefined, () => mockJson("points.json"));
+}
+
+// «+1 Επιβεβαίωση» on a map report pin (layers/reports.js). Write: never falls back to fake data.
+// Backend: POST /api/map/reports/{id}/confirm -> { id, confirmations, points_awarded } (app/routers/map_reports.py).
+export function confirmReport(reportId) {
+  return liveJson(`/api/map/reports/${encodeURIComponent(reportId)}/confirm`, { method: "POST" });
 }
 
 export function transitArrivals(stopCode) {

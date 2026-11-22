@@ -16,7 +16,8 @@
   --radius: 16px; --fs: 15px;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  /* Follows the OS unless the page's theme toggle chose Light explicitly (Wave 3). */
+  :root:not([data-theme="light"]) {
     --ink: #f1f5f9; --muted: #94a3b8; --line: rgba(248, 250, 252, 0.14);
     --bg: radial-gradient(circle at top left, #0f172a 0%, #0b1120 55%, #111827 100%);
     --bg-solid: #0b1120;
