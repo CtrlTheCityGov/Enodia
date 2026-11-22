@@ -196,7 +196,8 @@ function postJson(body) {
 //   init:     fetch options (POST body)
 //   fallback: async () => the mock answer (without `source`)
 //   cache:    false = skip the cache step entirely (stoaAsk, routing: A-38)
-async function read(key, path, init, fallback, { cache = true } = {}) {
+//   trim:     data => data, applied to cache and mock answers only (B17: bbox/status filters offline)
+async function read(key, path, init, fallback, { cache = true, trim = (d) => d } = {}) {
   try {
     const data = await liveJson(path, init);
     if (cache) writeCache(path, data);
@@ -211,29 +212,61 @@ async function read(key, path, init, fallback, { cache = true } = {}) {
   const cached = cache ? readCache(path) : null;
   if (cached) {
     report(key, "cache");
-    return { ...cached, source: "cache" };
+    return { ...trim(cached), source: "cache" };
   }
   const data = await fallback();
   report(key, "mock");
-  return { ...data, source: "mock" };
+  return { ...trim(data), source: "mock" };
+}
+
+// ---------- offline filters (B17) ----------
+
+function insideBbox([lon, lat], [minLon, minLat, maxLon, maxLat]) {
+  return lon >= minLon && lon <= maxLon && lat >= minLat && lat <= maxLat;
+}
+
+// B17 card: a Point is kept if it is inside the bbox; a LineString if any vertex is inside.
+// Other geometry types (none in our mocks today) are kept: we don't guess their extent.
+function featureInBbox(feature, bbox) {
+  const g = feature && feature.geometry;
+  if (!g) return true;
+  if (g.type === "Point") return insideBbox(g.coordinates, bbox);
+  if (g.type === "LineString") return g.coordinates.some((c) => insideBbox(c, bbox));
+  return true;
+}
+
+// Keeps the features that pass `keep`; a non-FeatureCollection answer is returned unchanged.
+function filterFeatures(data, keep) {
+  if (!data || !Array.isArray(data.features)) return data;
+  return { ...data, features: data.features.filter(keep) };
+}
+
+// trim option for GeoJSON reads that take a bbox: no bbox = no filter.
+function byBbox(bbox) {
+  if (!Array.isArray(bbox) || bbox.length !== 4) return (d) => d;
+  return (d) => filterFeatures(d, (f) => featureInBbox(f, bbox));
 }
 
 // ---------- reads (SPEC «Backend contracts», paths per A-33) ----------
 
-// bbox = [minLon, minLat, maxLon, maxLat] or { bbox }. Mock answers are the whole snapshot, not cut to bbox.
+// bbox = [minLon, minLat, maxLon, maxLat] or { bbox }. env is not GeoJSON: its mock is the whole snapshot.
 export function env(bboxOrOpts) {
   const bbox = bboxOrOpts && typeof bboxOrOpts === "object" && !Array.isArray(bboxOrOpts) ? bboxOrOpts.bbox : bboxOrOpts;
   return read("env", `/api/map/env${query({ bbox })}`, undefined, () => mockJson("env.json"));
 }
 
 export function works({ bbox, status: workStatus } = {}) {
+  // B17: the mock snapshot holds every status, so filter it like the backend would. The cache is already
+  // the live answer for this exact status, so only the bbox filter applies to it.
+  const byStatus = (d) => (workStatus ? filterFeatures(d, (f) => f.properties?.status === workStatus) : d);
   return read("works", `/api/map/works${query({ bbox, status: workStatus })}`, undefined,
-    () => mockJson("works.geojson"));
+    async () => byStatus(await mockJson("works.geojson")), { trim: byBbox(bbox) });
 }
 
 export function transit(bboxOrOpts) {
   const bbox = bboxOrOpts && typeof bboxOrOpts === "object" && !Array.isArray(bboxOrOpts) ? bboxOrOpts.bbox : bboxOrOpts;
-  return read("transit", `/api/map/transit${query({ bbox })}`, undefined, () => mockJson("transit.geojson"));
+  return read("transit", `/api/map/transit${query({ bbox })}`, undefined, () => mockJson("transit.geojson"),
+    { trim: byBbox(bbox) });
 }
 
 // On-duty pharmacies and hospitals; date = "YYYY-MM-DD" or { date }.
@@ -244,12 +277,13 @@ export function health(dateOrOpts) {
 
 export function reports({ bbox, since } = {}) {
   return read("reports", `/api/map/reports${query({ bbox, since })}`, undefined,
-    () => mockJson("reports.geojson"));
+    () => mockJson("reports.geojson"), { trim: byBbox(bbox) });
 }
 
 // Official City POIs (B14); categories = array or comma string, default friendship_club,library on the backend.
 export function pois({ bbox, categories } = {}) {
-  return read("pois", `/api/map/pois${query({ categories, bbox })}`, undefined, () => mockJson("pois.geojson"));
+  return read("pois", `/api/map/pois${query({ categories, bbox })}`, undefined, () => mockJson("pois.geojson"),
+    { trim: byBbox(bbox) });
 }
 
 // «Διορθώθηκαν κοντά σου» (B15). No mock file: we have no real resolved data to show offline, so the

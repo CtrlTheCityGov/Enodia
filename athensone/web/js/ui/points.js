@@ -17,6 +17,17 @@ export function formatDelta(n) {
   return "0";
 }
 
+// History dates in Athens time, not the UTC date of the ISO string (B17 card: «Europe/Athens date»).
+// 2026-11-21T22:30:00Z is 22/11/2026 in Athens (UTC+2). el-GR gives dd/mm/yyyy (Node full ICU; sure).
+const ATHENS_DATE = new Intl.DateTimeFormat("el-GR", {
+  timeZone: "Europe/Athens", day: "2-digit", month: "2-digit", year: "numeric",
+});
+
+export function athensDate(ts) {
+  const d = new Date(ts);
+  return Number.isNaN(d.getTime()) ? "άγνωστο" : ATHENS_DATE.format(d);
+}
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -71,7 +82,7 @@ export async function mount({ api, root, container, bus }) {
     const list = el("ul", "points-history");
     if (state.history.length === 0) list.appendChild(el("li", "", "Δεν υπάρχουν κινήσεις ακόμη."));
     for (const h of state.history) {
-      list.appendChild(el("li", "", `${formatDelta(h.delta)} · ${h.reason} · ${h.ts.slice(0, 10)}`));
+      list.appendChild(el("li", "", `${formatDelta(h.delta)} · ${h.reason} · ${athensDate(h.ts)}`));
     }
     panel.appendChild(list);
 
