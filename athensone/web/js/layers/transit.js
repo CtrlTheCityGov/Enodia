@@ -395,6 +395,40 @@ function formatArrivalsHtml(res) {
   return `${header}<ul class="transit-popup__list">${items}</ul>`;
 }
 
+function scheduleFallbackHtml(map, lines, lngLat) {
+  const refs = Array.isArray(lines) ? lines.map((l) => String(l).toUpperCase()) : [];
+  const isProastiakos = refs.some((r) => r.includes("Π") || r.includes("SUB") || r.includes("PRO"));
+  const hasMetro = refs.some((r) => /^Μ?[123]$/.test(r) || r.startsWith("M"));
+  const items = [];
+  if (hasMetro) {
+    items.push(`<li class="transit-popup__item"><span>Μετρό ΣΤΑΣΥ</span><strong>κάθε 4–7 λεπτά (05:30–00:30)</strong></li>`);
+  }
+  if (isProastiakos) {
+    items.push(`<li class="transit-popup__item"><span>Προαστιακός</span><strong>κάθε 15–30 λεπτά (05:00–23:30)</strong></li>`);
+  }
+  // Show up to 3 nearby live OASA buses from the buses GeoJSON source.
+  const busSrc = typeof map?.getSource === "function" ? map.getSource(BUSES_SOURCE_ID) : null;
+  const busFeatures = busSrc?._data?.features || busSrc?.data?.features || [];
+  if (Array.isArray(busFeatures) && busFeatures.length > 0 && lngLat) {
+    const nearby = [];
+    for (const bf of busFeatures) {
+      const c = bf?.geometry?.coordinates;
+      if (!Array.isArray(c) || c.length < 2) continue;
+      const dKm = Math.hypot((c[0] - lngLat.lng) * 88, (c[1] - lngLat.lat) * 111.3);
+      if (dKm <= 1.8) {
+        nearby.push({ dM: Math.round(dKm * 1000), p: bf.properties || {} });
+      }
+    }
+    nearby.sort((a, b) => a.dM - b.dM);
+    for (const n of nearby.slice(0, 3)) {
+      const line = n.p.line || n.p.route_code || "ΟΑΣΑ";
+      items.push(`<li class="transit-popup__item"><span>Λεωφ. ${escapeHtml(line)} (ζωντανό)</span><strong>~${n.dM} m</strong></li>`);
+    }
+  }
+  if (!items.length) return "";
+  return `<ul class="transit-popup__list">${items.join("")}</ul>`;
+}
+
 function setCursor(map, value) {
   const canvas = typeof map.getCanvas === "function" ? map.getCanvas() : null;
   if (canvas?.style) canvas.style.cursor = value;
@@ -427,7 +461,9 @@ function bindStationPopup(map) {
     const currentApi = apiByMap.get(map);
     const canLoad = Boolean(stopCode && typeof currentApi?.transitArrivals === "function");
 
-    const initialBody = canLoad ? `<p class="transit-popup__loading">Φόρτωση αφίξεων…</p>` : "";
+    const initialBody = canLoad
+      ? `<p class="transit-popup__loading">Φόρτωση αφίξεων…</p>`
+      : scheduleFallbackHtml(map, lines, event.lngLat);
     const popup = new PopupCtor({ className: "glass work-popup" })
       .setLngLat(event.lngLat)
       .setHTML(renderStationPopupHtml(name, lines, initialBody, extras))

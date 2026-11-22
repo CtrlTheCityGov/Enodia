@@ -250,7 +250,7 @@ def geojson(
     so its pin turns green too once the canonical case is resolved (Wave 3)."""
     linked = linked_request_by_report or {}
     rows = _rows(
-        "SELECT m.id, m.category, m.lon, m.lat, m.created_at, m.city_request_id, COUNT(c.account) AS confirmations"
+        "SELECT m.id, m.category, m.lon, m.lat, m.note, m.created_at, m.city_request_id, COUNT(c.account) AS confirmations"
         " FROM map_reports m LEFT JOIN map_report_confirmations c ON c.report_id = m.id"
         " GROUP BY m.id ORDER BY m.created_at DESC"
     )
@@ -266,8 +266,9 @@ def geojson(
         features.append({
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
-            "properties": {"id": r["id"], "category": r["category"], "created_at": r["created_at"],
-                           "confirmations": int(r["confirmations"]), "status": status},
+            "properties": {"id": r["id"], "category": r["category"], "note": r.get("note") or "",
+                           "created_at": r["created_at"], "confirmations": int(r["confirmations"]),
+                           "status": status},
         })
     return {"type": "FeatureCollection", "features": features}
 

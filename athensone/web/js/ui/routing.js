@@ -1411,6 +1411,29 @@ export function initRouting(container, map, api, options = {}) {
   const fromField = createPointField("from", "Από", "Σύνταγμα ή lat, lon");
   const toField = createPointField("to", "Προς", "Μοναστηράκι ή lat, lon");
 
+  const RECOMMENDED_ROUTES = [
+    { label: "Σύνταγμα → Κυψέλη", fromLabel: "Σύνταγμα", from: [23.7347, 37.9755], toLabel: "Κυψέλη", to: [23.7392, 38.0012] },
+    { label: "Σύνταγμα → Πετράλωνα", fromLabel: "Σύνταγμα", from: [23.7347, 37.9755], toLabel: "Πετράλωνα", to: [23.7094, 37.9684] },
+  ];
+  const presetRow = doc.createElement("div");
+  presetRow.className = "routing-presets";
+  presetRow.setAttribute("aria-label", "Προτεινόμενες διαδρομές");
+  for (const preset of RECOMMENDED_ROUTES) {
+    const pBtn = doc.createElement("button");
+    pBtn.type = "button";
+    pBtn.className = "routing-pick-btn";
+    pBtn.textContent = preset.label;
+    pBtn.addEventListener("click", () => {
+      fromField.input.value = preset.fromLabel;
+      toField.input.value = preset.toLabel;
+      coords.from = [...preset.from];
+      coords.to = [...preset.to];
+      requestRoute();
+    });
+    presetRow.appendChild(pBtn);
+  }
+  form.appendChild(presetRow);
+
   const profilesGroup = doc.createElement("div");
   profilesGroup.className = "routing-profiles";
   profilesGroup.setAttribute("role", "group");
