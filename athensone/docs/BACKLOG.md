@@ -57,3 +57,9 @@ Later improvements, not work to do now. Each with its reason.
 - B14: only `friendship_club` and `library` POI categories are verified; get the sandbox OpenAPI spec for the rest.
   No map layer calls `api.pois()` yet (Dev A).
 - B15: no map layer calls `api.resolved()` yet (Dev A); future-dated `resolved_at` values are kept.
+- Dev A (Αναστάσης): map layer «Υπηρεσίες Δήμου» on top of `api.pois()` (B14). Layerbar toggle (`aria-pressed`),
+  one icon per category, popup with name, address, `open_now` («άγνωστο» when null), «επίσημο» badge, and
+  «δοκιμαστικό» when `source`/`upstream_source` is `mock`. Starts with `friendship_club` (Λέσχες Φιλίας, the former
+  ΚΑΠΗ: unverified rename, check before the pitch) and `library`.
+- Dev B: find the sandbox's other POI categories (ΚΕΠ, cooling rooms, nurseries, ...) from its OpenAPI spec or a
+  live `GET /api/pois?radius_km=5` with the key, then add the verified ones to `pois_map.DEFAULT_CATEGORIES`.
