@@ -21,9 +21,9 @@ export const MODES = Object.freeze({
   pm25: "pm25",
 });
 
-// Temperature normalization bounds (15-42 C for Athens summer/winter range) (certainty: design default).
-const TEMP_MIN_C = 15;
-const TEMP_MAX_C = 42;
+// Temperature normalization bounds (5-38 C covering winter through summer heatwaves in Athens).
+const TEMP_MIN_C = 5;
+const TEMP_MAX_C = 38;
 
 // AQI normalization bounds (0-150 standard air quality index scale) (certainty: design default).
 const AQI_MIN = 0;
@@ -33,11 +33,11 @@ const AQI_MAX = 150;
 const PM25_MIN = 0;
 const PM25_MAX = 75;
 
-// Heatmap visual tuning constants for urban point grids (certainty: design default).
-const HEATMAP_INTENSITY = 1.1;
-const HEATMAP_RADIUS_LOW_ZOOM = 24;
-const HEATMAP_RADIUS_HIGH_ZOOM = 42;
-const HEATMAP_OPACITY = 0.72;
+// Heatmap visual tuning constants for 600 m urban point grids.
+const HEATMAP_INTENSITY = 1.4;
+const HEATMAP_RADIUS_LOW_ZOOM = 36;
+const HEATMAP_RADIUS_HIGH_ZOOM = 90;
+const HEATMAP_OPACITY = 0.78;
 
 // Heatmap color ramp for temperature mode (cool blue -> amber -> hot red) (certainty: design default).
 const TEMP_COLOR_RAMP = [
@@ -150,9 +150,9 @@ export function heatmapWeightForMode(mode = MODES.temp) {
   return [
     "interpolate",
     ["linear"],
-    ["coalesce", ["to-number", ["get", "temp_c"]], 0],
+    ["coalesce", ["to-number", ["get", "temp_c"]], TEMP_MIN_C],
     TEMP_MIN_C,
-    0,
+    0.25,
     TEMP_MAX_C,
     1,
   ];
@@ -182,8 +182,7 @@ async function loadEnvData(map, api, state) {
     return emptyFeatureCollection();
   }
   try {
-    const bbox = getMapBbox(map);
-    const res = await api.env(bbox ? { bbox } : undefined);
+    const res = await api.env();
     if (res?.source && res.source !== "live" && typeof state?.onOffline === "function") {
       state.onOffline();
     }
