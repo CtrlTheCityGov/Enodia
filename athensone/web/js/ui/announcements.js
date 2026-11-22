@@ -118,8 +118,7 @@ export async function mount({ api, root, container, bus }) {
   }
 
   panel.append(header, filterBar, emptyMsg, list);
-  const host = root.parentElement || doc.querySelector?.(".hud") || root;
-  host.appendChild(panel);
+  root.appendChild(panel);
 
   let loaded = false;
   async function loadAnnouncements() {

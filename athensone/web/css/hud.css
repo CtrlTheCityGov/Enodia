@@ -664,6 +664,16 @@ body {
   align-items: center;
 }
 
+.forum-panel {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(760px, calc(100vw - 28px));
+  max-height: calc(100vh - 90px);
+  z-index: 26;
+}
+
 .forum-controls {
   display: flex;
   flex-wrap: wrap;

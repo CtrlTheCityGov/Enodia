@@ -364,8 +364,7 @@ export async function mount({ api, root, container, bus }) {
 
   controls.append(filterBar, sortSelect);
   panel.append(header, controls, emptyMsg, list);
-  const host = root.parentElement || doc.querySelector?.(".hud") || root;
-  host.appendChild(panel);
+  root.appendChild(panel);
 
   async function loadReports() {
     try {
