@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 import httpx
 
-from . import ckan, config, env, interop, privacy, routing, store, vision, works
+from . import cases, categories, ckan, config, env, interop, privacy, routing, store, vision, works
 from .geo import cluster, haversine_km
 from .sandbox import Sandbox, SandboxError
 # --- T2: Points wallet, earn side ---
@@ -45,7 +45,8 @@ async def _sandbox_error(_req, exc):
 @app.get("/api/health")
 def health():
     return {"ok": True, "mock": sb.mock, "persona": sb.persona, "vision": config.VISION_PROVIDER,
-            "valhalla": config.VALHALLA_URL}
+            "valhalla": config.VALHALLA_URL, "demo_mode": config.DEMO_MODE,
+            "operator_auth": bool(os.getenv("OPERATOR_KEY", "").strip())}
 
 
 @app.get("/api/me")
@@ -460,6 +461,12 @@ async def report(request: Request, response: Response, photo: UploadFile = File(
     near = sb.list_requests(lat=lat, lng=lng, radius_km=config.DUPLICATE_RADIUS_KM, category=ai["category"])
     dup = next((r for r in near.get("items", []) if r.get("status") in OPEN), None)
     if dup:
+        # Keep this citizen's submission (photo, note, AI result) as supporting evidence of the open case
+        # instead of dropping it (audit F-2). Response shape unchanged.
+        child = f"PH-{uuid.uuid4().hex[:12]}"
+        store.save(child, name, lat, lng, ai, p["faces"], privacy_status=p["privacy_status"])
+        cases.link(child, "photo", dup["id"], lat, lng, note or None, name,
+                   round(1000 * float(dup.get("distance_km") or 0), 1))
         sb.upvote(dup["id"])
         return {"duplicate_of": dup["id"], "request": sb.get_request(dup["id"]), "ai": ai,
                 "photo_url": photo_url, "faces_blurred": p["faces"], "gps_from_photo": bool(p["gps"])}
@@ -469,6 +476,12 @@ async def report(request: Request, response: Response, photo: UploadFile = File(
     req = sb.create_request(category=ai["category"], title=ai["title_el"],
                             address=address or f"{lat:.5f}, {lng:.5f}", description=desc, lat=lat, lng=lng)
     store.save(req["id"], name, lat, lng, ai, p["faces"], privacy_status=p["privacy_status"])
+    cls = categories.normalise(ai["category"], None, note)
+    cls["ai_category"], cls["ai_confidence"] = ai["category"], ai.get("confidence")
+    if ai.get("confidence", 0) < config.CONFIDENCE_THRESHOLD:
+        cls["needs_review"] = True
+        cls["reasons"].append("Η AI κατηγοριοποίηση έχει χαμηλή βεβαιότητα.")
+    cases.ensure(req["id"], cls, lat, lng, "photo", req["id"])
     # --- T2: Points wallet, earn side ---
     token = points.ensure_token(request, response)
     points.link_report(req["id"], token)
@@ -478,8 +491,9 @@ async def report(request: Request, response: Response, photo: UploadFile = File(
 
 
 @app.get("/api/reports/export")
-def export_reports_csv():
+def export_reports_csv(request: Request):
     """Export triaged reports as UTF-8 CSV for municipal operator handoff."""
+    _require_operator(request)
     import csv
     import io
     from fastapi.responses import Response
@@ -507,12 +521,15 @@ def export_reports_csv():
 
 
 @app.get("/api/reports/{rid}")
-def get_report(rid: str):
+def get_report(rid: str, request: Request):
+    _require_operator(request)
     return _merge(sb.get_request(rid))
 
 
 @app.get("/api/reports")
-def list_reports():
+def list_reports(request: Request = None):
+    if request is not None:
+        _require_operator(request)
     items = [_merge(r) for r in sb.list_requests(mine=True).get("items", [])]
     located = [r for r in items if r.get("lat") is not None]
     for r, c in zip(located, cluster([(r["lat"], r["lng"]) for r in located], radius_km=0.1)):
@@ -522,6 +539,15 @@ def list_reports():
         sizes[r["cluster"]] = sizes.get(r["cluster"], 0) + 1
     for r in located:
         r["cluster_size"] = sizes[r["cluster"]]
+    # Each canonical case carries its workflow stage, support count and Stoa summary. Submissions linked to
+    # another case as duplicates are shown inside that case, not as separate rows.
+    from .routers import cases as _cases_api
+
+    for r in items:
+        try:
+            r["case"] = _cases_api.summary(r)
+        except Exception as exc:  # never let one bad record break the inbox
+            r["case"] = {"error": str(exc)[:200]}
     order = {"submitted": 0, "received": 1, "in_progress": 2, "resolved": 3, "rejected": 4}
     items.sort(key=lambda r: (order.get(r["status"], 9), -(r.get("local") or {}).get("severity", 0)))
     return {"items": items, "confidence_threshold": config.CONFIDENCE_THRESHOLD}
@@ -533,11 +559,13 @@ class Decision(BaseModel):
 
 def _require_operator(request: Request) -> None:
     """Enforce X-Operator-Key when OPERATOR_KEY env var is configured (fail-closed operator auth)."""
+    import hmac
+
     expected = os.getenv("OPERATOR_KEY", "").strip()
     if not expected:
         return
     provided = (request.headers.get("X-Operator-Key") or "").strip()
-    if provided != expected:
+    if not hmac.compare_digest(provided.encode(), expected.encode()):
         raise HTTPException(403, "operator authorization required")
 
 
@@ -554,6 +582,7 @@ def approve(rid: str, request: Request, d: Decision | None = None):
     _require_transition(rid, ("resolved", "rejected"))
     note = (d.note if d and d.note else "Εγκρίθηκε από υπάλληλο του Δήμου · το συνεργείο ειδοποιήθηκε")
     out = _merge(sb.update_request(rid, status="in_progress", note=note))
+    _legacy_stage(rid, "APPROVED_ACTION", "approve", note, request)
     # --- T2: Points wallet, earn side ---
     points.grant_for_report(rid, action="report_approved", verified_by="operator", district=out.get("district_name"))
     # --- /T2 ---
@@ -568,6 +597,7 @@ def resolve(rid: str, request: Request):
     _require_operator(request)
     _require_transition(rid, ("rejected",))
     updated = sb.update_request(rid, status="resolved", note="Το πρόβλημα αποκαταστάθηκε")
+    _legacy_stage(rid, "RESOLVED", "resolve", None, request)
     # --- T1: "Is it fixed?" loop ---
     store.ask_confirmation(rid)
     # --- end T1 ---
@@ -578,7 +608,21 @@ def resolve(rid: str, request: Request):
 def reject(rid: str, request: Request, d: Decision | None = None):
     _require_operator(request)
     _require_transition(rid, ("resolved",))
-    return _merge(sb.update_request(rid, status="rejected", note=(d.note if d and d.note else "Απορρίφθηκε από υπάλληλο")))
+    out = _merge(sb.update_request(rid, status="rejected", note=(d.note if d and d.note else "Απορρίφθηκε από υπάλληλο")))
+    _legacy_stage(rid, "REJECTED", "reject", d.note if d else None, request)
+    return out
+
+
+def _legacy_stage(rid: str, stage: str, what: str, note: str | None, request: Request) -> None:
+    """Keep the case stage and audit log in step when the older one-click endpoints are used."""
+    c = cases.get(rid)
+    if not c:
+        return
+    from urllib.parse import unquote
+
+    actor = (unquote(request.headers.get("X-Operator-Name") or "") or "operator (legacy endpoint)").strip()[:80]
+    cases._set_stage(rid, stage)
+    cases.log(rid, actor, "legacy_status", c["stage"], stage, note, {"endpoint": what})
 
 
 # --- T1: "Is it fixed?" loop ---
@@ -673,6 +717,10 @@ async def confirm_report(
 
     if not fixed:
         req = sb.update_request(rid, status="in_progress", note=REOPEN_NOTE)
+        c = cases.get(rid)
+        if c and c["stage"] in ("RESOLVED", "CITIZEN_NOTIFIED"):
+            cases._set_stage(rid, "TRIAGED")
+            cases.log(rid, "citizen", "reopen", c["stage"], "TRIAGED", REOPEN_NOTE, {"via": "confirm"})
 
     store.record_confirmation(rid, fixed=fixed, photo=photo_name)
     merged = _merge(req)
@@ -805,8 +853,11 @@ def points_districts():
 
 # ------------------------------------------------------------------ admin
 @app.post("/api/admin/reset")
-def reset():
+def reset(request: Request = None):
+    if request is not None:
+        _require_operator(request)
     store.clear()
+    cases.clear()
     # --- B6: Report flow + ---
     map_reports.clear()
     # --- /B6 ---

@@ -22,6 +22,8 @@
       <span class="hud-divider" aria-hidden="true"></span>
       <!-- Visible Greek label ("Σκοτεινό"/"Φωτεινό") serves as the accessible name for WCAG 2.5.3 label-in-name (TASKS_A.md A5). -->
       <button id="theme-toggle" type="button" class="hud-btn hud-theme-btn" aria-pressed="false">Σκοτεινό</button>
+      <span class="hud-divider" aria-hidden="true"></span>
+      <a id="my-reports" class="hud-btn hud-tab" href="/web/track.html">Οι αναφορές μου</a>
     </div>
     <nav id="hud-layerbar" class="hud-top-center" aria-label="Επίπεδα χάρτη"></nav>
     <div id="hud-points" class="hud-top-right" role="region" aria-label="Πόντοι Γειτονιάς"></div>
@@ -34,6 +36,8 @@
 
   <!-- MapLibre GL JS 5.3.0 JS from jsDelivr CDN (source: SPEC.md "Engine και στυλ", certainty: verified). -->
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
+  <!-- Offline fallback: the same MapLibre 5.3.0 build (BSD-3-Clause, see vendor/…/LICENSE.txt) when the CDN is unreachable. -->
+  <script src="/web/vendor/maplibre-fallback.js"></script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

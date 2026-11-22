@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Enodia · Οι αναφορές μου</title>
+<link rel="icon" href="/web/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="app.css">
+<style>
+  main { max-width: 640px; margin: 0 auto; padding: 16px; }
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .top h1 { font-size: 1.15em; margin: 0; flex: 1; }
+  .rep { margin-bottom: 14px; }
+  .rep h2 { font-size: 1em; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .stage { font-size: 1.25em; font-weight: 750; margin: 6px 0; }
+  .bar { display: flex; gap: 4px; margin: 8px 0 4px; }
+  .bar span { flex: 1; height: 6px; border-radius: 99px; background: var(--line); }
+  .bar span.on { background: var(--accent); }
+  .city { background: var(--quote-bg); border-radius: 10px; padding: 8px 12px; margin: 8px 0; }
+  form.find { display: flex; gap: 8px; margin: 12px 0 18px; }
+  form.find input { flex: 1; }
+  .confirm { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <img src="/web/assets/enodia-logo-square.png" alt="" width="28" height="28" style="border-radius:7px">
+    <h1>Οι αναφορές μου</h1>
+    <a class="pill" href="/web/citizen.html" style="text-decoration:none">← Χάρτης</a>
+  </div>
+  <form class="find" id="find">
+    <label for="tid" class="hidden">Κωδικός αναφοράς</label>
+    <input id="tid" placeholder="Κωδικός αναφοράς, π.χ. MR-…" autocomplete="off">
+    <button type="submit">Αναζήτηση</button>
+  </form>
+  <div id="out" aria-live="polite"></div>
+  <p class="muted">Βλέπετε μόνο την πορεία της αναφοράς σας. Τα στοιχεία σας δεν εμφανίζονται δημόσια· η θέση δείχνεται
+    με ακρίβεια περίπου 100 m. Οι κωδικοί αποθηκεύονται μόνο σε αυτή τη συσκευή.</p>
+</main>
+<script>
+(function () {
+  "use strict";
+  const ORDER = ["Η αναφορά καταχωρήθηκε", "Παραλήφθηκε", "Σε αξιολόγηση", "Προγραμματίστηκε αποκατάσταση", "Αποκαταστάθηκε"];
+  const $ = (s) => document.querySelector(s);
+  function h(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") n.className = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v); }
+    for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : String(k));
+    return n;
+  }
+  const mine = () => { try { const l = JSON.parse(localStorage.getItem("ao_my_reports") || "[]"); return Array.isArray(l) ? l : []; } catch { return []; } };
+  const remember = (id) => { try { localStorage.setItem("ao_my_reports", JSON.stringify([id, ...mine().filter((x) => x !== id)].slice(0, 20))); } catch {} };
+
+  async function card(id) {
+    const box = h("section", { class: "card rep", "aria-label": `Αναφορά ${id}` }, h("p", { class: "muted" }, `Φόρτωση ${id}…`));
+    $("#out").append(box);
+    let t;
+    try {
+      const r = await fetch(`/api/track/${encodeURIComponent(id)}`);
+      if (r.status === 404) { box.replaceChildren(h("p", {}, `Δεν βρέθηκε αναφορά με κωδικό ${id}.`)); return; }
+      if (!r.ok) throw new Error(r.statusText);
+      t = await r.json();
+    } catch (e) { box.replaceChildren(h("p", {}, "Δεν ήταν δυνατή η σύνδεση. Δοκιμάστε ξανά αργότερα.")); return; }
+    const step = Math.max(0, ORDER.indexOf(t.stage_el));
+    box.replaceChildren(...[
+      h("h2", {}, h("span", {}, t.category_el || "Αναφορά"), h("span", { class: "badge" }, id),
+        t.support_count > 1 ? h("span", { class: "badge info" }, `👥 ${t.support_count} πολίτες ανέφεραν το ίδιο σημείο`) : null),
+      h("div", { class: "stage" }, t.stage_el),
+      t.city_case ? h("div", { class: "bar", "aria-hidden": "true" }, ORDER.slice(1).map((_, i) => h("span", { class: i < Math.max(step, 1) ? "on" : "" }))) : null,
+      t.linked_to_existing ? h("p", { class: "muted" }, "Η αναφορά σας συνδέθηκε με υπάρχουσα αναφορά για το ίδιο σημείο και ενισχύει την προτεραιότητά της.") : null,
+      t.note ? h("p", { class: "muted" }, t.note) : null,
+      h("ul", { class: "timeline" }, (t.updates || []).map((u) => u.from_city
+        ? h("li", {}, h("div", { class: "city" }, h("b", {}, "Μήνυμα από τον Δήμο: "), u.text))
+        : h("li", {}, `${u.at ? new Date(u.at).toLocaleString("el-GR") : ""} · ${u.text}`))),
+    ].filter(Boolean));
+    if (t.can_confirm_fix && t.city_case) {
+      const ask = h("div", { class: "confirm" }, h("b", {}, "Διορθώθηκε;"));
+      const send = async (fixed) => {
+        const fd = new FormData(); fd.append("fixed", String(fixed));
+        const r = await fetch(`/api/reports/${encodeURIComponent(t.city_case)}/confirm`, { method: "POST", body: fd });
+        ask.replaceChildren(h("span", {}, r.ok ? (fixed ? "Ευχαριστούμε για την επιβεβαίωση!" : "Ευχαριστούμε · η αναφορά ξανανοίγει.") : "Δεν καταχωρήθηκε."));
+      };
+      ask.append(h("button", { type: "button", class: "good", onclick: () => send(true) }, "Ναι"),
+        h("button", { type: "button", class: "bad", onclick: () => send(false) }, "Όχι ακόμα"));
+      box.append(ask);
+    }
+  }
+
+  function renderAll() {
+    $("#out").replaceChildren();
+    const ids = mine();
+    if (!ids.length) { $("#out").append(h("p", { class: "card" }, "Δεν έχετε κάνει ακόμα αναφορά από αυτή τη συσκευή. Πατήστε «+» στον χάρτη.")); return; }
+    ids.forEach(card);
+  }
+  $("#find").addEventListener("submit", (e) => {
+    e.preventDefault(); const id = $("#tid").value.trim(); if (!id) return;
+    remember(id); renderAll();
+  });
+  const q = new URLSearchParams(location.search).get("id");
+  if (q) remember(q);
+  renderAll();
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") renderAll(); });
+})();
+</script>
+</body>
+</html>

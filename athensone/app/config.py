@@ -11,9 +11,13 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
-PHOTO_DIR = DATA_DIR / "photos"
-DB_PATH = DATA_DIR / "athensone.db"
+# Overridable so tests never touch the demo database or photo folder (audit finding F-9).
+PHOTO_DIR = Path(os.getenv("ATHENSONE_PHOTO_DIR") or DATA_DIR / "photos")
+DB_PATH = Path(os.getenv("ATHENSONE_DB") or DATA_DIR / "athensone.db")
 PHOTO_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+# Demo mode: deterministic fixtures, reset/seed endpoint enabled, nothing is ever sent anywhere.
+DEMO_MODE = os.getenv("DEMO_MODE", "1").lower() in ("1", "true", "yes")
 
 SANDBOX_URL = os.getenv("SANDBOX_URL", "https://athensgov.cityofathens.gr/sandbox").rstrip("/")
 SANDBOX_KEY = os.getenv("SANDBOX_KEY", "")

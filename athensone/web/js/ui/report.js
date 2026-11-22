@@ -11,6 +11,28 @@ export const CATEGORIES = [
   { id: "work_progress", label: "Πρόοδος έργου", icon: "🏗️" },
 ];
 
+// What exactly is damaged (sent as `subtype`). Lets a damaged sidewalk reach the Stoa works lookup instead of
+// becoming a generic "other" request (audit F-1). Ids match app/categories.py SUBTYPES.
+export const SUBTYPES = [
+  { id: "sidewalk", label: "Πεζοδρόμιο" },
+  { id: "pothole", label: "Λακκούβα" },
+  { id: "streetlight", label: "Φωτισμός" },
+  { id: "ramp", label: "Ράμπα ΑμεΑ" },
+  { id: "other", label: "Άλλο" },
+];
+export const SUBTYPE_CATEGORIES = ["damage"];
+// Tracking ids of this device's reports (no personal data: ids only). Our choice. Certainty: n/a.
+export const MINE_KEY = "ao_my_reports";
+
+export function rememberReport(storage, id) {
+  if (!id || String(id).startsWith("offline-")) return;
+  try {
+    const list = JSON.parse(storage.getItem(MINE_KEY) || "[]");
+    const next = [id, ...(Array.isArray(list) ? list : []).filter((x) => x !== id)].slice(0, 20);
+    storage.setItem(MINE_KEY, JSON.stringify(next));
+  } catch { /* storage full or blocked: tracking link still shown */ }
+}
+
 // localStorage key of the offline queue. Our choice (no SPEC name). Certainty: n/a.
 export const QUEUE_KEY = "ao_report_queue";
 
@@ -21,9 +43,10 @@ export const BLUR_MESSAGE = "Θολώνουμε πρόσωπα και πινακ
 const FOLD_CLOSE_MS = 200;
 
 // Multipart fields of POST /reports (SPEC «Backend contracts»): category, lon, lat, note, work_id?, photo?
-export function buildForm({ category, lngLat, note = "", photo = null, work_id = null }) {
+export function buildForm({ category, lngLat, note = "", photo = null, work_id = null, subtype = null }) {
   const form = new FormData();
   form.append("category", category);
+  if (subtype) form.append("subtype", subtype);
   form.append("lon", String(lngLat.lng));
   form.append("lat", String(lngLat.lat));
   form.append("note", note || "");
@@ -63,8 +86,10 @@ export async function submitReport(input, api, storage) {
     return { queued: false, result: await send(api, buildForm(input)) };
   } catch (err) {
     if (isRejected(err)) throw err;
-    const { category, lngLat, note = "", work_id = null } = input;
-    setQueue(storage, [...getQueue(storage), { category, lngLat: { lng: lngLat.lng, lat: lngLat.lat }, note, work_id }]);
+    const { category, lngLat, note = "", work_id = null, subtype = null } = input;
+    const item = { category, lngLat: { lng: lngLat.lng, lat: lngLat.lat }, note, work_id };
+    if (subtype) item.subtype = subtype;
+    setQueue(storage, [...getQueue(storage), item]);
     return { queued: true, photoDropped: Boolean(input.photo) };
   }
 }
@@ -156,6 +181,14 @@ export function mount({ map, api, root, container, bus }) {
   const panel = el("form", { class: "glass report-panel", hidden: "", "aria-label": "Αναφορά" });
   const title = el("p", { class: "report-title" });
   const hint = el("p", { class: "report-hint" }, "Σύρετε την πινέζα στο σωστό σημείο.");
+  const subBox = el("fieldset", { class: "report-sub", hidden: "" });
+  subBox.append(el("legend", {}, "Τι έχει ζημιά;"));
+  for (const st of SUBTYPES) {
+    const lab = el("label", { class: "report-sub__opt" });
+    const r = el("input", { type: "radio", name: "subtype", value: st.id });
+    lab.append(r, el("span", {}, " " + st.label));
+    subBox.append(lab);
+  }
   const noteLabel = el("label", {}, "Σχόλιο (προαιρετικό)");
   const note = el("textarea", { name: "note", rows: "2", maxlength: "500" });
   noteLabel.append(note);
@@ -166,7 +199,7 @@ export function mount({ map, api, root, container, bus }) {
   const preview = el("img", { class: "report-preview", alt: "Η φωτογραφία με θολωμένα πρόσωπα και πινακίδες", hidden: "" });
   const sendBtn = el("button", { type: "submit" }, "Αποστολή");
   const cancelBtn = el("button", { type: "button" }, "Άκυρο");
-  panel.append(title, hint, noteLabel, photoLabel, sendBtn, cancelBtn, status, preview);
+  panel.append(title, hint, subBox, noteLabel, photoLabel, sendBtn, cancelBtn, status, preview);
   root.append(fab, menu, panel);
 
   function toggleMenu(open) {
@@ -205,6 +238,8 @@ export function mount({ map, api, root, container, bus }) {
     status.textContent = "";
     preview.hidden = true;
     sendBtn.disabled = false;
+    subBox.hidden = !SUBTYPE_CATEGORIES.includes(category);
+    for (const r of subBox.querySelectorAll?.("input") || []) r.checked = false;
     state.marker = new window.maplibregl.Marker({ draggable: true })
       .setLngLat(lngLat || map.getCenter())
       .addTo(map);
@@ -240,8 +275,9 @@ export function mount({ map, api, root, container, bus }) {
     e.preventDefault();
     const file = photo.files?.[0] || null;
     const { lng: lon, lat } = state.marker.getLngLat();
+    const picked = subBox.hidden ? null : subBox.querySelector?.("input:checked")?.value || null;
     const input = { category: state.category, lngLat: { lng: lon, lat }, note: note.value,
-      photo: file, work_id: state.work_id };
+      photo: file, work_id: state.work_id, subtype: picked };
     sendBtn.disabled = true;
     status.textContent = file ? BLUR_MESSAGE : "Αποστολή…";
     try {
@@ -267,9 +303,12 @@ export function mount({ map, api, root, container, bus }) {
           : r.photo_url_blurred
             ? " · Φωτογραφία επεξεργάστηκε"
             : "";
-      const toastMsg = r.points_awarded > 0
-        ? `Αναφορά καταχωρήθηκε · +${r.points_awarded} Πόντοι Γειτονιάς${privNote}`
-        : `Αναφορά καταχωρήθηκε${privNote}`;
+      const linkedNote = r.linked_to_existing ? " · Συνδέθηκε με υπάρχουσα αναφορά στο ίδιο σημείο" : "";
+      const trackId = r.tracking_id || r.id;
+      rememberReport(storage, trackId);
+      const toastMsg = (r.points_awarded > 0
+        ? `Αναφορά ${trackId} καταχωρήθηκε · +${r.points_awarded} Πόντοι Γειτονιάς${privNote}`
+        : `Αναφορά ${trackId} καταχωρήθηκε${privNote}`) + linkedNote;
       if (r.photo_url_blurred) {
         preview.src = r.photo_url_blurred; // only the backend's blurred copy is ever shown (SPEC «Privacy»)
       }
@@ -285,7 +324,11 @@ export function mount({ map, api, root, container, bus }) {
       bus.dispatchEvent(new CustomEvent("report:created", {
         detail: { id: r.id, category: input.category, lon, lat },
       }));
-      notifyToast(toastMsg, r.photo_url_blurred ? { photo_url_blurred: r.photo_url_blurred } : {});
+      notifyToast(toastMsg, {
+        ...(r.photo_url_blurred ? { photo_url_blurred: r.photo_url_blurred } : {}),
+        ...(trackId ? { link: { href: `/web/track.html?id=${encodeURIComponent(trackId)}`, label: "Παρακολούθηση" } } : {}),
+        durationMs: 6000,
+      });
     } catch {
       status.textContent = "Η αναφορά δεν έγινε δεκτή. Ελέγξτε τα στοιχεία και δοκιμάστε ξανά.";
       sendBtn.disabled = false;

@@ -85,3 +85,7 @@ AthensOne is released under the MIT licence. All third-party packages and assets
 | Φαρμακευτικός Σύλλογος Αττικής (ΦΣΑ) | Public on-duty pharmacy directory (no formal open-data licence stated; cached daily, read-only attribution shown) | Daily on-duty pharmacies in Attica (`app/onduty_src.py`) | https://fsa-efimeries.gr/Home/FilteredHomeResults |
 | Υπουργείο Υγείας — Εφημερίες Νοσοκομείων Αττικής | Public government daily duty announcements (Greek public sector information; read-only attribution shown) | Daily on-duty hospital clinics/specialties (`app/onduty_src.py`) | https://www.moh.gov.gr/articles/citizen/efhmeries-nosokomeiwn/68-efhmeries-nosokomeiwn-attikhs |
 | OpenStreetMap / Nominatim | ODbL 1.0 (`© OpenStreetMap contributors`) | Curated hospital coordinates (`data/onduty/hospitals.json`) and cached address geocoding fallback (`app/onduty_src.py`) | https://nominatim.openstreetmap.org/search |
+
+## MapLibre GL JS 5.3.0 (vendored offline fallback)
+- Files: `web/vendor/maplibre-gl-5.3.0/` (maplibre-gl.js, maplibre-gl.css, LICENSE.txt), copied unmodified from the npm package `maplibre-gl@5.3.0`.
+- Licence: BSD-3-Clause (notice kept in `LICENSE.txt`). Loaded only when the jsDelivr CDN copy fails to load.

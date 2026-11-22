@@ -304,6 +304,13 @@ export async function bootstrap(
       span.className = "hud-toast__text";
       span.textContent = text;
       pill.appendChild(span);
+      if (detail?.link?.href && String(detail.link.href).startsWith("/")) {
+        const a = doc.createElement("a");
+        a.className = "hud-toast__link";
+        a.href = detail.link.href;
+        a.textContent = detail.link.label || "Άνοιγμα";
+        pill.appendChild(a);
+      }
       if (typeof toastEl.replaceChildren === "function") {
         toastEl.replaceChildren(pill);
       } else {

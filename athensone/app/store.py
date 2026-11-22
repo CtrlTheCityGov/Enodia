@@ -49,8 +49,11 @@ def get(request_id):
     return _row(row) if row else None
 
 
-def all_reports():
-    return [_row(r) for r in _conn.execute("SELECT * FROM reports ORDER BY created_at DESC")]
+def all_reports(include_supporting: bool = False):
+    """Canonical photo reports. Supporting duplicates (ids PH-…, linked in app/cases.py) are evidence of an
+    existing case, not separate hazards, so they are left out unless asked for."""
+    sql = "SELECT * FROM reports" + ("" if include_supporting else " WHERE request_id NOT LIKE 'PH-%'")
+    return [_row(r) for r in _conn.execute(sql + " ORDER BY created_at DESC")]
 
 
 def clear():

@@ -36,7 +36,8 @@ CATEGORY_WORKS = {
     "water_leak": set(),  # usually a utility (ΕΥΔΑΠ): out of scope in v1
 }
 WORKS_EL = {"sidewalk": "Ανακατασκευή πεζοδρομίου", "ramp": "Ράμπες ΑμεΑ", "paving": "Πλακόστρωση",
-            "asphalt": "Ασφαλτόστρωση", "lighting": "Ηλεκτροφωτισμός"}
+            "asphalt": "Ασφαλτόστρωση", "lighting": "Ηλεκτροφωτισμός", "roadworks": "Οδοποιία / δίκτυα",
+            "traffic_control": "Σύστημα ελέγχου πρόσβασης οχημάτων"}
 
 _cache: dict = {}
 
@@ -159,10 +160,13 @@ def near(lat: float, lng: float, radius_m: float = 300) -> list[dict]:
 
 def for_report(lat, lng, category) -> dict | None:
     """Best works record that could explain this report, or None."""
-    types = CATEGORY_WORKS.get(category)
+    from .categories import STOA_TYPES  # central mapping (audit F-1); CATEGORY_WORKS kept for old importers
+
+    types = STOA_TYPES.get(category) or CATEGORY_WORKS.get(category)
     if not types or lat is None:
         return None
-    cands = [c for c in near(lat, lng, REPORT_MATCH_M) if c.get("works_type") in types]
+    cands = [c for c in near(lat, lng, REPORT_MATCH_M)
+             if set(c.get("works_types") or [c.get("works_type")]) & set(types)]
     if not cands:
         return None
     order = {"ACTIVE": 0, "UNKNOWN": 1, "ENDED": 2}

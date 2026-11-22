@@ -12,7 +12,7 @@ import uuid
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
 
-from .. import ckan, config, map_reports, points, privacy
+from .. import cases, categories, ckan, config, map_reports, points, privacy
 from ..sandbox import SandboxError
 
 router = APIRouter()
@@ -28,13 +28,16 @@ def _sandbox():
     return sb
 
 
-def _city_request(category: str, lon: float, lat: float, note: str, photo_url: str | None) -> str:
-    """Create the City request for an obstacle/damage map report, as POST /api/report does. No token in it."""
+def _city_request(category: str, lon: float, lat: float, note: str, photo_url: str | None,
+                  city_category: str | None = None, label_el: str | None = None) -> str:
+    """Create the City request for an obstacle/damage map report, as POST /api/report does. No token in it.
+    `city_category` comes from app/categories.normalise() (audit F-1); the old fixed mapping is the fallback."""
     label = map_reports.CATEGORIES[category]
-    desc = f"Αναφορά από τον χάρτη: {label}\nΣχόλιο πολίτη: {note or '-'}"
+    desc = f"Αναφορά από τον χάρτη: {label}{(' · ' + label_el) if label_el else ''}\nΣχόλιο πολίτη: {note or '-'}"
     if photo_url:
         desc += f"\nΦωτογραφία (θολωμένα πρόσωπα και πινακίδες): {photo_url}"
-    req = _sandbox().create_request(category=map_reports.CITY_CATEGORIES[category], title=f"{label} (αναφορά χάρτη)",
+    title = f"{label}{(' · ' + label_el) if label_el and label_el != 'Άλλο' else ''} (αναφορά χάρτη)"
+    req = _sandbox().create_request(category=city_category or map_reports.CITY_CATEGORIES[category], title=title,
                                     address=f"{lat:.4f}, {lon:.4f}", description=desc, lat=lat, lng=lon)
     return req["id"]
 
@@ -49,11 +52,16 @@ async def create_map_report(
     note: str = Form(""),
     work_id: str | None = Form(None),
     photo: UploadFile | None = File(None),
+    subtype: str | None = Form(None),
 ):
     if not (math.isfinite(lon) and math.isfinite(lat)):
         raise HTTPException(422, "lon and lat must be finite numbers")
     if category not in map_reports.CATEGORIES:
         raise HTTPException(422, f"unknown category; expected one of {', '.join(map_reports.CATEGORIES)}")
+    if subtype is not None and subtype != "" and subtype not in categories.SUBTYPES:
+        raise HTTPException(422, f"unknown subtype; expected one of {', '.join(categories.SUBTYPES)}")
+    if len(note or "") > 2000:
+        raise HTTPException(422, "note is too long (max 2000 characters)")
     name, blur = None, {"faces": 0, "plates": 0}
     privacy_status = privacy.PRIVACY_PROCESSED
     if photo is not None and photo.filename:
@@ -85,11 +93,30 @@ async def create_map_report(
         plates_blurred=blur["plates"],
     )
     city_request_id = None
-    if category in map_reports.CITY_CATEGORIES and not saved["duplicate"]:
-        absolute = f"{str(request.base_url).rstrip('/')}{photo_url}" if photo_url else None
-        city_request_id = _city_request(category, saved["lon"], saved["lat"], note, absolute)
-        map_reports.link_city_request(saved["id"], city_request_id)
+    linked = False
+    cls = categories.normalise(category, subtype, note)
+    if category in map_reports.CITY_CATEGORIES:
+        # A duplicate strengthens the existing case; it never disappears (audit F-2). Every submission is stored
+        # above; here it is either the start of a new City request or linked to the open one nearby.
+        canon = _canonical(cls["city_category"], saved["lat"], saved["lon"])
+        if canon:
+            city_request_id, dist = canon
+            linked = True
+            cases.link(saved["id"], "map", city_request_id, saved["lat"], saved["lon"], note or None, name, dist)
+            try:
+                _sandbox().upvote(city_request_id)
+            except SandboxError:
+                pass
+        elif not saved["duplicate"]:
+            absolute = f"{str(request.base_url).rstrip('/')}{photo_url}" if photo_url else None
+            city_request_id = _city_request(category, saved["lon"], saved["lat"], note, absolute,
+                                            cls["city_category"], cls["label_el"])
+            map_reports.link_city_request(saved["id"], city_request_id)
+            cases.ensure(city_request_id, cls, saved["lat"], saved["lon"], "map", saved["id"])
     return {
+        "tracking_id": saved["id"],
+        "linked_to_existing": linked,
+        "classification": {k: cls[k] for k in ("city_category", "label_el", "stoa_eligible", "needs_review")},
         "id": saved["id"],
         "photo_url_blurred": photo_url,
         "points_awarded": saved["points_awarded"],
@@ -97,6 +124,12 @@ async def create_map_report(
         "privacy_status": privacy_status,
         "city_request_id": city_request_id,
     }
+
+
+def _canonical(city_category: str, lat: float, lon: float):
+    from .cases import find_canonical
+
+    return find_canonical(city_category, lat, lon)
 
 
 @router.get("/api/map/reports")

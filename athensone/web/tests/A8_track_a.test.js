@@ -14,7 +14,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIR = path.resolve(__dirname, "..");
 
 test("test_a_op_1_operator_ids_and_glass_claim_card", () => {
-  const html = fs.readFileSync(path.join(WEB_DIR, "operator.html"), "utf8");
+  // The Stoa panel moved into operator-case.js (loaded by operator.html); check both files together.
+  const html = fs.readFileSync(path.join(WEB_DIR, "operator.html"), "utf8") +
+    fs.readFileSync(path.join(WEB_DIR, "operator-case.js"), "utf8");
   const css = fs.readFileSync(path.join(WEB_DIR, "app.css"), "utf8");
 
   for (const id of [
@@ -26,9 +28,9 @@ test("test_a_op_1_operator_ids_and_glass_claim_card", () => {
     "list",
     "detail",
     "dWorks",
-    "approve",
-    "resolve",
-    "reject",
+    // approve/resolve/reject one-click buttons were replaced by the audited case workflow (operator-case.js,
+    // docs/FINAL_ENGINEERING_AUDIT.md F-6); the demo reset control is new.
+    "demoReset",
   ]) {
     assert.ok(html.includes(`id="${id}"`), `operator.html must preserve #${id}`);
   }

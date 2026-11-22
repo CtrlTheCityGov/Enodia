@@ -106,7 +106,7 @@
     },
     {
       "id": "W-DIAV-002",
-      "works_type": "sidewalk",
+      "works_type": "traffic_control",
       "resolution": "street",
       "status": "in_progress",
       "title": {
@@ -286,7 +286,11 @@
             37.9814
           ]
         ]
-      }
+      },
+      "works_types": [
+        "sidewalk",
+        "asphalt"
+      ]
     },
     {
       "id": "W-DIAV-004",
@@ -482,7 +486,7 @@
     },
     {
       "id": "W-DIAV-006",
-      "works_type": "sidewalk",
+      "works_type": "asphalt",
       "resolution": "street",
       "status": "in_progress",
       "title": {
@@ -578,7 +582,7 @@
     },
     {
       "id": "W-DIAV-007",
-      "works_type": "sidewalk",
+      "works_type": "lighting",
       "resolution": "street",
       "status": "in_progress",
       "title": {
@@ -674,7 +678,7 @@
     },
     {
       "id": "W-DIAV-008",
-      "works_type": "sidewalk",
+      "works_type": "roadworks",
       "resolution": "street",
       "status": "in_progress",
       "title": {
@@ -798,20 +802,12 @@
         "label": "UNKNOWN"
       },
       "end_date": {
-        "value": "2026-11-17",
-        "label": "CITED",
-        "source": {
-          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
-          "page": 1
-        }
+        "value": null,
+        "label": "UNKNOWN"
       },
       "completion_date": {
-        "value": "2026-11-17",
-        "label": "CITED",
-        "source": {
-          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
-          "page": 1
-        }
+        "value": null,
+        "label": "UNKNOWN"
       },
       "guarantee_months": {
         "value": null,
@@ -846,7 +842,39 @@
             37.9712
           ]
         ]
-      }
+      },
+      "decision_date": {
+        "value": "2026-11-17",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        }
+      },
+      "decision_type": {
+        "value": "2.4.7.1 · Απόφαση επιστροφής εγγυήσεων καλής εκτέλεσης",
+        "label": "CITED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        }
+      },
+      "final_acceptance_evidence": {
+        "value": true,
+        "label": "INFERRED",
+        "source": {
+          "ada": "ΨΓΟ3Ω6Μ-ΔΚ6",
+          "page": 1
+        },
+        "note": "Η πράξη ΨΓΟ3Ω6Μ-ΔΚ6 επιστρέφει τις εγγυήσεις καλής εκτέλεσης· αυτό συνήθως ακολουθεί την οριστική παραλαβή, άρα η περίοδος υποχρεωτικής συντήρησης πιθανώς έχει λήξει (συμπέρασμα, προς επιβεβαίωση)."
+      },
+      "scope": {
+        "level": "municipality",
+        "districts": [],
+        "evidence": "Το θέμα της πράξης στη Διαύγεια αναφέρει τις Δ.Κ. 1η έως 7η (όλο τον Δήμο).",
+        "annotation": null
+      },
+      "contractor_note": "Το θέμα της πράξης κατονομάζει ανάδοχο· δεν καταχωρήθηκε εδώ γιατί δεν επαληθεύτηκε αυτούσια η γραφή του."
     },
     {
       "id": "W-DIAV-010",
@@ -1023,18 +1051,20 @@
         "coordinates": [
           [
             23.7336,
-            37.9756
+            37.9748
           ],
           [
             23.7312,
-            37.9758
+            37.975
           ],
           [
             23.7289,
-            37.976
+            37.9752
           ]
         ]
-      }
+      },
+      "seed": true,
+      "geometry_basis": "seed"
     },
     {
       "id": "W-SEED-002",
@@ -1063,7 +1093,8 @@
         "source": {
           "ada": "SEED-ΑΔΑ-002",
           "page": 1
-        }
+        },
+        "quote": "(SEED · δοκιμαστικό κείμενο) Ανάδοχος: «Ανάδοχος Δείγματος Β (SEED)»."
       },
       "amount_contract_eur": {
         "value": 96000.0,
@@ -1103,15 +1134,17 @@
         "source": {
           "ada": "SEED-ΑΔΑ-002",
           "page": 1
-        }
+        },
+        "quote": "(SEED · δοκιμαστικό κείμενο) Βεβαιώνεται ότι οι εργασίες του έργου περατώθηκαν στις 15/02/2026."
       },
       "guarantee_months": {
         "value": 15,
-        "label": "INFERRED",
+        "label": "CITED",
         "source": {
           "ada": "SEED-ΑΔΑ-002",
-          "page": 1
-        }
+          "page": 3
+        },
+        "quote": "(SEED · δοκιμαστικό κείμενο) Ο χρόνος εγγύησης ορίζεται σε δεκαπέντε (15) μήνες από την επομένη της βεβαίωσης περάτωσης."
       },
       "final_acceptance": false,
       "ada": {
@@ -1146,7 +1179,22 @@
             37.9698
           ]
         ]
-      }
+      },
+      "seed": true,
+      "geometry_basis": "seed"
+    }
+  ],
+  "corrections": [
+    {
+      "date": "2026-11-22",
+      "by": "engineering audit",
+      "items": [
+        "W-DIAV-009: completion_date was the issue date of a guarantee-return decision (type 2.4.7.1), not a completion certificate; set to UNKNOWN and recorded as final_acceptance_evidence (INFERRED). Verified against diavgeia.gov.gr/opendata/decisions/ΨΓΟ3Ω6Μ-ΔΚ6.json.",
+        "W-DIAV-002/006/007/008: works_type corrected from the decision titles (traffic_control, asphalt, lighting, roadworks); W-DIAV-003 covers sidewalks and roads.",
+        "SEED records flagged seed=true; W-SEED-002 given complete synthetic contract quotes so the demo can show a fully computed clock. All SEED text is marked as synthetic.",
+        "\"(τμήμα X)\" suffixes in W-DIAV titles are AthensOne map annotations, not decision text; app/stoa_match.py treats them so.",
+        "W-SEED-001 (titled Μητροπόλεως) was drawn on top of Ermou, overlapping the real W-DIAV-001; moved ~90 m south so the demo does not mix a SEED record into the Ermou case."
+      ]
     }
   ]
 }

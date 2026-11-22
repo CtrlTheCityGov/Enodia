@@ -1,0 +1,75 @@
+/* Operator Console · case panel. Uses the tokens from app.css (--ink, --muted, --line, --accent, --good, ...). */
+.card.case { padding: 16px 18px; }
+.case-head h3 { margin: 0 0 8px; font-size: 1.05em; }
+.case-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; padding: 0; margin: 0 0 12px; counter-reset: st; }
+.case-step { counter-increment: st; font-size: .74em; font-weight: 600; padding: 4px 9px 4px 6px; border-radius: 999px;
+  background: var(--pill-bg); color: var(--muted); border: 1px solid transparent; white-space: nowrap; }
+.case-step::before { content: counter(st); display: inline-grid; place-items: center; width: 16px; height: 16px; margin-right: 5px;
+  border-radius: 50%; background: var(--line); color: var(--ink); font-size: .9em; }
+.case-step.done { color: var(--good); }
+.case-step.done::before { content: "✓"; background: rgba(26, 127, 55, .18); color: var(--good); }
+.case-step.now { color: #fff; background: var(--accent); }
+.case-step.now::before { background: rgba(255, 255, 255, .25); color: #fff; }
+.case-step.now.bad { background: var(--bad); }
+
+.case-sec { border-top: 1px solid var(--line); padding: 12px 0 4px; }
+.case-sec h3 { font-size: .95em; margin: 0 0 8px; }
+.case-sec summary { cursor: pointer; padding: 4px 0; }
+.case-sec select, .case-sec input[type=text] { width: auto; min-width: 180px; }
+
+.sup-list { display: grid; gap: 8px; }
+.sup { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center; padding: 8px; border-radius: 10px;
+  background: var(--surface-subtle); border: 1px solid var(--line); }
+.sup img, .sup__nophoto { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; display: grid; place-items: center; background: var(--pill-bg); }
+.sup__body { font-size: .88em; min-width: 0; }
+button.small { padding: 4px 10px; font-size: .8em; min-height: 30px; }
+
+.stoa { background: linear-gradient(180deg, rgba(11, 92, 173, .05), transparent 120px); margin: 4px -18px 0; padding: 14px 18px 6px; }
+.stoa__head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.stoa__head h3 { margin: 0 8px 0 0; font-size: 1.02em; }
+.stoa__expl { margin: 8px 0 10px; font-weight: 600; }
+.cand-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 0 0 12px; background: var(--card-solid); }
+.cand-card.accepted { border-color: var(--good); box-shadow: 0 0 0 2px rgba(26, 127, 55, .18); }
+.cand-card.rejected { opacity: .6; }
+.cand-card__head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.cand-card__title { font-weight: 700; line-height: 1.3; }
+.confbar { position: relative; display: inline-flex; align-items: center; width: 110px; height: 20px; border-radius: 999px;
+  background: var(--pill-bg); overflow: hidden; font-size: .72em; font-weight: 700; }
+.confbar__fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #d97706, #1a7f37); opacity: .35; }
+.confbar__txt { position: relative; padding-left: 8px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 14px; margin: 8px 0; }
+.fact { display: grid; grid-template-columns: 1fr; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.fact__k { font-size: .72em; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.fact__v { font-weight: 650; overflow-wrap: anywhere; }
+.fact__v.unk { color: var(--bad); }
+.fact__s { font-size: .74em; color: var(--muted); }
+.gbox { border-radius: 12px; padding: 10px 12px; margin: 8px 0; border: 1px solid var(--line); background: var(--surface-subtle); }
+.gbox.good { border-color: rgba(26, 127, 55, .35); }
+.gbox.warn { border-color: rgba(217, 119, 6, .4); }
+.gbox__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.stoa-claim__stat-sub { display: block; font-size: .72em; color: var(--muted); margin-top: 2px; }
+.formula { margin: 4px 0; }
+.gbox blockquote { margin: 8px 0; padding: 8px 12px; background: var(--quote-bg); border-left: 3px solid #e0b400; border-radius: 6px; font-size: .88em; }
+.lim, .why ul { margin: 6px 0; padding-left: 18px; font-size: .86em; }
+.why .unc li { color: var(--warn); }
+
+.decide .who { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+.decide .who label { display: grid; gap: 4px; font-size: .8em; font-weight: 600; color: var(--muted); }
+.decide textarea { width: 100%; }
+.decide__btns { margin-top: 8px; gap: 8px; }
+button.primary { background: var(--accent); color: #fff; }
+button[disabled] { opacity: .45; cursor: not-allowed; }
+.guard { margin-top: 8px; }
+.dossiers { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.dossiers .pill { text-decoration: none; }
+#demoReset { cursor: pointer; }
+@media (max-width: 900px) {
+  .ops { grid-template-columns: 1fr; height: auto; }
+  .ops .list { max-height: 45vh; }
+  .stoa { margin: 4px -12px 0; padding: 12px; }
+}
+#opmap.map-off { display: grid; place-items: center; text-align: center; padding: 16px; color: var(--muted);
+  background: repeating-linear-gradient(45deg, var(--surface-subtle), var(--surface-subtle) 10px, transparent 10px, transparent 20px); }
+#dImg.photo { max-height: 280px; width: auto; max-width: 100%; object-fit: cover; }
+#dDesc { overflow-wrap: anywhere; }
+.case-sec .row { flex-wrap: wrap; }

@@ -18,7 +18,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import date
+from datetime import datetime, date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -86,6 +86,7 @@ def main() -> None:
     ap.add_argument("--from", dest="date_from", default="2024-01-01")
     ap.add_argument("--to", dest="date_to", default=date.today().isoformat())
     ap.add_argument("--out", default=str(config.DATA_DIR / "stoa" / "works.json"))
+    ap.add_argument("--replace", action="store_true", help="overwrite instead of merging (not recommended)")
     a = ap.parse_args()
 
     contracts = fetch_contracts(a.date_from, a.date_to)
@@ -99,14 +100,24 @@ def main() -> None:
 
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({
-        "source": "DIAVGEIA+KHMDHS",
-        "snapshot": date.today().isoformat(),
-        "organisation": "Δήμος Αθηναίων",
-        "note": "Από Διαύγεια και ΚΗΜΔΗΣ OpenData (scripts/fetch_works.py). Οδοί από χειροκίνητο πίνακα (OSM, ODbL). "
-                "Ελέγξτε χειροκίνητα πριν τη χρήση.",
-        "works": items,
-    }, ensure_ascii=False, indent=1), encoding="utf-8")
+    today = date.today().isoformat()
+    doc = {"source": "DIAVGEIA+KHMDHS", "snapshot": today, "organisation": "Δήμος Αθηναίων",
+           "note": "Από Διαύγεια και ΚΗΜΔΗΣ OpenData (scripts/fetch_works.py). Οδοί από χειροκίνητο πίνακα (OSM, ODbL). "
+                   "Ελέγξτε χειροκίνητα πριν τη χρήση.", "works": items}
+    if out.exists() and not a.replace:
+        # Never silently replace verified data: merge field by field and keep a backup (app/stoa_ingest.py).
+        from app import stoa_ingest
+
+        old = json.loads(out.read_text(encoding="utf-8"))
+        backup = out.with_name(f"{out.stem}.backup-{datetime.now():%Y%m%d-%H%M%S}.json")
+        backup.write_text(out.read_text(encoding="utf-8"), encoding="utf-8")
+        merged, rep = stoa_ingest.merge_datasets(old.get("works", []), items, today)
+        doc = {**old, "snapshot": today, "works": merged}
+        doc.setdefault("refresh_log", []).append({"at": today, **{k: v for k, v in rep.items()}})
+        print(f"backup: {backup}")
+        print(f"merge: +{len(rep['added'])} new, {len(rep['updated'])} updated, {len(rep['conflicts'])} with conflicts, "
+              f"{len(rep['kept_missing'])} kept although not in this fetch")
+    out.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"wrote {out}")
 
 

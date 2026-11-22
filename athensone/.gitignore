@@ -9,3 +9,4 @@ data/photos/*.jpg
 data/stoa/raw/
 node_modules/
 data/ckan/
+data/stoa/works.backup-*.json
