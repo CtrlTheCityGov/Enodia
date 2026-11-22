@@ -531,6 +531,24 @@ export async function bootstrap(
   const layerBarEl = root.getElementById("hud-layerbar");
   if (layerBarEl) {
     initLayerBar(layerBarEl, state, { map, api, bus });
+    const barRow = layerBarEl.querySelector?.(".layerbar");
+    if (barRow && typeof root.createElement === "function") {
+      const allRepBtn = root.createElement("button");
+      allRepBtn.type = "button";
+      allRepBtn.className = "layer-chip";
+      allRepBtn.setAttribute("data-action", "reports-show-all");
+      allRepBtn.textContent = "📍 Αναφορές Χάρτη";
+      allRepBtn.addEventListener("click", () => {
+        reportsLayer.showAllOnMap(map);
+        selectTab("map");
+      });
+      barRow.appendChild(allRepBtn);
+    }
+  }
+  if (bus && typeof bus.addEventListener === "function") {
+    bus.addEventListener("reports:show-all", () => {
+      reportsLayer.showAllOnMap(map);
+    });
   }
   /* --- /A2 --- */
 

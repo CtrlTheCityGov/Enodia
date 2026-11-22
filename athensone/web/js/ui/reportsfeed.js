@@ -164,6 +164,12 @@ export async function mount({ api, root, container, bus, standalone = false }) {
   const countBadge = el("span", { class: "workstab-source" }, "");
   header.append(heading, countBadge);
   if (!standalone) {
+    const showAllBtn = el("button", { type: "button", class: "workstab-filter" }, "🗺️ Όλες στον χάρτη");
+    showAllBtn.addEventListener("click", () => {
+      bus?.dispatchEvent?.(new CustomEvent("reports:show-all"));
+      const mTab = doc.getElementById?.("tab-map");
+      if (mTab && typeof mTab.click === "function") mTab.click();
+    });
     const openPageLink = el(
       "a",
       { href: "/web/forum.html", target: "_blank", rel: "noopener noreferrer", class: "workstab-filter notice-link" },
@@ -175,7 +181,7 @@ export async function mount({ api, root, container, bus, standalone = false }) {
       if (mTab && typeof mTab.click === "function") mTab.click();
       else bus?.dispatchEvent?.(new CustomEvent("tab:change", { detail: { tab: "map" } }));
     });
-    header.append(openPageLink, closeBtn);
+    header.append(showAllBtn, openPageLink, closeBtn);
   }
 
   const controls = el("div", { class: "forum-controls" });

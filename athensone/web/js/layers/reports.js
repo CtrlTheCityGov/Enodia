@@ -2,6 +2,8 @@
 // (SPEC.md F3, TASKS_A.md A2, UI/UX upgrade #4: persistent newly submitted pins + pulse ring).
 // Never touches document or maplibregl at import time so Node can import it safely.
 
+import { DEMO_FORUM_REPORTS } from "../ui/reportsfeed.js";
+
 // Layer id from TASKS_A.md A2 (certainty: verified).
 export const id = "reports";
 
@@ -36,6 +38,12 @@ const CATEGORY_LABELS = Object.freeze({
   obstacle: "Εμπόδιο",
   damage: "Ζημιά",
   work_progress: "Πρόοδος έργου",
+  pothole: "Λακκούβα",
+  sidewalk: "Πεζοδρόμιο",
+  lighting: "Φωτισμός",
+  streetlight: "Φωτισμός",
+  water_leak: "Διαρροή νερού",
+  trash: "Απορρίμματα",
 });
 
 // Pin visual dimensions for light/dark readability (certainty: design default).
@@ -50,6 +58,7 @@ const PULSE_RIPPLES = 2;
 
 const STATUS_LABELS = Object.freeze({
   submitted: "Νέα αναφορά",
+  acknowledged: "Ανατέθηκε",
   received: "Σε εξέλιξη",
   in_progress: "Συνεργείο καθ' οδόν",
   resolved: "Επιλύθηκε",
@@ -191,10 +200,10 @@ function ensureReportsSourceAndLayer(map) {
   }
 }
 
-// Real backend ids only: optimistic pins ("local-…") and offline-queued ones ("offline-…") have no tracker page.
+// Real backend ids only: optimistic ("local-…"), offline ("offline-…"), and demo ("demo-…") pins have no tracker page.
 function isTrackableId(value) {
   const s = String(value ?? "");
-  return Boolean(s) && !s.startsWith("offline-") && !s.startsWith("local-");
+  return Boolean(s) && !s.startsWith("offline-") && !s.startsWith("local-") && !s.startsWith("demo-");
 }
 
 function escapeHtml(text) {
@@ -229,9 +238,11 @@ function bindReportPopup(map) {
     const catLabel = CATEGORY_LABELS[p.category] || p.category || "Αναφορά";
     const statusLabel = STATUS_LABELS[p.status] || STATUS_LABELS.submitted;
     const note = p.note || p.description || "";
-    const conf = Number(p.confirmations);
+    const addr = [p.address, p.neighborhood].filter(Boolean).join(" · ");
+    const author = p.author || "";
+    const conf = Number(p.confirmations ?? p.upvotes);
     const meta = Number.isFinite(conf) && conf > 0 ? `${conf} επιβεβαιώσεις` : "Χωρίς επιβεβαιώσεις ακόμη";
-    const canConfirm = Boolean(p.id && apiByMap.get(map)?.api?.confirmReport);
+    const canConfirm = Boolean(p.id && !String(p.id).startsWith("demo-") && apiByMap.get(map)?.api?.confirmReport);
     const trackLink = isTrackableId(p.id)
       ? `<a class="report-pin-popup__track" href="/web/track.html?id=${encodeURIComponent(String(p.id))}">Παρακολούθηση ↗</a>`
       : "";
@@ -239,6 +250,8 @@ function bindReportPopup(map) {
       `<div class="report-pin-popup">` +
       `<strong class="report-pin-popup__title">${escapeHtml(catLabel)}</strong> ` +
       `<span class="report-pin-popup__status report-pin-popup__status--${escapeHtml(p.status || "submitted")}">${escapeHtml(statusLabel)}</span>` +
+      (addr ? `<div class="report-pin-popup__meta">📍 ${escapeHtml(addr)}</div>` : "") +
+      (author ? `<div class="report-pin-popup__meta">${escapeHtml(author)}</div>` : "") +
       (note ? `<p class="report-pin-popup__note">${escapeHtml(note)}</p>` : "") +
       `<span class="report-pin-popup__meta">${escapeHtml(meta)}</span>` +
       (canConfirm || trackLink
@@ -431,11 +444,37 @@ export async function refresh(map, api, state = {}) {
     return emptyFeatureCollection();
   }
   const remoteData = await loadReportsData(map, api, state);
-  remoteReportsByMap.set(map, remoteData);
+  const demoWrapped =
+    remoteData.features.length === 0
+      ? DEMO_FORUM_REPORTS.map((d) => ({ type: "Feature", id: d.id, geometry: d.geometry, properties: d.properties }))
+      : [];
+  const withDemo = mergeFeatures(remoteData, demoWrapped);
+  remoteReportsByMap.set(map, withDemo);
   const locals = localReportsByMap.get(map) ?? [];
-  const merged = mergeFeatures(remoteData, locals);
+  const merged = mergeFeatures(withDemo, locals);
   setData(map, merged);
   return merged;
+}
+
+export function showAllOnMap(map) {
+  if (!map) return;
+  ensureReportsSourceAndLayer(map);
+  if (typeof map.setLayoutProperty === "function" && (typeof map.getLayer !== "function" || map.getLayer(PINS_LAYER_ID))) {
+    map.setLayoutProperty(PINS_LAYER_ID, "visibility", "visible");
+  }
+  const src = typeof map.getSource === "function" ? map.getSource(SOURCE_ID) : null;
+  const feats = src?._data?.features ?? src?.data?.features ?? [];
+  const pts = feats.map((f) => f?.geometry?.coordinates).filter((c) => Array.isArray(c) && c.length >= 2);
+  if (pts.length >= 2 && typeof map.fitBounds === "function") {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const [x, y] of pts) {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+    map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 72, duration: 700, maxZoom: 15.5 });
+  }
 }
 
 export async function register(map, api, state = {}) {

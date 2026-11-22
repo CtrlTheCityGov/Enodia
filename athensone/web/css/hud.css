@@ -72,6 +72,16 @@ body {
   pointer-events: auto;
 }
 
+.hud > *[hidden],
+.hud > .hidden {
+  pointer-events: none !important;
+}
+
+.maplibregl-popup {
+  z-index: 28;
+  pointer-events: auto;
+}
+
 .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -2043,7 +2053,26 @@ body {
 @media (max-width: 600px) {
   /* Allow absolutely positioned .workstab-panel inside #hud-tabs to extend below the top-left pill without clipping. */
   #hud-tabs.hud-top-left {
+    max-width: calc(100vw - 108px);
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+
+  #hud-tabs.hud-top-left::-webkit-scrollbar {
+    display: none;
+  }
+
+  #hud-tabs.hud-top-left:has(.workstab-panel:not([hidden])) {
     overflow: visible;
+  }
+
+  .forum-panel {
+    top: 56px;
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 72px);
+    padding: 12px;
   }
 
   .points-pill {
