@@ -19,6 +19,7 @@ All nine JSON/GeoJSON files match the exact response shapes expected by `web/js/
 | `points.json` | Point rules (`+5/+2/+15/+20`) from SPEC.md; district goal `5000` (A-9) | Simulated anonymous wallet history & illustrative municipal rewards (no `user_id`) | Mock |
 | `stoa.json` | Snapshot `2026-11-21` — top-level JSON array without a wrapper object (so `api.js` matches `POST /stoa_ask` entries directly). Citations align with `health.geojson` (0 m offset for the Syntagma demo pharmacy), `works.geojson`, `transit.geojson`, and `env.json`. | Pre-canned offline Q&A answers for the demo questions, including `«Ποιο φαρμακείο εφημερεύει κοντά μου;»`, using cautious Stoa wording («πιθανώς εντός περιόδου εγγύησης»). | Mock + cited sources |
 | `base.geojson` | 7 Municipal District MultiPolygons from CKAN `neighbourhoods-athens` & `municipal-districts-athens` (simplified ~45 m, edge-clamped to bbox) | Simplified arterial road corridors for A1 offline style | CC BY 4.0 / ODbL 1.0 |
+| `pois.geojson` | None (the 3 fictional POIs of the mock sandbox, `app/sandbox.py` `_MockData`; names end in «(mock)») | All 3 POIs; `distance_km` measured from Σύνταγμα `[23.7348, 37.9755]`; every feature `official: true`, `source: "mock"` (B14) | Mock |
 
 **Value conventions (shared with the live endpoints):** report `category` ids are `congestion`, `incident`,
 `obstacle`, `damage`, `work_progress` (B6; Greek labels in `ui/report.js`). Stoa citation `kind` is `work`,
