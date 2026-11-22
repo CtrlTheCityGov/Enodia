@@ -6,6 +6,8 @@ at request time. Existing /api/works/* routes are untouched.
 """
 from __future__ import annotations
 
+import math
+
 import re
 
 import httpx
@@ -25,7 +27,7 @@ def _bbox(raw: str | None) -> tuple[float, float, float, float] | None:
         b = tuple(float(x) for x in raw.split(","))
     except ValueError:
         b = ()
-    if len(b) != 4 or b[0] > b[2] or b[1] > b[3]:
+    if len(b) != 4 or not all(math.isfinite(x) for x in b) or b[0] > b[2] or b[1] > b[3]:
         raise HTTPException(422, "bbox must be minLon,minLat,maxLon,maxLat")
     return b  # type: ignore[return-value]
 

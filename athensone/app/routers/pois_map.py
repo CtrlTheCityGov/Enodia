@@ -5,6 +5,8 @@ feature marked `official: true`. Existing callers of sb.pois (cool places, envgr
 """
 from __future__ import annotations
 
+import math
+
 from fastapi import APIRouter, HTTPException, Query
 
 from .. import config
@@ -22,6 +24,8 @@ DEFAULT_RADIUS_KM = 3.0
 MAX_RADIUS_KM = 5.0
 # Items per category per call (card B14). Certainty: card value.
 PAGE_SIZE = 50
+# Max categories per call: each costs one sandbox call (100 req/min limit). Our choice (B14 fix round).
+MAX_CATEGORIES = 5
 
 
 def _circle(box: tuple[float, float, float, float] | None) -> tuple[float, float, float]:
@@ -36,7 +40,7 @@ def _circle(box: tuple[float, float, float, float] | None) -> tuple[float, float
 
 def _feature(p: dict, lon: float, lat: float, source: str) -> dict:
     dist = p.get("distance_km")
-    if dist is None:
+    if not isinstance(dist, (int, float)) or isinstance(dist, bool):  # missing or not a number: compute it ourselves
         dist = round(haversine_km(lat, lon, p["lat"], p["lng"]), 3)
     props = {"id": p["id"], "name": p.get("name"), "category": p.get("category"), "address": p.get("address"),
              "open_now": p.get("open_now"), "distance_km": dist, "source": source, "official": True}
@@ -50,7 +54,9 @@ def map_pois(categories: str = Query(DEFAULT_CATEGORIES, description="comma-sepa
     from .. import main  # imported here: app.main includes this router while it is still loading
 
     lon, lat, radius = _circle(_bbox(bbox))
-    cats = [c.strip() for c in categories.split(",") if c.strip()]
+    cats = list(dict.fromkeys(c.strip() for c in categories.split(",") if c.strip()))
+    if len(cats) > MAX_CATEGORIES:
+        raise HTTPException(422, f"at most {MAX_CATEGORIES} categories")
     source = "mock" if config.MOCK else "sandbox"
     feats: dict[str, dict] = {}
     errors: list[str] = []
@@ -61,7 +67,13 @@ def map_pois(categories: str = Query(DEFAULT_CATEGORIES, description="comma-sepa
             errors.append(cat)
             continue
         for p in items:
-            if p.get("id") is None or p.get("lat") is None or p.get("lng") is None or p["id"] in feats:
+            if p.get("id") is None or p["id"] in feats:
+                continue
+            try:
+                p = {**p, "lat": float(p["lat"]), "lng": float(p["lng"])}
+            except (KeyError, TypeError, ValueError):
+                continue  # missing or non-numeric coordinates: untrusted upstream data, skip the POI
+            if not (math.isfinite(p["lat"]) and math.isfinite(p["lng"])):
                 continue
             feats[p["id"]] = _feature(p, lon, lat, source)
     if cats and len(errors) == len(cats):
