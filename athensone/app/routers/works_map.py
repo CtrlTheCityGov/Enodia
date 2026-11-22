@@ -13,7 +13,7 @@ import re
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 
-from .. import config, map_reports, works, works_src
+from .. import cases, config, map_reports, works, works_src
 
 router = APIRouter()
 
@@ -43,8 +43,17 @@ def _open_reports() -> list[tuple[float, float]] | None:
     reports = [(r["lat"], r["lng"]) for r in items
                if r.get("status") in main.OPEN and r.get("lat") is not None and r.get("lng") is not None]
     # B12 counts linked reports through the sandbox only; the link identifies the same submission.
-    reports.extend((r["lat"], r["lon"]) for r in map_reports.all_reports() if r["city_request_id"] is None)
+    # B16 (B12 duplicates): a map report folded into an existing case (an active case link) is already counted
+    # through that case's sandbox request, so it is skipped here too.
+    reports.extend((r["lat"], r["lon"]) for r in map_reports.all_reports()
+                   if r["city_request_id"] is None and not _linked(r["id"]))
     return reports
+
+
+def _linked(report_id: str) -> bool:
+    """True if the map report is an active child of a canonical case (cases.link, not unlinked since)."""
+    link = cases.link_of(report_id)
+    return link is not None and link.get("unlinked_at") is None
 
 
 @router.get("/api/map/works")

@@ -135,4 +135,7 @@ def map_routing(req: RoutingRequest) -> dict:
         "source": best["source"],
         "label": best.get("label"),
         "env": env.meta(),
+        # A-40 (additive): the wheelchair route still touches a hard blocker because no candidate avoids them
+        # all. `_hard` is set by route_cost.choose with the same "touches" test; other profiles have no blockers.
+        "blocked": profile == "wheelchair" and bool(best.get("_hard")),
     }
