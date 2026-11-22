@@ -27,8 +27,8 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B13 Service guide from the sandbox registry | 5 | `GET /api/map/services?category=` → the official municipal service for a report category (documents, cost, online link); `api.js serviceFor()` + `web/mock/services.json` | **merged** into `dev-b` |
 | B14 Official POI layer | 5 | `GET /api/map/pois` → sandbox POIs as GeoJSON with `official: true`; `api.js pois()` + `web/mock/pois.geojson` | **merged** into `dev-b` (fix round: finite bbox, ≤ 5 categories) |
 | B15 «Διορθώθηκαν κοντά σου» | 5 | `GET /api/map/resolved` → resolved sandbox requests as GeoJSON, hours to resolve, no personal fields; `api.js resolved()` | **merged** into `dev-b` (fix round: bad coords skipped, no negative hours, `source`, A-39) |
-| B16 Backend backlog fixes | 6 | Athens-day points cap, reports outside the Δήμος → 422, routing `blocked`, duplicate reports not double-counted | **in progress** |
-| B17 Frontend backlog fixes + service after report | 6 | `report.js` shows the official service (B13) after submit; Athens dates in points; mock filters in `api.js` | **in progress** |
+| B16 Backend backlog fixes | 6 | Athens-day points cap, reports outside the Δήμος → 422, routing `blocked`, duplicate reports not double-counted | **merged** into `dev-b` |
+| B17 Frontend backlog fixes + service after report | 6 | `report.js` shows the official service (B13) after submit; Athens dates in points; mock filters in `api.js` | **merged** into `dev-b` (fix: http(s)-only service links) |
 
 ### B0: Contracts + first mocks (phase 0)
 SPEC «Backend contracts», «Εξωτερικές πηγές» (Fallback column), «Offline fallback», «Demo script». Every file in

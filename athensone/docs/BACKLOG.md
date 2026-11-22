@@ -57,9 +57,12 @@ Later improvements, not work to do now. Each with its reason.
 - B14: only `friendship_club` and `library` POI categories are verified; get the sandbox OpenAPI spec for the rest.
   No map layer calls `api.pois()` yet (Dev A).
 - B15: no map layer calls `api.resolved()` yet (Dev A); future-dated `resolved_at` values are kept.
-- Dev A (Αναστάσης): map layer «Υπηρεσίες Δήμου» on top of `api.pois()` (B14). Layerbar toggle (`aria-pressed`),
-  one icon per category, popup with name, address, `open_now` («άγνωστο» when null), «επίσημο» badge, and
-  «δοκιμαστικό» when `source`/`upstream_source` is `mock`. Starts with `friendship_club` (Λέσχες Φιλίας, the former
-  ΚΑΠΗ: unverified rename, check before the pitch) and `library`.
 - Dev B: find the sandbox's other POI categories (ΚΕΠ, cooling rooms, nurseries, ...) from its OpenAPI spec or a
   live `GET /api/pois?radius_km=5` with the key, then add the verified ones to `pois_map.DEFAULT_CATEGORIES`.
+- A10: done (layer «Δήμος»). Αναστάσης to review; check 390 px and Dark-mode contrast of `#7c3aed`/`#475569` in a
+  browser; `.pois-popup` and B17's `.report-service` have no CSS yet (`hud.css`, Dev A). Verify the ΚΑΠΗ → Λέσχες
+  Φιλίας rename before saying it on stage.
+- B16: legacy `POST /api/report` has no Δήμος bbox check (SPEC: existing calls unchanged); `ENV_BBOX` is a rectangle,
+  so points in neighbouring municipalities inside it pass; `zoneinfo` needs the `tzdata` package on Windows (new
+  dependency, owner approval); `works_map._linked` is one query per map report.
+- B17: «Εμπόδιο» reports have no subtype in the form, so they never show a service; the «n €» cost wording is ours.

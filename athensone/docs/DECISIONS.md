@@ -114,3 +114,6 @@
 - **A-40** (Evgenii, 22 Nov after freeze) Two additive contract changes: `POST /api/map/routing` answers carry
   `blocked: bool` (B16), and the layer bar gets a seventh chip «Δήμος» (A10, official City POIs from B14) although
   SPEC lists six. A10 is built on Dev A files at Evgenii's request; Αναστάσης reviews it before the pitch.
+- **A-41** (Evgenii, B16/B17 walkthrough) Duplicate map reports are folded within 30 min (the existing window; the
+  B16 card's 5 min was a card error). After a report is sent, the report panel reopens showing only the official
+  service (B13) and «Κλείσιμο»; service links are shown only for `http(s)://` URLs.

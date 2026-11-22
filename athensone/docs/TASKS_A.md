@@ -191,7 +191,7 @@ Aligns Dev A's HUD stylesheet, map layers, and `main.js` wiring with Dev B's com
 | `test_workpopup_report_open_includes_click_lnglat` | click `"works-line"` at `{ lng: 23.73, lat: 37.97 }`, click «Ανέφερε πρόοδο» | `report:open` event detail includes both `work_id` and `lngLat` |
 | `test_transit_ignores_stale_bus_poll_and_matches_proastiakos` | two overlapping polls (#1 slow, #2 fast) + rail layer paint | stale poll #1 does not overwrite poll #2's bus coords; `line-color` expression handles `PROASTIAKOS` |
 
-### A10: Layer «Υπηρεσίες Δήμου» (phase 6, after freeze)
+### A10: Layer «Υπηρεσίες Δήμου» (phase 6, after freeze) — **merged** into `dev-a` and `main`
 **Requested by Evgenii (Dev B owner) on 22 Nov after freeze, built by Dev B's agents on Dev A files: Αναστάσης to
 review before the pitch.** Data: `api.pois()` (B14, `GET /api/map/pois`): GeoJSON Points, properties `{id, name,
 category, address, open_now, distance_km, source, official: true}`; categories today `friendship_club` (Λέσχες
