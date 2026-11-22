@@ -21,6 +21,19 @@ export const SUBTYPES = [
   { id: "other", label: "Άλλο" },
 ];
 export const SUBTYPE_CATEGORIES = ["damage"];
+
+// B17: report subtype -> City sandbox category, for the official service lookup (api.serviceFor, B13).
+// Same table as app/categories.py SUBTYPE_TO_SANDBOX (B17 card). Certainty: verified against the card.
+const SUBTYPE_TO_SANDBOX = { sidewalk: "sidewalk", ramp: "sidewalk", pothole: "pothole",
+  streetlight: "streetlight", other: "other" };
+// Report categories that can carry a subtype for the lookup (B17 card: damage/obstacle).
+const SANDBOX_CATEGORIES = ["damage", "obstacle"];
+
+// null = no official service lookup (congestion, incident, work_progress, or no/unknown subtype).
+export function sandboxCategoryFor(category, subtype = null) {
+  if (!SANDBOX_CATEGORIES.includes(category)) return null;
+  return SUBTYPE_TO_SANDBOX[subtype] || null;
+}
 // Tracking ids of this device's reports (no personal data: ids only). Our choice. Certainty: n/a.
 export const MINE_KEY = "ao_my_reports";
 
@@ -95,8 +108,9 @@ export async function submitReport(input, api, storage) {
 }
 
 // Send queued reports in order, each once. Stops at the first network failure and keeps the rest.
+// B17: every report sent fires `report:created` on `bus` (optional), like a live submit (B11), so layers refresh.
 let flushing = false;
-export async function flushQueue(api, storage) {
+export async function flushQueue(api, storage, bus = null) {
   if (flushing) return [];
   flushing = true;
   const results = [];
@@ -104,7 +118,12 @@ export async function flushQueue(api, storage) {
     let list = getQueue(storage);
     while (list.length) {
       try {
-        results.push(await send(api, buildForm(list[0])));
+        const item = list[0];
+        const result = await send(api, buildForm(item));
+        results.push(result);
+        bus?.dispatchEvent(new CustomEvent("report:created", {
+          detail: { id: result?.id, category: item.category, lon: item.lngLat.lng, lat: item.lngLat.lat },
+        }));
       } catch (err) {
         if (!isRejected(err)) break; // still offline: try again on the next `online`
       }
@@ -199,7 +218,10 @@ export function mount({ map, api, root, container, bus }) {
   const preview = el("img", { class: "report-preview", alt: "Η φωτογραφία με θολωμένα πρόσωπα και πινακίδες", hidden: "" });
   const sendBtn = el("button", { type: "submit" }, "Αποστολή");
   const cancelBtn = el("button", { type: "button" }, "Άκυρο");
-  panel.append(title, hint, subBox, noteLabel, photoLabel, sendBtn, cancelBtn, status, preview);
+  // B17: official service shown after a sent report (filled by showService, emptied by openForm).
+  const serviceBox = el("section", { class: "report-service", "aria-label": "Επίσημη υπηρεσία", hidden: "" });
+  const formFields = [hint, subBox, noteLabel, photoLabel, sendBtn, preview];
+  panel.append(title, hint, subBox, noteLabel, photoLabel, sendBtn, cancelBtn, status, preview, serviceBox);
   root.append(fab, menu, panel);
 
   function toggleMenu(open) {
@@ -226,9 +248,50 @@ export function mount({ map, api, root, container, bus }) {
     state.marker = null;
   }
 
+  // B17: «Τι μπορείτε να κάνετε ακόμα» after a sent report. Never shows an error: a failed call, a missing
+  // service or a form reopened meanwhile (serviceSeq) just leave the block out.
+  let serviceSeq = 0;
+  async function showService(category, subtype) {
+    const sandboxCategory = sandboxCategoryFor(category, subtype);
+    if (!sandboxCategory || typeof api.serviceFor !== "function") return;
+    const seq = ++serviceSeq;
+    let res;
+    try {
+      res = await api.serviceFor(sandboxCategory);
+    } catch {
+      return;
+    }
+    const svc = res?.service;
+    if (!svc || seq !== serviceSeq) return;
+    const head = el("p", { class: "report-title" }, "Τι μπορείτε να κάνετε ακόμα");
+    // CLAUDE.md «Mock data is labelled»: offline mock file or a mock City sandbox (A-39 upstream_source).
+    if (res.source === "mock" || res.upstream_source === "mock") head.append(" · δοκιμαστικό");
+    const docs = el("ul");
+    for (const d of svc.documents || []) docs.append(el("li", {}, d));
+    // CLAUDE.md: unknown is «άγνωστο», never 0; 0 is free.
+    const cost = svc.cost_eur == null ? "άγνωστο" : svc.cost_eur === 0 ? "Δωρεάν" : `${svc.cost_eur} €`;
+    serviceBox.replaceChildren(head, el("p", {}, svc.title || ""), el("p", {}, "Δικαιολογητικά:"), docs,
+      el("p", {}, `Κόστος: ${cost}`));
+    // Only http(s) links: a `javascript:` URL from a bad registry entry must never become a clickable link.
+    if (typeof svc.online_url === "string" && /^https?:\/\//i.test(svc.online_url)) {
+      serviceBox.append(el("a", { href: svc.online_url, target: "_blank", rel: "noopener noreferrer" },
+        "Επίσημη σελίδα"));
+    }
+    // The panel was folded closed after the send: reopen it with only the service block and «Κλείσιμο».
+    for (const f of formFields) f.hidden = true;
+    cancelBtn.textContent = "Κλείσιμο";
+    serviceBox.hidden = false;
+    foldShow(panel, panelTimer);
+  }
+
   function openForm(category, workId, lngLat) {
     toggleMenu(false);
     closeForm(true);
+    serviceSeq++; // a late service answer for the previous report must not land in this form
+    serviceBox.hidden = true;
+    serviceBox.replaceChildren();
+    for (const f of [hint, noteLabel, photoLabel, sendBtn]) f.hidden = false;
+    cancelBtn.textContent = "Άκυρο";
     state.category = category;
     state.work_id = workId;
     const label = CATEGORIES.find((c) => c.id === category)?.label || category;
@@ -273,6 +336,7 @@ export function mount({ map, api, root, container, bus }) {
 
   panel.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!state.marker) return; // service view (B17): the form is not active
     const file = photo.files?.[0] || null;
     const { lng: lon, lat } = state.marker.getLngLat();
     const picked = subBox.hidden ? null : subBox.querySelector?.("input:checked")?.value || null;
@@ -294,6 +358,7 @@ export function mount({ map, api, root, container, bus }) {
           detail: { id: `offline-${Date.now()}`, category: input.category, lon, lat },
         }));
         notifyToast(queuedMsg);
+        showService(input.category, input.subtype);
         return;
       }
       const r = out.result;
@@ -329,6 +394,7 @@ export function mount({ map, api, root, container, bus }) {
         ...(trackId ? { link: { href: `/web/track.html?id=${encodeURIComponent(trackId)}`, label: "Παρακολούθηση" } } : {}),
         durationMs: 6000,
       });
+      showService(input.category, input.subtype);
     } catch {
       status.textContent = "Η αναφορά δεν έγινε δεκτή. Ελέγξτε τα στοιχεία και δοκιμάστε ξανά.";
       sendBtn.disabled = false;
@@ -378,7 +444,7 @@ export function mount({ map, api, root, container, bus }) {
     }
   });
 
-  const flush = async () => (await flushQueue(api, storage)).forEach(earned);
+  const flush = async () => (await flushQueue(api, storage, bus)).forEach(earned);
   window.addEventListener("online", flush);
   if (navigator.onLine) flush();
 

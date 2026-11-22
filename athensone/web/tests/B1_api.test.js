@@ -74,12 +74,17 @@ test("test_live_answer_cached", async () => {
   assert.deepEqual(second.features, fc.features);
 });
 
-// Fetch fails and storage is empty: answer comes from mock/works.geojson.
+// Fetch fails and storage is empty: answer comes from mock/works.geojson, cut to the bbox (B17: a LineString is kept
+// when any vertex is inside).
 test("test_no_cache_falls_back_to_mock", async () => {
   setup(failing());
   const out = await api.works({ bbox: BBOX });
   assert.equal(out.source, "mock");
-  assert.deepEqual(out.features, readMock("works.geojson").features);
+  const [w, s, e, n] = BBOX;
+  const inside = ([x, y]) => x >= w && x <= e && y >= s && y <= n;
+  const expected = readMock("works.geojson").features.filter((f) => f.geometry.type !== "LineString"
+    || f.geometry.coordinates.some(inside));
+  assert.deepEqual(out.features, expected);
 });
 
 // A 404 (endpoint not merged yet) is a failure: its body must never reach the caller.
