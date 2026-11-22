@@ -102,10 +102,11 @@ def candidates(frm: dict, to: dict, hazards=None, profile="wheelchair", avoid_po
     hit = _cache.get(key)
     if hit and hit[0] > time.time():
         return hit[1]
+    is_auto = profile == "auto"
     base = {
         "locations": [{"lat": frm["lat"], "lon": frm["lng"]}, {"lat": to["lat"], "lon": to["lng"]}],
-        "costing": "pedestrian",
-        "costing_options": {"pedestrian": PROFILES.get(profile, PROFILES["wheelchair"])},
+        "costing": "auto" if is_auto else "pedestrian",
+        "costing_options": {"auto": {"use_tolls": 0.5}} if is_auto else {"pedestrian": PROFILES.get(profile, PROFILES["wheelchair"])},
         "exclude_locations": [{"lat": h["lat"], "lon": h["lng"]} for h in hazards],
         "directions_options": {"units": "kilometers", "language": "el-GR"},
     }
@@ -120,11 +121,11 @@ def candidates(frm: dict, to: dict, hazards=None, profile="wheelchair", avoid_po
             try:
                 r2 = httpx.post(f"{config.VALHALLA_URL}/route", json={**base, "exclude_polygons": avoid_polys}, timeout=12)
                 r2.raise_for_status()
-                out.append(_trip(r2.json()["trip"], "Valhalla · μακριά από δρόμους με κίνηση"))
+                out.append(_trip(r2.json()["trip"], "Valhalla · αποφυγή κυκλοφορίας"))
             except Exception:
                 pass  # no route without busy roads: fine, keep the others
     except Exception as e:
-        out = _fallback_candidates(frm, to, hazards)
+        out = _fallback_candidates(frm, to, hazards, speed_kmh=22.0 if is_auto else 3.5)
         for c in out:
             c["error"] = type(e).__name__
     # drop near-duplicates (same length within 2% and same midpoint within ~15 m)
@@ -143,10 +144,12 @@ def candidates(frm: dict, to: dict, hazards=None, profile="wheelchair", avoid_po
     return uniq
 
 
-def _fallback_candidates(frm, to, hazards):
+def _fallback_candidates(frm, to, hazards, speed_kmh: float = 3.5):
     """Offline demo only: direct line + two side detours, clearly labelled."""
     direct = _fallback(frm, to, hazards)
     direct["label"] = "Δοκιμαστική · ευθεία"
+    if speed_kmh > 5.0:
+        direct["duration_min"] = round(direct["distance_km"] / speed_kmh * 60, 1)
     kx = 111.32 * math.cos(math.radians(frm["lat"]))
     dx, dy = (to["lng"] - frm["lng"]) * kx, (to["lat"] - frm["lat"]) * 111.32
     L = (dx * dx + dy * dy) ** .5 or 1
@@ -157,5 +160,5 @@ def _fallback_candidates(frm, to, hazards):
         pts = [[frm["lng"], frm["lat"]], mid, [to["lng"], to["lat"]]]
         dist = sum(haversine_km(a[1], a[0], b[1], b[0]) for a, b in zip(pts, pts[1:]))
         out.append({"source": "fallback", "label": name, "geojson": {"type": "LineString", "coordinates": pts},
-                    "distance_km": round(dist, 3), "duration_min": round(dist / 3.5 * 60, 1), "steps": []})
+                    "distance_km": round(dist, 3), "duration_min": round(dist / speed_kmh * 60, 1), "steps": []})
     return out

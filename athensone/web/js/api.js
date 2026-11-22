@@ -385,7 +385,9 @@ export function routing(fromOrOpts, to, profile) {
   const f = isObj ? fromOrOpts.from : fromOrOpts;
   const t = isObj ? fromOrOpts.to : to;
   const p = isObj ? fromOrOpts.profile : profile;
-  return read("routing", "/api/map/routing", postJson({ from: f, to: t, profile: p }),
+  const endpoint = p === "car" ? "/api/map/routing/car" : "/api/map/routing";
+  const body = p === "car" ? { from: f, to: t } : { from: f, to: t, profile: p };
+  return read("routing", endpoint, postJson(body),
     async () => straightLine(f, t), { cache: false });
 }
 
@@ -400,6 +402,27 @@ export async function landmarks() {
   const data = await mockJson("landmarks.geojson");
   report("landmarks", "mock");
   return { ...data, source: "curated" };
+}
+
+export function announcements() {
+  return read("announcements", "/api/announcements", undefined, async () => ({
+    source: "mock",
+    items: [
+      {
+        id: "apg-offline-1",
+        kind: "protest",
+        title: "Ενημέρωση πορειών & απεργιών (apergia.gr)",
+        date: "Σήμερα",
+        time: "",
+        location: "Κέντρο Αθήνας",
+        lat: 37.9755,
+        lng: 23.7348,
+        summary: "Ελέγξτε τις τρέχουσες συγκεντρώσεις και κυκλοφοριακές ρυθμίσεις στο apergia.gr.",
+        url: "https://apergia.gr/",
+        source_label: "apergia.gr",
+      },
+    ],
+  }));
 }
 
 export async function base() {

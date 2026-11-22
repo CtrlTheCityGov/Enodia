@@ -11,6 +11,9 @@ export const PROFILES = [
   { id: "cool", label: "Δροσερότερη διαδρομή" },
 ];
 
+export const CAR_PROFILE = { id: "car", label: "Αυτοκίνητο" };
+export const ALL_PROFILES = [...PROFILES, CAR_PROFILE];
+
 // MapLibre source and layer IDs for the active route (source: A4_routing.test.js; certainty: verified).
 export const ROUTE_SOURCE_ID = "route";
 export const ROUTE_LAYER_ID = "route-line";
@@ -27,6 +30,7 @@ export const PROFILE_PALETTES = Object.freeze({
   stroller: Object.freeze({ start: "#0d9488", end: "#2dd4bf", accent: "#0d9488" }),
   cool: Object.freeze({ start: "#059669", end: "#34d399", accent: "#059669" }),
 });
+const CAR_PALETTE = Object.freeze({ start: "#ea580c", end: "#f97316", accent: "#ea580c" });
 
 // MapLibre source & layer IDs for live/simulated GPS directional puck (UI/UX upgrade #6).
 const NAV_GPS_SOURCE_ID = "nav-gps-source";
@@ -145,7 +149,7 @@ const baselineStateByMap = new WeakMap();
 const reasonsHighlightByMap = new WeakMap();
 
 function isValidProfileId(id) {
-  return PROFILES.some((p) => p.id === id);
+  return ALL_PROFILES.some((p) => p.id === id);
 }
 
 function normalizeQuery(text) {
@@ -243,7 +247,7 @@ export function routeSource(geojson) {
 }
 
 function paletteForProfile(profileId) {
-  return PROFILE_PALETTES[profileId] ?? PROFILE_PALETTES.wheelchair;
+  return profileId === "car" ? CAR_PALETTE : (PROFILE_PALETTES[profileId] ?? PROFILE_PALETTES.wheelchair);
 }
 
 export function gradientAt(progress, palette = null) {
@@ -882,11 +886,22 @@ export function buildRouteInsight(route, profile = "wheelchair") {
         });
       }
     }
+    if (profile === "car" && route?.traffic) {
+      const lvl = route.traffic.level;
+      const lvlText = lvl === "heavy" ? "Αυξημένη" : lvl === "moderate" ? "Μέτρια" : "Χαμηλή";
+      const delay = Number(route.traffic.delay_min || 0);
+      metrics.push({
+        label: "Κίνηση",
+        value: lvlText,
+        delta: delay > 0 ? `+${delay}' καθυστέρηση` : "ομαλή ροή",
+        tone: lvl === "heavy" ? "warn" : lvl === "moderate" ? "neutral" : "good",
+      });
+    }
   } else {
     // Graceful offline / mock fallback (never invents numbers)
     metrics.push({
       label: "Προφίλ",
-      value: PROFILES.find((p) => p.id === profile)?.label ?? profile,
+      value: ALL_PROFILES.find((p) => p.id === profile)?.label ?? profile,
       delta: reasons.length > 0 ? `${reasons.length} κριτήρια` : "εκτός σύνδεσης",
       tone: "neutral",
     });
@@ -1467,13 +1482,13 @@ export function initRouting(container, map, api, options = {}) {
     }
   }
 
-  for (const profile of PROFILES) {
+  for (const profile of ALL_PROFILES) {
     const btn = doc.createElement("button");
     btn.type = "button";
     btn.className = "routing-profile-btn";
     btn.setAttribute("data-profile", profile.id);
     btn.setAttribute("aria-pressed", String(profile.id === activeProfile));
-    btn.textContent = profile.label;
+    btn.textContent = profile.id === "car" ? `🚗 ${profile.label}` : profile.label;
     btn.addEventListener("click", () => {
       activeProfile = profile.id;
       saveProfile(activeProfile);
@@ -1618,7 +1633,7 @@ export function initRouting(container, map, api, options = {}) {
     aiBtn.className = "routing-why__ai-btn";
     aiBtn.textContent = "✨ Εξήγηση από Stoa AI";
     aiBtn.addEventListener("click", () => {
-      const profileLabel = PROFILES.find((p) => p.id === activeProfile)?.label ?? activeProfile;
+      const profileLabel = ALL_PROFILES.find((p) => p.id === activeProfile)?.label ?? activeProfile;
       bus?.dispatchEvent(
         new CustomEvent("stoa:analyze-route", {
           detail: {
@@ -2251,6 +2266,11 @@ export function initRouting(container, map, api, options = {}) {
   if (bus) {
     bus.addEventListener("route:request", handleRouteRequestEvent);
     bus.addEventListener("reports:changed", handleReportsChangedEvent);
+    bus.addEventListener("tab:change", (e) => {
+      if (e?.detail?.tab && e.detail.tab !== "map" && !collapsed) {
+        setCollapsed(true);
+      }
+    });
   }
 
   form.addEventListener("submit", (e) => {

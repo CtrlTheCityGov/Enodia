@@ -1182,6 +1182,294 @@
       },
       "seed": true,
       "geometry_basis": "seed"
+    },
+    {
+      "id": "W-UTIL-DEDDIE-01",
+      "works_type": "power",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Υπογειοποίηση δικτύου μέσης τάσης ΔΕΔΔΗΕ (ΔΕΗ) — οδός Πατησίων",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-DEDDIE-01",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Πατησίων 65 - 89 (Πεδίον του Άρεως)",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-DEDDIE-01",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΔΕΔΔΗΕ Α.Ε. (Δίκτυο ΔΕΗ)",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-DEDDIE-01",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "start_date": {
+        "value": "2026-10-15",
+        "label": "CITED"
+      },
+      "end_date": {
+        "value": "2026-12-20",
+        "label": "INFERRED"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7322,
+            37.9912
+          ],
+          [
+            23.7326,
+            37.9935
+          ],
+          [
+            23.7331,
+            37.9958
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-UTIL-EYDAP-01",
+      "works_type": "water",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Αντικατάσταση κεντρικού αγωγού ύδρευσης ΕΥΔΑΠ — Λεωφ. Αλεξάνδρας",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-EYDAP-01",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Λεωφ. Αλεξάνδρας 98 - 122",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-EYDAP-01",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΕΥΔΑΠ Α.Ε.",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-EYDAP-01",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "start_date": {
+        "value": "2026-11-01",
+        "label": "CITED"
+      },
+      "end_date": {
+        "value": "2026-12-15",
+        "label": "INFERRED"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7485,
+            37.9896
+          ],
+          [
+            23.7518,
+            37.9889
+          ],
+          [
+            23.7549,
+            37.9882
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-UTIL-GAS-01",
+      "works_type": "gas",
+      "resolution": "street",
+      "status": "planned",
+      "title": {
+        "value": "Επέκταση δικτύου Φυσικού Αερίου (ΕΔΑ Αττικής) — Κουκάκι",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-GAS-01",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Βεΐκου 30 - 58, Κουκάκι",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-GAS-01",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΕΔΑ Αττικής (Φυσικό Αέριο)",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-GAS-01",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "start_date": {
+        "value": "2026-12-01",
+        "label": "CITED"
+      },
+      "end_date": {
+        "value": "2027-01-15",
+        "label": "INFERRED"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7242,
+            37.9636
+          ],
+          [
+            23.7229,
+            37.9621
+          ],
+          [
+            23.7218,
+            37.9606
+          ]
+        ]
+      }
+    },
+    {
+      "id": "W-UTIL-DEDDIE-02",
+      "works_type": "power",
+      "resolution": "street",
+      "status": "in_progress",
+      "title": {
+        "value": "Ενίσχυση υποσταθμού & καλωδίων ΔΕΔΔΗΕ (ΔΕΗ) — Πειραιώς",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-DEDDIE-02",
+          "page": 1
+        }
+      },
+      "street": {
+        "value": "Πειραιώς 78 - 102 (Γκάζι / Κεραμεικός)",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-DEDDIE-02",
+          "page": 1
+        }
+      },
+      "contractor": {
+        "value": "ΔΕΔΔΗΕ Α.Ε. (Δίκτυο ΔΕΗ)",
+        "label": "CITED",
+        "source": {
+          "ada": "UTIL-DEDDIE-02",
+          "page": 1
+        }
+      },
+      "amount_contract_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "amount_paid_eur": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "start_date": {
+        "value": "2026-11-05",
+        "label": "CITED"
+      },
+      "end_date": {
+        "value": "2026-12-10",
+        "label": "INFERRED"
+      },
+      "completion_date": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "guarantee_months": {
+        "value": null,
+        "label": "UNKNOWN"
+      },
+      "final_acceptance": false,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            23.7155,
+            37.9794
+          ],
+          [
+            23.7141,
+            37.9782
+          ],
+          [
+            23.7126,
+            37.977
+          ]
+        ]
+      }
     }
   ],
   "corrections": [

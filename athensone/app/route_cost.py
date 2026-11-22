@@ -40,9 +40,9 @@ SOFT_PENALTY = 0.3
 # SPEC Routing treats congestion as a stroller penalty; B12 and map_reports.CATEGORIES confirm the stored key.
 SOFT_REPORT_CATEGORIES = {"congestion"}
 
-PROFILES = ("wheelchair", "stroller", "cool")
-# Valhalla pedestrian costing used per profile (keys of routing.PROFILES; SPEC table: cool does not exclude steps).
-COSTING = {"wheelchair": "wheelchair", "stroller": "stroller", "cool": "walk"}
+PROFILES = ("wheelchair", "stroller", "cool", "car")
+# Valhalla costing used per profile.
+COSTING = {"wheelchair": "wheelchair", "stroller": "stroller", "cool": "walk", "car": "auto"}
 
 
 # ------------------------------------------------------------------ geometry
@@ -135,6 +135,8 @@ def choose(profile: str, cands: list[dict], hard_works: list[dict], hard_reports
             c["score"] = d
         elif profile == "stroller":
             c["score"] = d * (1 + SOFT_PENALTY * len(c["_soft"]) + busy_w * m["busy_pct"] / 100)
+        elif profile == "car":
+            c["score"] = d * (1 + 0.45 * len(c["_soft"]) + 0.6 * m["busy_pct"] / 100)
         else:  # cool
             c["score"] = d * (1 + SHADE_W_COOL * (1 - m["shade_pct"] / 100) + busy_w * m["busy_pct"] / 100)
     pool = [c for c in cands if not c["_hard"]] or cands  # hard rule first; if nothing is clear, keep all
@@ -160,14 +162,14 @@ def reasons(profile: str, best: dict, baseline: dict | None, works_list: list[di
             text = "αποφεύγει σημείο συμφόρησης" if r.get("category") in SOFT_REPORT_CATEGORIES \
                 else "αποφεύγει αναφερμένο εμπόδιο"
             out.append({"text": text, "layer": "reports", "feature_id": r["id"]})
-    if profile in ("stroller", "cool"):
+    if profile in ("stroller", "cool", "car"):
         b = best.get("metrics") or env.score_line(bco)
         s = env.score_line(sco)
         if profile == "cool" and b.get("shade_pct", 0) > s.get("shade_pct", 0):
             out.append({"text": f"περισσότερη σκιά: {b['shade_pct']}% αντί {s['shade_pct']}%",
                         "layer": "env", "feature_id": "shade"})
         if b.get("busy_pct", 0) < s.get("busy_pct", 0):
-            out.append({"text": f"λιγότερο δίπλα σε δρόμους με κίνηση: {b['busy_pct']}% αντί {s['busy_pct']}%",
+            out.append({"text": f"λιγότερη κυκλοφοριακή συμφόρηση: {b['busy_pct']}% αντί {s['busy_pct']}%",
                         "layer": "env", "feature_id": "busy_road"})
     return out
 

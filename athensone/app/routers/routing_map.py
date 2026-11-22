@@ -26,6 +26,12 @@ class RoutingRequest(BaseModel):
     profile: Literal["wheelchair", "stroller", "cool"]
 
 
+class CarRoutingRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    frm: list[float] = Field(alias="from", min_length=2, max_length=2)
+    to: list[float] = Field(min_length=2, max_length=2)
+
+
 def _open_reports() -> list[dict]:
     """Read route hazards from legacy reports and map reports, using sandbox status for City requests."""
     from .. import main  # lazy: main imports this module at the end of its own import
@@ -85,10 +91,19 @@ def _nearest_env_sample(lon: float, lat: float, bbox: tuple, air: dict | None) -
 
 @router.post("/api/map/routing")
 def map_routing(req: RoutingRequest) -> dict:
-    (flng, flat), (tlng, tlat) = req.frm, req.to
+    return _compute_route(req.frm, req.to, req.profile)
+
+
+@router.post("/api/map/routing/car")
+def map_routing_car(req: CarRoutingRequest) -> dict:
+    return _compute_route(req.frm, req.to, "car")
+
+
+def _compute_route(req_frm: list[float], req_to: list[float], profile: str) -> dict:
+    (flng, flat), (tlng, tlat) = req_frm, req_to
     frm, to = {"lat": flat, "lng": flng}, {"lat": tlat, "lng": tlng}
     bbox = (min(flng, tlng) - PAD_DEG, min(flat, tlat) - PAD_DEG, max(flng, tlng) + PAD_DEG, max(flat, tlat) + PAD_DEG)
-    profile, costing = req.profile, route_cost.COSTING[req.profile]
+    costing = route_cost.COSTING[profile]
 
     today = works.today()
     live_works = [w for w in works.all_cards()
@@ -103,6 +118,13 @@ def map_routing(req: RoutingRequest) -> dict:
         hz = hazards + [route_cost.work_point(w["geometry"]["coordinates"]) for w in live_works]
         polys = [p for w in live_works for p in route_cost.work_polygons(w["geometry"]["coordinates"])] or None
         hard_works, hard_reports, soft_works, soft_reports, reason_reports = live_works, blockers, [], [], blockers
+    elif profile == "car":
+        # car: avoid roadworks & congestion reports softly, prefer less congested arteries
+        hz = hazards
+        polys = [p for w in live_works for p in route_cost.work_polygons(w["geometry"]["coordinates"])] or env.busy_polygons(bbox) or None
+        hard_works, hard_reports = [], []
+        soft_works, soft_reports = live_works, soft
+        reason_reports = soft_reports
     else:
         # stroller and cool: like /api/navigate with air=True (busy-road avoid polygons); works/reports are soft
         hz = hazards
@@ -124,13 +146,26 @@ def map_routing(req: RoutingRequest) -> dict:
     why = route_cost.reasons(profile, best, baseline, hard_works or soft_works, reason_reports)
     comparison = route_cost.compare(profile, best, baseline, live_works, soft, env_sample)
 
+    best_metrics = best.get("metrics") or {}
+    busy_pct = int(best_metrics.get("busy_pct", 0) or 0)
+    congestion_hits = len([r for r in soft if r.get("category") == "congestion"])
+    traffic_level = "heavy" if busy_pct >= 55 or congestion_hits >= 2 else ("moderate" if busy_pct >= 25 or congestion_hits >= 1 or len(live_works) >= 2 else "low")
+    delay_min = round(best["duration_min"] * (0.35 if traffic_level == "heavy" else (0.18 if traffic_level == "moderate" else 0.05)), 1) if profile == "car" else 0
+
     return {
         "geometry": best["geojson"],
         "distance_m": round(best["distance_km"] * 1000),
-        "duration_s": round(best["duration_min"] * 60),
-        "legs": [{"mode": "walk"}],  # metro/bus legs are a later card (TASKS_B B9)
+        "duration_s": round((best["duration_min"] + delay_min) * 60),
+        "legs": [{"mode": "car" if profile == "car" else "walk"}],
         "reasons": why,
         "comparison": comparison,
+        "traffic": {
+            "level": traffic_level,
+            "delay_min": delay_min,
+            "busy_pct": busy_pct,
+            "congestion_reports": congestion_hits,
+            "works_nearby": len(live_works),
+        },
         # extra keys (not in the SPEC contract): where the line came from, so the UI can label a fallback
         "source": best["source"],
         "label": best.get("label"),
