@@ -149,14 +149,21 @@ body {
   background: transparent;
   color: var(--hud-text);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: var(--glass-radius-pill);
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 150ms ease, color 150ms ease;
+}
+
+/* On laptop widths <= 1360px, drop the layer bar to Row 2 so 3-tab #hud-tabs never touches it. */
+@media (max-width: 1360px) and (min-width: 601px) {
+  #hud-layerbar.hud-top-center {
+    top: calc(var(--hud-gap) * 2 + var(--hud-top-row-height));
+  }
 }
 
 .hud-btn:hover {
