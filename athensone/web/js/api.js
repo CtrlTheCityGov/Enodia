@@ -201,7 +201,10 @@ async function read(key, path, init, fallback, { cache = true } = {}) {
     const data = await liveJson(path, init);
     if (cache) writeCache(path, data);
     report(key, "live");
-    return { ...data, source: "live" };
+    // A-39: a backend that says where its data came from (e.g. "mock" when the City sandbox itself is the mock)
+    // keeps that as upstream_source, so the UI can still show «δοκιμαστικό» on a live answer.
+    const upstream = data && typeof data.source === "string" ? { upstream_source: data.source } : {};
+    return { ...data, ...upstream, source: "live" };
   } catch {
     // fall through to the cache
   }
@@ -247,6 +250,13 @@ export function reports({ bbox, since } = {}) {
 // Official City POIs (B14); categories = array or comma string, default friendship_club,library on the backend.
 export function pois({ bbox, categories } = {}) {
   return read("pois", `/api/map/pois${query({ categories, bbox })}`, undefined, () => mockJson("pois.geojson"));
+}
+
+// «Διορθώθηκαν κοντά σου» (B15). No mock file: we have no real resolved data to show offline, so the
+// fallback is an empty collection with an unknown (null) median, never a made-up number.
+export function resolved({ bbox, days } = {}) {
+  return read("resolved", `/api/map/resolved${query({ bbox, days })}`, undefined,
+    async () => ({ type: "FeatureCollection", features: [], summary: { count: 0, median_hours_to_resolve: null } }));
 }
 
 // The SPEC's ?user_id= is not sent: the backend reads the ao_token cookie (A-34).

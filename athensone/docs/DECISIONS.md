@@ -108,5 +108,6 @@
   mock files (`access`, `base`) don't turn on the «Offline λειτουργία» badge.
 - **A-39** (Evgenii, B15 fix round) New `/api/map/*` answers built from sandbox data carry a top-level
   `source: "mock" | "sandbox"` (from `sb.mock`), like `/api/map/reports`, so the UI shows «δοκιμαστικό» when the
-  City sandbox itself is the mock. Applied to `/api/map/resolved` (B15); B13 and B14 already had it. Resolved
+  City sandbox itself is the mock. Applied to `/api/map/resolved` (B15); B13 and B14 already had it. `api.js` keeps such a backend `source` as `upstream_source` (its own `source` stays
+  live/cache/mock). Resolved
   requests with no usable date are left out of `/api/map/resolved` (can't be placed in the `days` window).
