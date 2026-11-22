@@ -190,3 +190,37 @@ Aligns Dev A's HUD stylesheet, map layers, and `main.js` wiring with Dev B's com
 | `test_workpopup_suppresses_diavgeia_link_for_seed_work` | `popupHtml({ ..., ada: "SEED-ΑΔΑ-001", seed: true })` | no `<a href="https://diavgeia.gov.gr/...">` link; contains `SEED-ΑΔΑ-001` and `SEED` badge text |
 | `test_workpopup_report_open_includes_click_lnglat` | click `"works-line"` at `{ lng: 23.73, lat: 37.97 }`, click «Ανέφερε πρόοδο» | `report:open` event detail includes both `work_id` and `lngLat` |
 | `test_transit_ignores_stale_bus_poll_and_matches_proastiakos` | two overlapping polls (#1 slow, #2 fast) + rail layer paint | stale poll #1 does not overwrite poll #2's bus coords; `line-color` expression handles `PROASTIAKOS` |
+
+### A10: Layer «Υπηρεσίες Δήμου» (phase 6, after freeze)
+**Requested by Evgenii (Dev B owner) on 22 Nov after freeze, built by Dev B's agents on Dev A files: Αναστάσης to
+review before the pitch.** Data: `api.pois()` (B14, `GET /api/map/pois`): GeoJSON Points, properties `{id, name,
+category, address, open_now, distance_km, source, official: true}`; categories today `friendship_club` (Λέσχες
+Φιλίας, the former ΚΑΠΗ: unverified rename) and `library`. Offline mock: `web/mock/pois.geojson` (3 fictional POIs).
+**Files:** `web/js/layers/pois.js` (new), `web/js/ui/layerbar.js` (+1 chip), `web/js/main.js` (+1
+`registerOverlay`), `web/tests/A10_pois_layer.test.js` (new), and **the test writer updates the chip-count asserts**
+`web/tests/A2_layers.test.js:441`, `web/tests/A7_ux_upgrades.test.js:189` and `:229` from 6 to 7 (owner-approved,
+A-40: SPEC lists six layers; this seventh is an addition).
+- `layers/pois.js` like `layers/health.js`: `id = "pois"`, `label = "Δήμος"`, `layerIds = ["pois-points"]`,
+  `register(map, api, state)` adds a geojson source + circle layer (hidden unless `state.visible.pois`), loads
+  `api.pois()`, calls `state.onOffline()` when `source !== "live"`. Colour per category: `friendship_club` and
+  `library` each their own colour, anything else a default.
+- `popupHtml(props)` (exported, pure): name (escaped), Greek category label (`friendship_club` «Λέσχη Φιλίας»,
+  `library` «Βιβλιοθήκη», else the raw id), address or «άγνωστο», open now «Ανοιχτό τώρα» / «Κλειστό τώρα» /
+  «Ωράριο: άγνωστο» for `true`/`false`/`null`, an «επίσημο» badge, and «δοκιμαστικό» when `props.source === "mock"`.
+  In `register`, a click on `pois-points` opens a `maplibregl.Popup` with it (only when `globalThis.maplibregl`
+  exists; nothing at import time).
+- Chip added **last** in `layerbar.CHIPS` (after Εφημερεύοντα), `aria-pressed` like the others. The 390 px mobile
+  layout must still not overflow horizontally (the bar already scrolls; check A5 tests stay green).
+
+| Test | Given | Expected |
+|---|---|---|
+| `pois layer exports id, label, layerIds` | import `layers/pois.js` | `id === "pois"`, `label === "Δήμος"`, `layerIds` = `["pois-points"]`; no `document`/`maplibregl` touched at import |
+| `register adds source and hidden layer` | fake map, fake api `pois()` → 2 features, `state.visible = {}` | one geojson source, one circle layer with `visibility: "none"`, source data set to the 2 features |
+| `register visible when state says so` | `state.visible.pois = true` | layer `visibility: "visible"` |
+| `register calls onOffline for mock data` | `api.pois()` → `source: "mock"` | `state.onOffline` called once |
+| `register survives api failure` | `api.pois()` rejects | no throw; source has an empty collection |
+| `popupHtml shows Greek category and open state` | `{name: "Λέσχη Φιλίας Παγκρατίου", category: "friendship_club", address: "Χ 1", open_now: true, source: "live"}` | contains «Λέσχη Φιλίας», «Ανοιχτό τώρα», «επίσημο», not «δοκιμαστικό» |
+| `popupHtml unknowns` | `address: null, open_now: null` | «άγνωστο» and «Ωράριο: άγνωστο» |
+| `popupHtml escapes the name` | `name: "<img src=x onerror=1>"` | no `<img` in the output |
+| `popupHtml labels mock` | `source: "mock"` | «δοκιμαστικό» |
+| `layerbar has the Δήμος chip last` | `layerbar.CHIPS` | 7 chips, last `id === "pois"`, `label === "Δήμος"` |

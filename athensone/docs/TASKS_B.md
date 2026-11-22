@@ -27,6 +27,8 @@ The real routes vs the SPEC's short names: [SPEC.md, Παράρτημα](SPEC.md
 | B13 Service guide from the sandbox registry | 5 | `GET /api/map/services?category=` → the official municipal service for a report category (documents, cost, online link); `api.js serviceFor()` + `web/mock/services.json` | **merged** into `dev-b` |
 | B14 Official POI layer | 5 | `GET /api/map/pois` → sandbox POIs as GeoJSON with `official: true`; `api.js pois()` + `web/mock/pois.geojson` | **merged** into `dev-b` (fix round: finite bbox, ≤ 5 categories) |
 | B15 «Διορθώθηκαν κοντά σου» | 5 | `GET /api/map/resolved` → resolved sandbox requests as GeoJSON, hours to resolve, no personal fields; `api.js resolved()` | **merged** into `dev-b` (fix round: bad coords skipped, no negative hours, `source`, A-39) |
+| B16 Backend backlog fixes | 6 | Athens-day points cap, reports outside the Δήμος → 422, routing `blocked`, duplicate reports not double-counted | **in progress** |
+| B17 Frontend backlog fixes + service after report | 6 | `report.js` shows the official service (B13) after submit; Athens dates in points; mock filters in `api.js` | **in progress** |
 
 ### B0: Contracts + first mocks (phase 0)
 SPEC «Backend contracts», «Εξωτερικές πηγές» (Fallback column), «Offline fallback», «Demo script». Every file in
@@ -598,3 +600,69 @@ layer, with how long each took. `/api/equity` (per-district stats) already exist
 | `test_resolved_median_none_when_empty` | no resolved requests | `summary == {count: 0, median_hours_to_resolve: None}` |
 | `resolved: live answer marked live` (JS) | fake fetch → 200 | `source == "live"`, path starts `/api/map/resolved` |
 | `resolved: offline gives empty collection` (JS) | fetch rejects | `source == "mock"`, `features.length == 0`, `summary.count == 0` |
+
+## Phase 6: backlog (after freeze, owner's request 22 Nov)
+
+The backlog was written over two days and **some items are already fixed** on `main`. For every item below the test
+writer first checks whether the bug still exists: write the listed test anyway; if it already passes before any code,
+keep it as a regression test and say so in the report ("already fixed"); the implementer then leaves that item alone.
+B16 and B17 run in parallel with A10 (no shared files except that A10 only *reads* `api.pois()`).
+
+### B16: Backend backlog fixes (phase 6)
+**Files:** `app/store.py`, `app/routers/map_reports.py`, `app/routers/routing_map.py`, `app/route_cost.py`,
+`app/routers/works_map.py`, `app/config.py` (only if a new constant is needed), `tests/test_B16_backlog.py`.
+- **T2 Athens day:** the points daily cap counts by the Europe/Athens calendar day, not SQLite UTC `date('now')`.
+  Use `zoneinfo.ZoneInfo("Europe/Athens")` (stdlib): compute the UTC start/end of today's Athens day in Python and
+  compare `created_at` against them. Stored timestamps stay UTC.
+- **B6 Athens bounds:** `POST /api/map/reports` with a point outside `config.ENV_BBOX` (the Δήμος bbox,
+  `23.68,37.95,23.80,38.03`) → 422 `«Η αναφορά είναι εκτός Δήμου Αθηναίων»`; nothing stored, no points.
+  `GET /api/map/reports?bbox=nan,nan,nan,nan` (or `inf`) → 422.
+- **B9 blocked flag:** `POST /api/map/routing` answer gains `blocked: bool` (additive, A-40): `true` when the
+  wheelchair profile's chosen route still touches a hard blocker (in-progress work or obstacle report), else `false`
+  (always `false` for stroller / cool). Use the same "touches" test `route_cost.choose` uses.
+- **B12 duplicates:** an `obstacle`/`damage` map report that the duplicate check folds into an existing case must not
+  add a second count to `works_map` `reports_count` for the same work.
+
+| Test | Given | Expected |
+|---|---|---|
+| `test_daily_cap_uses_athens_day` | cap reached with entries at 2026-11-21T21:30Z (= 23:30 Athens, 21 Nov); now = 2026-11-21T22:30Z (= 00:30 Athens, 22 Nov) | a new award is allowed (new Athens day). Inject "now" via a monkeypatched helper, not the wall clock |
+| `test_daily_cap_same_athens_day_still_blocks` | cap reached at 2026-11-21T08:00Z, now 2026-11-21T20:00Z | award refused |
+| `test_report_outside_athens_422` | `POST /api/map/reports` at Πειραιάς `lon=23.6470, lat=37.9420` | 422 with the Greek message; `GET /api/map/reports` unchanged; points balance unchanged |
+| `test_report_inside_athens_still_ok` | same POST at Σύνταγμα `23.7348, 37.9755` | 200/201 as before |
+| `test_reports_bbox_non_finite_422` | `GET /api/map/reports?bbox=nan,nan,nan,nan` and `?bbox=-inf,0,inf,1` | 422 both |
+| `test_routing_blocked_true_when_every_candidate_blocked` | monkeypatched `routing.candidates` → candidates that all pass through an obstacle report; `profile="wheelchair"` | 200, `blocked is True` |
+| `test_routing_blocked_false_normally` | the existing Σύνταγμα→Μοναστηράκι wheelchair case with no blockers | `blocked is False` |
+| `test_routing_blocked_false_for_stroller` | same blocked candidates, `profile="stroller"` | `blocked is False` |
+| `test_duplicate_obstacle_not_double_counted_on_work` | two `obstacle` reports 10 m apart within 5 min on `W-SEED-001` (`23.7420, 37.9660`) | `GET /api/map/works` `reports_count` for `W-SEED-001` == 1 |
+
+### B17: Frontend backlog fixes + official service after a report (phase 6)
+**Files:** `web/js/ui/report.js`, `web/js/ui/points.js`, `web/js/api.js`, `web/css/` **no** (inline classes already
+in `hud.css` only; if a new style is needed write it under "Questions"), `web/tests/B17_backlog.test.js`.
+- **Service after submit (B13):** after `sendReport` succeeds (live or queued), `report.js` calls
+  `api.serviceFor(sandboxCategory)` and shows a block «Τι μπορείτε να κάνετε ακόμα» with the service title, the
+  documents list, cost («Δωρεάν» for 0, «άγνωστο» for null) and a link «Επίσημη σελίδα» (`online_url`, `rel="noopener"`,
+  `target="_blank"`). Mapping: `damage`/`obstacle` + subtype via `{sidewalk: "sidewalk", ramp: "sidewalk",
+  pothole: "pothole", streetlight: "streetlight", other: "other"}` (same as `app/categories.py`
+  `SUBTYPE_TO_SANDBOX`); `congestion`, `incident`, `work_progress` → no call. `service: null` or a failed call →
+  nothing shown (never an error to the user). A `source`/`upstream_source` of `mock` adds «δοκιμαστικό».
+  Export the mapping as `sandboxCategoryFor(category, subtype)`.
+- **B7 dates:** `ui/points.js` history dates show the Europe/Athens date (`Intl.DateTimeFormat("el-GR",
+  {timeZone: "Europe/Athens"})`), not `ts.slice(0, 10)`.
+- **B1 mock filters:** when `api.works({status})` falls back to the mock, features are filtered by `status`; when
+  any GeoJSON read with a `bbox` falls back to the mock or cache, Point features outside the bbox are dropped
+  (LineString: kept if any vertex is inside).
+- **B11 offline flush:** `flushQueue` dispatches `report:created` for every report it sends (check first; it may
+  already).
+
+| Test | Given | Expected |
+|---|---|---|
+| `sandboxCategoryFor maps subtypes` | `("damage","ramp")`, `("obstacle","pothole")`, `("damage","other")`, `("congestion")`, `("work_progress")` | `"sidewalk"`, `"pothole"`, `"other"`, `null`, `null` |
+| `report shows official service after submit` | fake api: `sendReport` ok, `serviceFor("sidewalk")` → service with title, 2 documents, `cost_eur: 0`, `online_url` | the form shows «Τι μπορείτε να κάνετε ακόμα», the title, both documents, «Δωρεάν», a link with `rel` containing `noopener` |
+| `report shows unknown cost as άγνωστο` | same, `cost_eur: null` | «άγνωστο» |
+| `report skips service for congestion` | category `congestion` | `serviceFor` not called |
+| `report hides block when service null or call fails` | `serviceFor` → `{service: null}`; then rejects | no block, no error text, submit success still shown |
+| `report labels mock service` | `serviceFor` → `upstream_source: "mock"` | «δοκιμαστικό» shown in the block |
+| `points history shows Athens date` | history entry `ts: "2026-11-21T22:30:00Z"` | rendered date is 22/11/2026 (Athens), not 2026-11-21 |
+| `works mock filtered by status` | fetch rejects; `api.works({status: "completed"})` with a mock containing planned + completed | only completed features, `source == "mock"` |
+| `mock GeoJSON filtered by bbox` | fetch rejects; `api.reports({bbox: [23.72,37.97,23.73,37.98]})`, mock with one point inside and one outside | only the inside point |
+| `flushQueue dispatches report:created` | queued report, fake bus, `sendReport` ok | one `report:created` event per sent report |

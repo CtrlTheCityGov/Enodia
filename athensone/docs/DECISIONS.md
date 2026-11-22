@@ -111,3 +111,6 @@
   City sandbox itself is the mock. Applied to `/api/map/resolved` (B15); B13 and B14 already had it. `api.js` keeps such a backend `source` as `upstream_source` (its own `source` stays
   live/cache/mock). Resolved
   requests with no usable date are left out of `/api/map/resolved` (can't be placed in the `days` window).
+- **A-40** (Evgenii, 22 Nov after freeze) Two additive contract changes: `POST /api/map/routing` answers carry
+  `blocked: bool` (B16), and the layer bar gets a seventh chip «Δήμος» (A10, official City POIs from B14) although
+  SPEC lists six. A10 is built on Dev A files at Evgenii's request; Αναστάσης reviews it before the pitch.
