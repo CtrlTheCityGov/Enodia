@@ -438,7 +438,7 @@ function collectJsFiles(dir) {
 test("test_six_chips_in_spec_order", () => {
   const chips = layerbar.CHIPS;
   assert.ok(Array.isArray(chips), "layerbar.CHIPS must be an array");
-  assert.equal(chips.length, 6, "layerbar.CHIPS must contain exactly 6 chips");
+  assert.equal(chips.length, 7, "layerbar.CHIPS must contain exactly 7 chips");
 
   assert.deepEqual(
     chips.map((c) => c?.label),
