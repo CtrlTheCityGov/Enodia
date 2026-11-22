@@ -8,8 +8,10 @@ import * as accessLayer from "../layers/access.js";
 import * as worksLayer from "../layers/works.js";
 import * as transitLayer from "../layers/transit.js";
 import * as healthLayer from "../layers/health.js";
+import * as poisLayer from "../layers/pois.js";
 
-// Six toggleable layer chips in exact SPEC order (source: SPEC.md "HUD (glassmorphism)", TASKS_A.md A2, certainty: verified).
+// Six toggleable layer chips in exact SPEC order (source: SPEC.md "HUD (glassmorphism)", TASKS_A.md A2, certainty: verified),
+// plus a seventh «Δήμος» chip added last (TASKS_A.md A10, DECISIONS.md A-40: an addition to the SPEC's six).
 // Citizen reports (layers/reports.js) are always on and intentionally excluded from CHIPS.
 export const CHIPS = Object.freeze([
   Object.freeze({
@@ -41,6 +43,11 @@ export const CHIPS = Object.freeze([
     id: healthLayer.id,
     label: healthLayer.label,
     layerIds: healthLayer.layerIds,
+  }),
+  Object.freeze({
+    id: poisLayer.id,
+    label: poisLayer.label,
+    layerIds: poisLayer.layerIds,
   }),
 ]);
 
