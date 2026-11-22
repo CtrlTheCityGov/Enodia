@@ -159,10 +159,13 @@ body {
   transition: background-color 150ms ease, color 150ms ease;
 }
 
-/* On laptop widths <= 1360px, drop the layer bar to Row 2 so 3-tab #hud-tabs never touches it. */
-@media (max-width: 1360px) and (min-width: 601px) {
+/* On laptop/desktop widths <= 1840px, place the wide layer bar on Row 2 so #hud-tabs and #hud-points never collide with it. */
+@media (max-width: 1840px) and (min-width: 601px) {
   #hud-layerbar.hud-top-center {
     top: calc(var(--hud-gap) * 2 + var(--hud-top-row-height));
+  }
+  #hud-offline {
+    top: calc(var(--hud-gap) * 3 + var(--hud-top-row-height) * 2);
   }
 }
 

@@ -53,7 +53,7 @@ html, body { margin: 0; font-family: "Inter", system-ui, -apple-system, "Segoe U
   line-height: 1.45; -webkit-font-smoothing: antialiased; }
 body.big { --fs: 21px; }
 body.big button { min-height: 60px; }
-header { display: flex; align-items: center; gap: 10px; padding: 10px 18px;
+header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; padding: 10px 18px;
   background: var(--card); backdrop-filter: blur(var(--glass-blur)) saturate(170%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(170%);
   border-bottom: 1px solid var(--line); box-shadow: 0 2px 14px rgba(15, 23, 42, 0.06);
@@ -110,6 +110,10 @@ footer { text-align: center; padding: 16px; font-size: .85em; }
 footer a { color: var(--accent); }
 /* operator control room */
 .ops { display: grid; grid-template-columns: 400px 1fr; gap: 14px; padding: 12px 16px; height: calc(100vh - 58px); }
+@media (max-width: 720px) {
+  header nav { flex-wrap: wrap; max-width: 100%; }
+  .ops { grid-template-columns: 1fr; height: auto; }
+}
 .ops .list { overflow: auto; border: 1px solid var(--glass-border); border-radius: var(--radius);
   background: var(--card); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-shadow); }
