@@ -23,6 +23,7 @@ export const OPTIONAL_DEV_B_MODULES = [
   "./ui/report.js",
   "./ui/stoa.js",
   "./ui/workstab.js",
+  "./ui/weathertab.js",
 ];
 
 // All six map layer modules owned by Dev A (source: SPEC.md "Αρχιτεκτονική", certainty: verified).
@@ -54,6 +55,7 @@ const DEV_B_UI_MOUNTS = [
   { specifier: "./ui/report.js", containerIds: ["hud-report"] },
   { specifier: "./ui/stoa.js", containerIds: ["hud-stoa"] },
   { specifier: "./ui/workstab.js", containerIds: ["hud-workstab", "hud-tabs"] },
+  { specifier: "./ui/weathertab.js", containerIds: ["hud-tabs"] },
 ];
 
 function isMissingModuleError(err) {
@@ -471,9 +473,10 @@ export async function bootstrap(
   const tabsContainer = root.getElementById("hud-tabs");
   const tabMapBtn = root.getElementById("tab-map");
   const tabWorksBtn = root.getElementById("tab-works");
+  const tabWeatherBtn = root.getElementById("tab-weather");
 
   function selectTab(tab) {
-    const nextTab = tab === "works" ? "works" : "map";
+    const nextTab = tab === "works" ? "works" : tab === "weather" ? "weather" : "map";
     state.activeTab = nextTab;
     if (tabsContainer?.dataset) {
       tabsContainer.dataset.activeTab = nextTab;
@@ -485,6 +488,10 @@ export async function bootstrap(
     if (tabWorksBtn) {
       tabWorksBtn.setAttribute("aria-selected", String(nextTab === "works"));
       tabWorksBtn.classList?.toggle("is-active", nextTab === "works");
+    }
+    if (tabWeatherBtn) {
+      tabWeatherBtn.setAttribute("aria-selected", String(nextTab === "weather"));
+      tabWeatherBtn.classList?.toggle("is-active", nextTab === "weather");
     }
     if (typeof state.onTabChange === "function") {
       state.onTabChange(nextTab);
@@ -499,6 +506,9 @@ export async function bootstrap(
   }
   if (tabWorksBtn && typeof tabWorksBtn.addEventListener === "function") {
     tabWorksBtn.addEventListener("click", () => selectTab("works"));
+  }
+  if (tabWeatherBtn && typeof tabWeatherBtn.addEventListener === "function") {
+    tabWeatherBtn.addEventListener("click", () => selectTab("weather"));
   }
 
   /* --- A2 --- */
