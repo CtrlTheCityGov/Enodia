@@ -66,7 +66,7 @@ def _resolved_at(req: dict) -> str | None:
 
 def _hours(created: str | None, resolved: str | None) -> float | None:
     a, b = _parse(created), _parse(resolved)
-    if a is None or b is None:
+    if a is None or b is None or b < a:  # resolved before created: inconsistent data, unknown rather than negative
         return None
     return round((b - a).total_seconds() / 3600, 1)
 
@@ -106,11 +106,18 @@ def list_resolved(bbox: str | None = None, days: int = Query(30, ge=1, le=365)):
         when = _parse(resolved_at)
         if when is None or when.date() < cutoff:
             continue  # outside the window, or no usable date to place it in the window
-        features.append(_feature(req, resolved_at))
+        try:
+            feat = _feature(req, resolved_at)
+        except (TypeError, ValueError):
+            continue  # non-numeric lat/lng from the sandbox (untrusted upstream data): skip, never 500
+        if not all(math.isfinite(c) for c in feat["geometry"]["coordinates"]):
+            continue
+        features.append(feat)
     hours = [f["properties"]["hours_to_resolve"] for f in features
              if f["properties"]["hours_to_resolve"] is not None]
     return {
         "type": "FeatureCollection",
+        "source": "mock" if sb.mock else "sandbox",  # A-39: label mock-sandbox data so the UI shows «δοκιμαστικό»
         "features": features,
         "summary": {"count": len(features),
                     "median_hours_to_resolve": round(statistics.median(hours), 1) if hours else None},
