@@ -646,6 +646,28 @@ body {
   gap: 6px;
 }
 
+.overlay-close-btn {
+  appearance: none;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--hud-text);
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.overlay-close-btn:hover {
+  background: var(--hud-hover-bg);
+}
+
 .routing-field {
   display: flex;
   flex-direction: column;

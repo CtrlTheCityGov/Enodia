@@ -1338,6 +1338,20 @@ export function initRouting(container, map, api, options = {}) {
   body.className = "routing-body";
   drawer.appendChild(body);
 
+  const drawerHeader = doc.createElement("div");
+  drawerHeader.className = "workstab-header";
+  const drawerTitle = doc.createElement("strong");
+  drawerTitle.textContent = "Διαδρομή";
+  const drawerCloseBtn = doc.createElement("button");
+  drawerCloseBtn.type = "button";
+  drawerCloseBtn.className = "overlay-close-btn";
+  drawerCloseBtn.setAttribute("aria-label", "Κλείσιμο διαδρομής");
+  drawerCloseBtn.textContent = "×";
+  drawerCloseBtn.addEventListener("click", () => setCollapsed(true));
+  drawerHeader.appendChild(drawerTitle);
+  drawerHeader.appendChild(drawerCloseBtn);
+  body.appendChild(drawerHeader);
+
   const form = doc.createElement("form");
   form.className = "routing-form";
   body.appendChild(form);

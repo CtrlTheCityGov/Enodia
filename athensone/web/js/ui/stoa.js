@@ -251,6 +251,13 @@ export function mount({ map, api, root, container, bus }) {
     flexDirection: "column",
   });
 
+  const header = el("div", { className: "workstab-header" });
+  const heading = el("strong", { textContent: "Stoa AI" });
+  const closeBtn = el("button", { type: "button", className: "overlay-close-btn", textContent: "×" });
+  closeBtn.setAttribute("aria-label", "Κλείσιμο Stoa AI");
+  closeBtn.addEventListener("click", () => { setOpen(false); bubble.focus(); });
+  header.append(heading, closeBtn);
+
   const log = el("div", { className: "stoa-log" });
   log.setAttribute("aria-live", "polite");
   Object.assign(log.style, { flex: "1", overflowY: "auto" });
@@ -282,7 +289,7 @@ export function mount({ map, api, root, container, bus }) {
   const send = el("button", { type: "submit", textContent: "Αποστολή" });
   if (micBtn) form.append(input, micBtn, send);
   else form.append(input, send);
-  panel.append(log, form);
+  panel.append(header, log, form);
   root.append(panel, bubble);
 
   let open = false;

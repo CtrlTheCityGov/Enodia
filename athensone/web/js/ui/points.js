@@ -78,7 +78,14 @@ export async function mount({ api, root, container, bus }) {
 
   function renderPanel() {
     panel.textContent = "";
-    panel.appendChild(el("h2", "", "Ιστορικό"));
+    const topRow = el("div", "workstab-header");
+    topRow.appendChild(el("h2", "", "Ιστορικό"));
+    const closeBtn = el("button", "overlay-close-btn", "×");
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Κλείσιμο");
+    closeBtn.addEventListener("click", () => setPanelOpen(false));
+    topRow.appendChild(closeBtn);
+    panel.appendChild(topRow);
     const list = el("ul", "points-history");
     if (state.history.length === 0) list.appendChild(el("li", "", "Δεν υπάρχουν κινήσεις ακόμη."));
     for (const h of state.history) {

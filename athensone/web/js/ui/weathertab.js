@@ -61,7 +61,13 @@ export async function mount({ map, api, root, container, bus }) {
   const header = el("div", { class: "workstab-header" });
   const heading = el("h2", { class: "workstab-heading" }, "Καιρός & Περιβάλλον Αθήνας");
   const sourceBadge = el("span", { class: "workstab-source" }, "");
-  header.append(heading, sourceBadge);
+  const closeBtn = el("button", { type: "button", class: "overlay-close-btn", "aria-label": "Κλείσιμο" }, "×");
+  closeBtn.addEventListener("click", () => {
+    const mTab = doc.getElementById?.("tab-map");
+    if (mTab && typeof mTab.click === "function") mTab.click();
+    else bus?.dispatchEvent?.(new CustomEvent("tab:change", { detail: { tab: "map" } }));
+  });
+  header.append(heading, sourceBadge, closeBtn);
 
   const modeBar = el("div", { class: "workstab-filters", role: "group", "aria-label": "Επίπεδο χάρτη περιβάλλοντος" });
   const modes = [
