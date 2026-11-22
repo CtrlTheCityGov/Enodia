@@ -113,6 +113,22 @@ const SECONDS_PER_MINUTE = 60;
 const ATHENS_PLACES = {
   συνταγμα: [23.7348, 37.9755],
   syntagma: [23.7348, 37.9755],
+  κυψελη: [23.7392, 38.0012],
+  kypseli: [23.7392, 38.0012],
+  πετραλωνα: [23.7094, 37.9684],
+  petralona: [23.7094, 37.9684],
+  παγκρατι: [23.7437, 37.9667],
+  pangrati: [23.7437, 37.9667],
+  αμπελοκηποι: [23.7600, 37.9880],
+  ampelokipoi: [23.7600, 37.9880],
+  "νεοσ κοσμοσ": [23.7290, 37.9570],
+  "neos kosmos": [23.7290, 37.9570],
+  πατησια: [23.7310, 38.0170],
+  patisia: [23.7310, 38.0170],
+  εξαρχεια: [23.7350, 37.9860],
+  exarcheia: [23.7350, 37.9860],
+  γκαζι: [23.7140, 37.9790],
+  gazi: [23.7140, 37.9790],
   μοναστηρακι: [23.7257, 37.9764],
   monastiraki: [23.7257, 37.9764],
   ομονοια: [23.728, 37.9841],
@@ -1422,31 +1438,19 @@ export function initRouting(container, map, api, options = {}) {
     return { input, pickBtn };
   }
 
-  const fromField = createPointField("from", "Από", "Σύνταγμα ή lat, lon");
-  const toField = createPointField("to", "Προς", "Μοναστηράκι ή lat, lon");
-
-  const RECOMMENDED_ROUTES = [
-    { label: "Σύνταγμα → Κυψέλη", fromLabel: "Σύνταγμα", from: [23.7347, 37.9755], toLabel: "Κυψέλη", to: [23.7392, 38.0012] },
-    { label: "Σύνταγμα → Πετράλωνα", fromLabel: "Σύνταγμα", from: [23.7347, 37.9755], toLabel: "Πετράλωνα", to: [23.7094, 37.9684] },
-  ];
-  const presetRow = doc.createElement("div");
-  presetRow.className = "routing-presets";
-  presetRow.setAttribute("aria-label", "Προτεινόμενες διαδρομές");
-  for (const preset of RECOMMENDED_ROUTES) {
-    const pBtn = doc.createElement("button");
-    pBtn.type = "button";
-    pBtn.className = "routing-pick-btn";
-    pBtn.textContent = preset.label;
-    pBtn.addEventListener("click", () => {
-      fromField.input.value = preset.fromLabel;
-      toField.input.value = preset.toLabel;
-      coords.from = [...preset.from];
-      coords.to = [...preset.to];
-      requestRoute();
-    });
-    presetRow.appendChild(pBtn);
+  const placesList = doc.createElement("datalist");
+  placesList.id = "routing-places";
+  for (const placeName of ["Σύνταγμα", "Κυψέλη", "Πετράλωνα", "Αμπελόκηποι", "Παγκράτι", "Νέος Κόσμος", "Πατήσια", "Εξάρχεια", "Γκάζι", "Μοναστηράκι", "Ακρόπολη", "Σεράφειο"]) {
+    const opt = doc.createElement("option");
+    opt.value = placeName;
+    placesList.appendChild(opt);
   }
-  form.appendChild(presetRow);
+  form.appendChild(placesList);
+
+  const fromField = createPointField("from", "Από", "Σύνταγμα ή lat, lon");
+  fromField.input.setAttribute("list", "routing-places");
+  const toField = createPointField("to", "Προς", "Κυψέλη, Πετράλωνα ή lat, lon");
+  toField.input.setAttribute("list", "routing-places");
 
   const profilesGroup = doc.createElement("div");
   profilesGroup.className = "routing-profiles";
