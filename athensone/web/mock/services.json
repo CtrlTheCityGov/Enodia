@@ -1,0 +1,148 @@
+{
+  "pothole": {
+    "category": "pothole",
+    "label_el": "Λακκούβα / οδόστρωμα",
+    "query": "λακκούβα οδόστρωμα",
+    "service": {
+      "id": "svc-mock-pothole",
+      "title": "Αποκατάσταση λακκούβας οδοστρώματος (mock)",
+      "documents": [
+        "Σημείο της λακκούβας"
+      ],
+      "cost_eur": null,
+      "online_url": "https://www.cityofathens.gr/",
+      "where": "(mock) Ηλεκτρονική αίτηση",
+      "when": null,
+      "faq": []
+    },
+    "source": "mock"
+  },
+  "streetlight": {
+    "category": "streetlight",
+    "label_el": "Φωτισμός",
+    "query": "βλάβη ηλεκτροφωτισμού",
+    "service": {
+      "id": "svc-mock-light",
+      "title": "Δήλωση βλάβης ηλεκτροφωτισμού (mock)",
+      "documents": [
+        "Σημείο της βλάβης (οδός, αριθμός κολώνας αν φαίνεται)"
+      ],
+      "cost_eur": null,
+      "online_url": "https://www.cityofathens.gr/",
+      "where": "(mock) Ηλεκτρονική αίτηση",
+      "when": null,
+      "faq": []
+    },
+    "source": "mock"
+  },
+  "garbage": {
+    "category": "garbage",
+    "label_el": "Απορρίμματα",
+    "query": "αποκομιδή απορριμμάτων",
+    "service": null,
+    "source": "mock"
+  },
+  "bulky_waste": {
+    "category": "bulky_waste",
+    "label_el": "Ογκώδη",
+    "query": "αποκομιδή ογκωδών αντικειμένων",
+    "service": {
+      "id": "svc-mock-bulky",
+      "title": "Αποκομιδή ογκωδών αντικειμένων (mock)",
+      "documents": [
+        "Διεύθυνση παραλαβής",
+        "Περιγραφή αντικειμένων"
+      ],
+      "cost_eur": null,
+      "online_url": "https://www.cityofathens.gr/",
+      "where": "(mock) Αίτηση ηλεκτρονικά ή τηλεφωνικά",
+      "when": "(mock) Ραντεβού παραλαβής μέσα σε λίγες ημέρες",
+      "faq": [
+        {
+          "q": "(mock) Πρέπει να βγάλω τα αντικείμενα στο πεζοδρόμιο;",
+          "a": "(mock) Μόνο την ημέρα του ραντεβού."
+        }
+      ]
+    },
+    "source": "mock"
+  },
+  "graffiti": {
+    "category": "graffiti",
+    "label_el": "Γκράφιτι",
+    "query": "καθαρισμός γκράφιτι",
+    "service": null,
+    "source": "mock"
+  },
+  "tree": {
+    "category": "tree",
+    "label_el": "Δέντρο",
+    "query": "κλάδεμα δέντρων",
+    "service": {
+      "id": "svc-mock-tree",
+      "title": "Κλάδεμα δέντρων σε κοινόχρηστο χώρο (mock)",
+      "documents": [
+        "Σημείο του δέντρου"
+      ],
+      "cost_eur": null,
+      "online_url": "https://www.cityofathens.gr/",
+      "where": "(mock) Ηλεκτρονική αίτηση",
+      "when": "(mock) Ανάλογα με την εποχή κλαδέματος",
+      "faq": []
+    },
+    "source": "mock"
+  },
+  "sidewalk": {
+    "category": "sidewalk",
+    "label_el": "Πεζοδρόμιο",
+    "query": "επισκευή πεζοδρομίου",
+    "service": {
+      "id": "svc-mock-sidewalk",
+      "title": "Επισκευή πεζοδρομίου (mock)",
+      "documents": [
+        "Σημείο της ζημιάς",
+        "Φωτογραφία (προαιρετικά)"
+      ],
+      "cost_eur": null,
+      "online_url": "https://www.cityofathens.gr/",
+      "where": "(mock) Ηλεκτρονική αίτηση",
+      "when": null,
+      "faq": []
+    },
+    "source": "mock"
+  },
+  "abandoned_vehicle": {
+    "category": "abandoned_vehicle",
+    "label_el": "Εγκαταλελειμμένο όχημα",
+    "query": "εγκαταλελειμμένα οχήματα",
+    "service": null,
+    "source": "mock"
+  },
+  "noise": {
+    "category": "noise",
+    "label_el": "Θόρυβος",
+    "query": "ηχορύπανση",
+    "service": null,
+    "source": "mock"
+  },
+  "stray_animals": {
+    "category": "stray_animals",
+    "label_el": "Αδέσποτα",
+    "query": "αδέσποτα ζώα",
+    "service": null,
+    "source": "mock"
+  },
+  "water_leak": {
+    "category": "water_leak",
+    "label_el": "Διαρροή νερού",
+    "query": "διαρροή νερού",
+    "service": null,
+    "source": "mock"
+  },
+  "other": {
+    "category": "other",
+    "label_el": "Άλλο",
+    "query": null,
+    "service": null,
+    "source": "mock"
+  }
+}

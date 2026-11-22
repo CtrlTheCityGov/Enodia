@@ -213,15 +213,64 @@ class _MockData:
             "results": [],
         }
 
+    # B13: a small fictional registry catalogue for the service guide. Every title ends in «(mock)»; places,
+    # hours and FAQ are invented (not the real Municipality of Athens procedures). cost_eur is None (unknown),
+    # never a made-up price. Each entry is matched when one of its keywords is in the lower-cased query.
+    _SERVICES = (
+        (("ογκωδ",), {
+            "id": "svc-mock-bulky", "title": "Αποκομιδή ογκωδών αντικειμένων (mock)",
+            "documents": ["Διεύθυνση παραλαβής", "Περιγραφή αντικειμένων"], "cost_eur": None,
+            "online_url": "https://www.cityofathens.gr/", "where": "(mock) Αίτηση ηλεκτρονικά ή τηλεφωνικά",
+            "when": "(mock) Ραντεβού παραλαβής μέσα σε λίγες ημέρες",
+            "faq": [{"q": "(mock) Πρέπει να βγάλω τα αντικείμενα στο πεζοδρόμιο;",
+                     "a": "(mock) Μόνο την ημέρα του ραντεβού."}]}),
+        (("ηλεκτροφωτισμ", "φωτισμ"), {
+            "id": "svc-mock-light", "title": "Δήλωση βλάβης ηλεκτροφωτισμού (mock)",
+            "documents": ["Σημείο της βλάβης (οδός, αριθμός κολώνας αν φαίνεται)"], "cost_eur": None,
+            "online_url": "https://www.cityofathens.gr/", "where": "(mock) Ηλεκτρονική αίτηση", "when": None,
+            "faq": []}),
+        (("πεζοδρομ",), {
+            "id": "svc-mock-sidewalk", "title": "Επισκευή πεζοδρομίου (mock)",
+            "documents": ["Σημείο της ζημιάς", "Φωτογραφία (προαιρετικά)"], "cost_eur": None,
+            "online_url": "https://www.cityofathens.gr/", "where": "(mock) Ηλεκτρονική αίτηση", "when": None,
+            "faq": []}),
+        (("λακκούβ", "οδόστρωμ"), {
+            "id": "svc-mock-pothole", "title": "Αποκατάσταση λακκούβας οδοστρώματος (mock)",
+            "documents": ["Σημείο της λακκούβας"], "cost_eur": None,
+            "online_url": "https://www.cityofathens.gr/", "where": "(mock) Ηλεκτρονική αίτηση", "when": None,
+            "faq": []}),
+        (("κλάδεμ", "δέντρ"), {
+            "id": "svc-mock-tree", "title": "Κλάδεμα δέντρων σε κοινόχρηστο χώρο (mock)",
+            "documents": ["Σημείο του δέντρου"], "cost_eur": None,
+            "online_url": "https://www.cityofathens.gr/", "where": "(mock) Ηλεκτρονική αίτηση",
+            "when": "(mock) Ανάλογα με την εποχή κλαδέματος", "faq": []}),
+    )
+
+    # The pre-B13 single answer: still returned for any query the catalogue doesn't know (POST /api/ask).
+    _SVC_DEFAULT = {"id": "svc-mock-1", "title": "Βεβαίωση μόνιμης κατοικίας (mock)",
+                    "documents": ["Αστυνομική ταυτότητα", "Αποδεικτικό διεύθυνσης"], "cost_eur": 0,
+                    "online_url": "https://www.cityofathens.gr/"}
+
     def services(self, q):
-        return {"total": 1, "page": 1, "size": 5, "items": [
-            {"id": "svc-mock-1", "title": "Βεβαίωση μόνιμης κατοικίας (mock)", "cost_eur": 0,
-             "online_url": "https://www.cityofathens.gr/", "score": 1.0}]}
+        from .service_guide import QUERIES  # late import; service_guide doesn't import sandbox
+        text = (q or "").lower()
+        hits = [entry for keys, entry in self._SERVICES if any(k in text for k in keys)]
+        if hits:
+            items = [{"id": e["id"], "title": e["title"], "cost_eur": e["cost_eur"],
+                      "online_url": e["online_url"], "score": 1.0} for e in hits]
+        elif q in QUERIES.values():
+            items = []  # a service-guide query with no mock entry: «no match», not a wrong service
+        else:
+            d = self._SVC_DEFAULT
+            items = [{"id": d["id"], "title": d["title"], "cost_eur": d["cost_eur"],
+                      "online_url": d["online_url"], "score": 1.0}]
+        return {"total": len(items), "page": 1, "size": 5, "items": items}
 
     def service(self, sid):
-        return {"id": sid, "title": "Βεβαίωση μόνιμης κατοικίας (mock)",
-                "documents": ["Αστυνομική ταυτότητα", "Αποδεικτικό διεύθυνσης"], "cost_eur": 0,
-                "online_url": "https://www.cityofathens.gr/"}
+        for _keys, entry in self._SERVICES:
+            if entry["id"] == sid:
+                return {**entry, "documents": list(entry["documents"]), "faq": list(entry["faq"])}
+        return {**self._SVC_DEFAULT, "id": sid, "documents": list(self._SVC_DEFAULT["documents"])}
 
     def pois(self, size=20, category=None, lat=None, lng=None, radius_km=2.0):
         items = [dict(p) for p in self._pois if not category or p["category"] == category]
