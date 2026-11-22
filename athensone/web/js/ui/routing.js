@@ -12,7 +12,8 @@ export const PROFILES = [
 ];
 
 export const CAR_PROFILE = { id: "car", label: "Αυτοκίνητο" };
-export const ALL_PROFILES = [...PROFILES, CAR_PROFILE];
+export const TRANSIT_PROFILE = { id: "transit", label: "ΜΜΜ" };
+export const ALL_PROFILES = [...PROFILES, CAR_PROFILE, TRANSIT_PROFILE];
 
 // MapLibre source and layer IDs for the active route (source: A4_routing.test.js; certainty: verified).
 export const ROUTE_SOURCE_ID = "route";
@@ -31,6 +32,7 @@ export const PROFILE_PALETTES = Object.freeze({
   cool: Object.freeze({ start: "#059669", end: "#34d399", accent: "#059669" }),
 });
 const CAR_PALETTE = Object.freeze({ start: "#ea580c", end: "#f97316", accent: "#ea580c" });
+const TRANSIT_PALETTE = Object.freeze({ start: "#7c3aed", end: "#a855f7", accent: "#7c3aed" });
 
 // MapLibre source & layer IDs for live/simulated GPS directional puck (UI/UX upgrade #6).
 const NAV_GPS_SOURCE_ID = "nav-gps-source";
@@ -247,7 +249,7 @@ export function routeSource(geojson) {
 }
 
 function paletteForProfile(profileId) {
-  return profileId === "car" ? CAR_PALETTE : (PROFILE_PALETTES[profileId] ?? PROFILE_PALETTES.wheelchair);
+  return profileId === "car" ? CAR_PALETTE : profileId === "transit" ? TRANSIT_PALETTE : (PROFILE_PALETTES[profileId] ?? PROFILE_PALETTES.wheelchair);
 }
 
 export function gradientAt(progress, palette = null) {
@@ -897,6 +899,15 @@ export function buildRouteInsight(route, profile = "wheelchair") {
         tone: lvl === "heavy" ? "warn" : lvl === "moderate" ? "neutral" : "good",
       });
     }
+    if (profile === "transit" && route?.transit_summary) {
+      const ts = route.transit_summary;
+      metrics.push({
+        label: "ΜΜΜ",
+        value: `Γραμμή ${ts.line}`,
+        delta: `${ts.from_stop} → ${ts.to_stop} (${ts.transit_min}')`,
+        tone: "good",
+      });
+    }
   } else {
     // Graceful offline / mock fallback (never invents numbers)
     metrics.push({
@@ -1488,7 +1499,7 @@ export function initRouting(container, map, api, options = {}) {
     btn.className = "routing-profile-btn";
     btn.setAttribute("data-profile", profile.id);
     btn.setAttribute("aria-pressed", String(profile.id === activeProfile));
-    btn.textContent = profile.id === "car" ? `🚗 ${profile.label}` : profile.label;
+    btn.textContent = profile.id === "car" ? `🚗 ${profile.label}` : profile.id === "transit" ? `🚌 ${profile.label}` : profile.label;
     btn.addEventListener("click", () => {
       activeProfile = profile.id;
       saveProfile(activeProfile);

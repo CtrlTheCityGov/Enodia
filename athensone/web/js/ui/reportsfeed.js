@@ -136,7 +136,7 @@ export const DEMO_FORUM_REPORTS = [
   },
 ];
 
-export async function mount({ api, root, container, bus }) {
+export async function mount({ api, root, container, bus, standalone = false }) {
   root = container || root;
   if (!root) return {};
   const doc = root.ownerDocument || globalThis.document;
@@ -162,13 +162,21 @@ export async function mount({ api, root, container, bus }) {
   const header = el("div", { class: "workstab-header" });
   const heading = el("h2", { class: "workstab-heading" }, "Φόρουμ Αναφορών Πολιτών");
   const countBadge = el("span", { class: "workstab-source" }, "");
-  const closeBtn = el("button", { type: "button", class: "overlay-close-btn", "aria-label": "Κλείσιμο" }, "×");
-  closeBtn.addEventListener("click", () => {
-    const mTab = doc.getElementById?.("tab-map");
-    if (mTab && typeof mTab.click === "function") mTab.click();
-    else bus?.dispatchEvent?.(new CustomEvent("tab:change", { detail: { tab: "map" } }));
-  });
-  header.append(heading, countBadge, closeBtn);
+  header.append(heading, countBadge);
+  if (!standalone) {
+    const openPageLink = el(
+      "a",
+      { href: "/web/forum.html", target: "_blank", rel: "noopener noreferrer", class: "workstab-filter notice-link" },
+      "↗ Σε νέα σελίδα",
+    );
+    const closeBtn = el("button", { type: "button", class: "overlay-close-btn", "aria-label": "Κλείσιμο" }, "×");
+    closeBtn.addEventListener("click", () => {
+      const mTab = doc.getElementById?.("tab-map");
+      if (mTab && typeof mTab.click === "function") mTab.click();
+      else bus?.dispatchEvent?.(new CustomEvent("tab:change", { detail: { tab: "map" } }));
+    });
+    header.append(openPageLink, closeBtn);
+  }
 
   const controls = el("div", { class: "forum-controls" });
   const filterBar = el("div", { class: "workstab-filters", role: "group", "aria-label": "Φίλτρο αναφορών" });
@@ -258,7 +266,30 @@ export async function mount({ api, root, container, bus }) {
       );
 
       const desc = el("p", { class: "notice-summary forum-body" }, p.description || p.note || "Αναφορά πολίτη στον χάρτη.");
-      const addrLine = p.address ? el("div", { class: "workstab-status" }, `📍 ${p.address}`) : null;
+      const hasCoords = coords.length >= 2;
+      const mapHref = hasCoords
+        ? `/web/citizen.html?lat=${encodeURIComponent(coords[1])}&lon=${encodeURIComponent(coords[0])}&zoom=17&notour=1`
+        : null;
+      let addrLine = null;
+      if (p.address) {
+        if (mapHref) {
+          addrLine = el("a", {
+            href: mapHref,
+            class: "workstab-status notice-link",
+            style: "display:inline-flex;gap:4px;color:inherit;text-decoration:underline;",
+          }, `📍 ${p.address}`);
+          if (!standalone) {
+            addrLine.addEventListener("click", (ev) => {
+              ev.preventDefault();
+              bus?.dispatchEvent?.(new CustomEvent("map:flyto", { detail: { lon: coords[0], lat: coords[1], zoom: 17 } }));
+              const mTab = doc.getElementById?.("tab-map");
+              if (mTab && typeof mTab.click === "function") mTab.click();
+            });
+          }
+        } else {
+          addrLine = el("div", { class: "workstab-status" }, `📍 ${p.address}`);
+        }
+      }
 
       const actions = el("div", { class: "notice-actions forum-actions" });
       const votesCount = getVotes(fid, p.upvotes);
@@ -293,14 +324,19 @@ export async function mount({ api, root, container, bus }) {
       });
       actions.append(commentToggle);
 
-      if (coords.length >= 2) {
-        const fly = el("button", { type: "button", class: "workstab-filter" }, "Στον χάρτη");
-        fly.addEventListener("click", () => {
-          bus?.dispatchEvent?.(new CustomEvent("map:flyto", { detail: { lon: coords[0], lat: coords[1], zoom: 17 } }));
-          const mTab = doc.getElementById?.("tab-map");
-          if (mTab && typeof mTab.click === "function") mTab.click();
-        });
-        actions.append(fly);
+      if (hasCoords) {
+        if (standalone) {
+          const flyLink = el("a", { href: mapHref, class: "workstab-filter notice-link" }, "📍 Στον χάρτη");
+          actions.append(flyLink);
+        } else {
+          const fly = el("button", { type: "button", class: "workstab-filter" }, "Στον χάρτη");
+          fly.addEventListener("click", () => {
+            bus?.dispatchEvent?.(new CustomEvent("map:flyto", { detail: { lon: coords[0], lat: coords[1], zoom: 17 } }));
+            const mTab = doc.getElementById?.("tab-map");
+            if (mTab && typeof mTab.click === "function") mTab.click();
+          });
+          actions.append(fly);
+        }
       }
 
       li.append(top, authorRow, desc);

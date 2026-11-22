@@ -494,6 +494,7 @@ def get_stop_arrivals(stop_code: str) -> dict[str, Any]:
 
 
 _bus_routes_cache: list[dict[str, Any]] | None = None
+_bus_stops_cache: list[dict[str, Any]] | None = None
 
 
 def load_bus_routes() -> list[dict[str, Any]]:
@@ -514,12 +515,31 @@ def load_bus_routes() -> list[dict[str, Any]]:
     return _bus_routes_cache
 
 
+def load_bus_stops() -> list[dict[str, Any]]:
+    """Load cached OASA bus stops from data/transit/bus_stops.json."""
+    global _bus_stops_cache
+    if _bus_stops_cache is not None:
+        return _bus_stops_cache
+    path = config.DATA_DIR / "transit" / "bus_stops.json"
+    if path.exists():
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            feats = raw.get("features") or []
+            _bus_stops_cache = feats
+            return feats
+        except (OSError, ValueError):
+            pass
+    _bus_stops_cache = []
+    return _bus_stops_cache
+
+
 def get_transit(bbox: BBox | None = None) -> dict[str, Any]:
-    """Assemble the SPEC GET /transit payload: lines, stations, buses, bus_routes, source, updated_at."""
+    """Assemble the SPEC GET /transit payload: lines, stations, buses, bus_routes, bus_stops, source, updated_at."""
     static = load_static()
     line_feats = static["lines"].get("features") or []
     station_feats = static["stations"].get("features") or []
     bus_route_feats = load_bus_routes()
+    bus_stop_feats = load_bus_stops()
 
     if bbox is not None:
         station_feats = [
@@ -529,6 +549,11 @@ def get_transit(bbox: BBox | None = None) -> dict[str, Any]:
         ]
         line_feats = [f for f in line_feats if line_intersects_bbox(f, bbox)]
         bus_route_feats = [f for f in bus_route_feats if line_intersects_bbox(f, bbox)]
+        bus_stop_feats = [
+            f
+            for f in bus_stop_feats
+            if point_in_bbox(f["geometry"]["coordinates"][0], f["geometry"]["coordinates"][1], bbox)
+        ]
 
     bus_feats, source, updated_at = get_buses(bbox)
     return {
@@ -536,6 +561,7 @@ def get_transit(bbox: BBox | None = None) -> dict[str, Any]:
         "stations": {"type": "FeatureCollection", "features": station_feats},
         "buses": {"type": "FeatureCollection", "features": bus_feats},
         "bus_routes": {"type": "FeatureCollection", "features": bus_route_feats},
+        "bus_stops": {"type": "FeatureCollection", "features": bus_stop_feats},
         "source": source,
         "updated_at": updated_at,
         "routes": routes_catalog(static.get("catalog") or {}, bus_feats),

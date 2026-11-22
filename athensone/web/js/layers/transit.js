@@ -42,16 +42,18 @@ const LINES_SOURCE_ID = "transit-lines-source";
 const STATIONS_SOURCE_ID = "transit-stations-source";
 const BUSES_SOURCE_ID = "transit-buses-source";
 const BUS_ROUTES_SOURCE_ID = "transit-bus-routes-source";
+const BUS_STOPS_SOURCE_ID = "transit-bus-stops-source";
 
 const RAIL_LINES_LAYER_ID = "transit-rail-lines";
 const RAIL_STATIONS_LAYER_ID = "transit-rail-stations";
 const RAIL_LABELS_LAYER_ID = "transit-rail-labels";
 const BUS_ROUTES_LAYER_ID = "transit-bus-routes";
+const BUS_STOPS_LAYER_ID = "transit-bus-stops";
 const BUSES_LAYER_ID = "transit-buses";
 const BUSES_LABELS_LAYER_ID = "transit-buses-labels";
 
 // Separate toggleable layer id lists for the two transit chips (TASKS_A.md A2, certainty: verified).
-export const busLayerIds = [BUS_ROUTES_LAYER_ID, BUSES_LAYER_ID, BUSES_LABELS_LAYER_ID];
+export const busLayerIds = [BUS_ROUTES_LAYER_ID, BUS_STOPS_LAYER_ID, BUSES_LAYER_ID, BUSES_LABELS_LAYER_ID];
 export const railLayerIds = [RAIL_LINES_LAYER_ID, RAIL_STATIONS_LAYER_ID, RAIL_LABELS_LAYER_ID];
 
 // All MapLibre layer ids added by this module (TASKS_A.md A2, certainty: verified).
@@ -442,7 +444,7 @@ function bindStationPopup(map) {
   }
   stationPopupBoundMaps.add(map);
   // The station name label is clickable too (Wave 1 review): same handlers on both layers.
-  for (const layerId of [RAIL_STATIONS_LAYER_ID, RAIL_LABELS_LAYER_ID]) {
+  for (const layerId of [RAIL_STATIONS_LAYER_ID, RAIL_LABELS_LAYER_ID, BUS_STOPS_LAYER_ID]) {
     map.on("mouseenter", layerId, () => setCursor(map, "pointer"));
     map.on("mouseleave", layerId, () => setCursor(map, ""));
     map.on("click", layerId, onStationClick);
@@ -879,6 +881,10 @@ async function loadTransitData(map, api, { updateRail = false, updateBuses = fal
       if (busRoutesSrc && typeof busRoutesSrc.setData === "function") {
         busRoutesSrc.setData(res?.bus_routes ?? emptyFeatureCollection());
       }
+      const busStopsSrc = map.getSource(BUS_STOPS_SOURCE_ID);
+      if (busStopsSrc && typeof busStopsSrc.setData === "function") {
+        busStopsSrc.setData(res?.bus_stops ?? emptyFeatureCollection());
+      }
     }
     let busesApplied = false;
     if (updateBuses) {
@@ -1011,7 +1017,7 @@ function filterForLayer(layerId, filter) {
   if (!filter) return null;
   if (layerId === RAIL_LINES_LAYER_ID) return railLineFilter(filter.railKeys);
   if (layerId === RAIL_STATIONS_LAYER_ID || layerId === RAIL_LABELS_LAYER_ID) return stationFilter(filter.railKeys);
-  if (layerId === BUSES_LAYER_ID || layerId === BUSES_LABELS_LAYER_ID || layerId === BUS_ROUTES_LAYER_ID) return busFilter(filter.busKeys);
+  if (layerId === BUSES_LAYER_ID || layerId === BUSES_LABELS_LAYER_ID || layerId === BUS_ROUTES_LAYER_ID || layerId === BUS_STOPS_LAYER_ID) return busFilter(filter.busKeys);
   return null;
 }
 
@@ -1081,6 +1087,12 @@ export async function register(map, api, state = {}) {
     }
     if (!map.getSource(BUS_ROUTES_SOURCE_ID)) {
       map.addSource(BUS_ROUTES_SOURCE_ID, {
+        type: "geojson",
+        data: emptyFeatureCollection(),
+      });
+    }
+    if (!map.getSource(BUS_STOPS_SOURCE_ID)) {
+      map.addSource(BUS_STOPS_SOURCE_ID, {
         type: "geojson",
         data: emptyFeatureCollection(),
       });
@@ -1164,6 +1176,24 @@ export async function register(map, api, state = {}) {
           "line-width": 3.5,
           "line-opacity": 0.72,
           "line-dasharray": [2, 1.5],
+        },
+      });
+    }
+
+    if (!map.getLayer(BUS_STOPS_LAYER_ID)) {
+      addLayerWithFilter(map, {
+        id: BUS_STOPS_LAYER_ID,
+        type: "circle",
+        source: BUS_STOPS_SOURCE_ID,
+        minzoom: 13.5,
+        layout: {
+          visibility: busesOn ? "visible" : "none",
+        },
+        paint: {
+          "circle-radius": 5.5,
+          "circle-color": "#ffffff",
+          "circle-stroke-color": busColorExpression(),
+          "circle-stroke-width": 2.2,
         },
       });
     }

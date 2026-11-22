@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="el" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Enodia — Φόρουμ Αναφορών Πολιτών</title>
+  <link rel="icon" href="/web/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="css/hud.css">
+  <style>
+    body.forum-standalone-page {
+      margin: 0;
+      min-height: 100vh;
+      overflow-y: auto;
+      background: linear-gradient(145deg, #eef2ff 0%, #f8fafc 55%, #e0f2fe 100%);
+      color: #0f172a;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .forum-page-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+    }
+    .forum-page-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+    .forum-page-main {
+      max-width: 860px;
+      margin: 20px auto 48px;
+      padding: 0 16px;
+    }
+    .forum-page-main .forum-panel {
+      position: static;
+      transform: none;
+      width: 100%;
+      max-height: none;
+    }
+  </style>
+</head>
+<body class="forum-standalone-page">
+  <header class="forum-page-topbar">
+    <div class="forum-page-brand">
+      <img src="/web/assets/enodia-logo-square.png" alt="" width="24" height="24">
+      <span>Enodia — Φόρουμ Αναφορών Αθήνας</span>
+    </div>
+    <a class="hud-btn hud-tab is-active" href="/web/citizen.html?notour=1" style="text-decoration:none;">← Επιστροφή στον Χάρτη</a>
+  </header>
+  <main id="forum-page-root" class="forum-page-main"></main>
+  <script type="module">
+    import * as api from "./js/api.js";
+    import { mount } from "./js/ui/reportsfeed.js";
+
+    const root = document.getElementById("forum-page-root");
+    const bus = new EventTarget();
+    await mount({ api, root: document, container: root, bus, standalone: true });
+    bus.dispatchEvent(new CustomEvent("tab:change", { detail: { tab: "reports-feed" } }));
+  </script>
+</body>
+</html>

@@ -597,6 +597,25 @@ export async function bootstrap(
   }
   /* --- /Wave 2 --- */
 
+  try {
+    const search = globalThis.location?.search;
+    if (search) {
+      const qs = new URLSearchParams(search);
+      const qLat = Number(qs.get("lat"));
+      const qLon = Number(qs.get("lon"));
+      const qZoom = Number(qs.get("zoom"));
+      if (Number.isFinite(qLat) && Number.isFinite(qLon) && bus && typeof bus.dispatchEvent === "function") {
+        setTimeout(() => {
+          bus.dispatchEvent(new CustomEvent("map:flyto", {
+            detail: { lat: qLat, lon: qLon, zoom: Number.isFinite(qZoom) ? qZoom : 17 },
+          }));
+        }, 350);
+      }
+    }
+  } catch {
+    // ignore URL parse errors
+  }
+
   return {
     map,
     api,
