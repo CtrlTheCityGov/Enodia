@@ -42,6 +42,9 @@ const CATEGORY_LABELS = Object.freeze({
 const REPORT_PIN_RADIUS = 8;
 const REPORT_STROKE_COLOR = "#ffffff";
 const REPORT_STROKE_WIDTH = 2.5;
+// Status ring colours (Wave 3; Tailwind green-600 / blue-600, ≥3:1 against the map for a UI component).
+const RESOLVED_STROKE_COLOR = "#16a34a";
+const IN_PROGRESS_STROKE_COLOR = "#2563eb";
 const PULSE_DURATION_MS = 1200;
 const PULSE_RIPPLES = 2;
 
@@ -172,11 +175,26 @@ function ensureReportsSourceAndLayer(map) {
           REPORT_COLORS.work_progress,
           REPORT_COLORS.default,
         ],
-        "circle-stroke-color": REPORT_STROKE_COLOR,
+        // Ring colour tells the case status at a glance (Wave 3): green resolved, blue in progress, else white.
+        "circle-stroke-color": [
+          "match",
+          ["coalesce", ["get", "status"], ""],
+          "resolved",
+          RESOLVED_STROKE_COLOR,
+          "in_progress",
+          IN_PROGRESS_STROKE_COLOR,
+          REPORT_STROKE_COLOR,
+        ],
         "circle-stroke-width": REPORT_STROKE_WIDTH,
       },
     });
   }
+}
+
+// Real backend ids only: optimistic pins ("local-…") and offline-queued ones ("offline-…") have no tracker page.
+function isTrackableId(value) {
+  const s = String(value ?? "");
+  return Boolean(s) && !s.startsWith("offline-") && !s.startsWith("local-");
 }
 
 function escapeHtml(text) {
@@ -214,13 +232,21 @@ function bindReportPopup(map) {
     const conf = Number(p.confirmations);
     const meta = Number.isFinite(conf) && conf > 0 ? `${conf} επιβεβαιώσεις` : "Χωρίς επιβεβαιώσεις ακόμη";
     const canConfirm = Boolean(p.id && apiByMap.get(map)?.api?.confirmReport);
+    const trackLink = isTrackableId(p.id)
+      ? `<a class="report-pin-popup__track" href="/web/track.html?id=${encodeURIComponent(String(p.id))}">Παρακολούθηση ↗</a>`
+      : "";
     const html =
       `<div class="report-pin-popup">` +
       `<strong class="report-pin-popup__title">${escapeHtml(catLabel)}</strong> ` +
-      `<span class="report-pin-popup__status">${escapeHtml(statusLabel)}</span>` +
+      `<span class="report-pin-popup__status report-pin-popup__status--${escapeHtml(p.status || "submitted")}">${escapeHtml(statusLabel)}</span>` +
       (note ? `<p class="report-pin-popup__note">${escapeHtml(note)}</p>` : "") +
       `<span class="report-pin-popup__meta">${escapeHtml(meta)}</span>` +
-      (canConfirm ? `<div><button type="button" class="report-pin-popup__confirm">+1 Επιβεβαίωση</button></div>` : "") +
+      (canConfirm || trackLink
+        ? `<div class="report-pin-popup__actions">` +
+          (canConfirm ? `<button type="button" class="report-pin-popup__confirm">+1 Επιβεβαίωση</button>` : "") +
+          trackLink +
+          `</div>`
+        : "") +
       `</div>`;
     const popup = new PopupCtor({ className: "glass work-popup" })
       .setLngLat(event.lngLat)
@@ -236,6 +262,14 @@ function bindReportPopup(map) {
           const metaEl = popup.getElement?.()?.querySelector?.(".report-pin-popup__meta");
           if (metaEl && typeof res?.confirmations === "number") {
             metaEl.textContent = `${res.confirmations} επιβεβαιώσεις`;
+          }
+          // +2 for confirming someone else's report: let the Points pill pulse live (Wave 3).
+          const bus = ctx?.state?.bus;
+          if (Number(res?.points_awarded) > 0 && typeof bus?.dispatchEvent === "function"
+              && typeof globalThis.CustomEvent === "function") {
+            bus.dispatchEvent(new CustomEvent("points:earned", {
+              detail: { delta: Number(res.points_awarded), reason: "Επιβεβαίωση αναφοράς" },
+            }));
           }
           await refresh(map, ctx.api, ctx.state);
         } catch {

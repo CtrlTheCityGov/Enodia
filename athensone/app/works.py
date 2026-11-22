@@ -146,7 +146,18 @@ def meta() -> dict:
 
 
 def all_cards() -> list[dict]:
-    return [card(w) for w in dataset().get("works", [])]
+    """All works records as cards (clock + headline), cached per (data file, mtime, today).
+
+    The cache lives in `_cache` so tests that call `works._cache.clear()` also drop it. `today()` is part
+    of the key because the guarantee clock (days_left, ACTIVE/ENDED) depends on the date.
+    Shallow copies are returned so a caller adding a top-level key never leaks into the cache.
+    """
+    p = _path()
+    key = (str(p), p.stat().st_mtime, today().isoformat())
+    if _cache.get("cards_key") != key or "cards" not in _cache:
+        _cache["cards"] = [card(w) for w in dataset().get("works", [])]
+        _cache["cards_key"] = key
+    return [dict(c) for c in _cache["cards"]]
 
 
 def near(lat: float, lng: float, radius_m: float = 300) -> list[dict]:

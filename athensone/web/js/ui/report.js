@@ -52,6 +52,9 @@ export const QUEUE_KEY = "ao_report_queue";
 // Message while the photo is uploaded and blurred. Source: SPEC HUD «Κάτω αριστερά». Certainty: verified.
 export const BLUR_MESSAGE = "Θολώνουμε πρόσωπα και πινακίδες…";
 
+// Max note length, same as the textarea's maxlength (backend accepts up to 2000; our UI choice). Certainty: n/a.
+export const NOTE_MAX = 500;
+
 // Fold-close animation duration matching hud.css macos-fold (design default).
 const FOLD_CLOSE_MS = 200;
 
@@ -202,6 +205,7 @@ export function mount({ map, api, root, container, bus }) {
   const hint = el("p", { class: "report-hint" }, "Σύρετε την πινέζα στο σωστό σημείο.");
   const subBox = el("fieldset", { class: "report-sub", hidden: "" });
   subBox.append(el("legend", {}, "Τι έχει ζημιά;"));
+  subBox.append(el("p", { class: "report-sub__hint" }, "Επιλέξτε είδος ζημιάς για αυτόματο έλεγχο εγγύησης Stoa."));
   for (const st of SUBTYPES) {
     const lab = el("label", { class: "report-sub__opt" });
     const r = el("input", { type: "radio", name: "subtype", value: st.id });
@@ -209,11 +213,15 @@ export function mount({ map, api, root, container, bus }) {
     subBox.append(lab);
   }
   const noteLabel = el("label", {}, "Σχόλιο (προαιρετικό)");
-  const note = el("textarea", { name: "note", rows: "2", maxlength: "500" });
+  const note = el("textarea", { name: "note", rows: "2", maxlength: String(NOTE_MAX), "aria-describedby": "report-note-count" });
   noteLabel.append(note);
+  // Live character counter under the note (Wave 3); not announced on every keystroke.
+  const noteCount = el("p", { id: "report-note-count", class: "report-counter" }, `0 / ${NOTE_MAX}`);
   const photoLabel = el("label", {}, "Φωτογραφία (προαιρετική)");
   const photo = el("input", { type: "file", name: "photo", accept: "image/*", capture: "environment" });
   photoLabel.append(photo);
+  // Selected-photo badge (filename + KB); the file itself is only sent, never shown unblurred.
+  const photoBadge = el("p", { class: "report-photo-badge", hidden: "" });
   const status = el("p", { class: "report-status", role: "status", "aria-live": "polite" });
   const preview = el("img", { class: "report-preview", alt: "Η φωτογραφία με θολωμένα πρόσωπα και πινακίδες", hidden: "" });
   const sendBtn = el("button", { type: "submit" }, "Αποστολή");
@@ -221,8 +229,33 @@ export function mount({ map, api, root, container, bus }) {
   // B17: official service shown after a sent report (filled by showService, emptied by openForm).
   const serviceBox = el("section", { class: "report-service", "aria-label": "Επίσημη υπηρεσία", hidden: "" });
   const formFields = [hint, subBox, noteLabel, photoLabel, sendBtn, preview];
-  panel.append(title, hint, subBox, noteLabel, photoLabel, sendBtn, cancelBtn, status, preview, serviceBox);
+  panel.append(title, hint, subBox, noteLabel, noteCount, photoLabel, photoBadge, sendBtn, cancelBtn, status, preview, serviceBox);
   root.append(fab, menu, panel);
+
+  function updateCount() {
+    const len = String(note.value || "").length;
+    noteCount.textContent = `${len} / ${NOTE_MAX}`;
+    noteCount.classList?.toggle?.("is-near", len >= NOTE_MAX - 50);
+  }
+
+  function clearPhotoBadge() {
+    photoBadge.textContent = "";
+    photoBadge.hidden = true;
+  }
+
+  function showPhotoBadge() {
+    const file = photo.files?.[0] || null;
+    if (!file) {
+      clearPhotoBadge();
+      return;
+    }
+    const kb = Math.max(1, Math.round((Number(file.size) || 0) / 1024));
+    photoBadge.textContent = `📷 ${file.name || "φωτογραφία"} · ${kb} KB`;
+    photoBadge.hidden = false;
+  }
+
+  note.addEventListener("input", updateCount);
+  photo.addEventListener("change", showPhotoBadge);
 
   function toggleMenu(open) {
     if (open) {
@@ -246,6 +279,7 @@ export function mount({ map, api, root, container, bus }) {
     }
     state.marker?.remove();
     state.marker = null;
+    clearPhotoBadge();
   }
 
   // B17: «Τι μπορείτε να κάνετε ακόμα» after a sent report. Never shows an error: a failed call, a missing
@@ -298,6 +332,8 @@ export function mount({ map, api, root, container, bus }) {
     title.textContent = workId ? `${label} · έργο ${workId}` : label;
     note.value = "";
     photo.value = "";
+    updateCount();
+    clearPhotoBadge();
     status.textContent = "";
     preview.hidden = true;
     sendBtn.disabled = false;
@@ -380,6 +416,7 @@ export function mount({ map, api, root, container, bus }) {
       // Reset form fields and smoothly fold-close the report window (UI/UX upgrade #5).
       note.value = "";
       photo.value = "";
+      updateCount();
       status.textContent = "";
       preview.hidden = true;
       sendBtn.disabled = false;
@@ -432,13 +469,19 @@ export function mount({ map, api, root, container, bus }) {
       }
       const r = out.result;
       earned(r);
+      // Quick reports belong in «Οι αναφορές μου» too (Wave 3).
+      const trackId = r.tracking_id || r.id;
+      rememberReport(storage, trackId);
       bus.dispatchEvent(new CustomEvent("report:created", {
         detail: { id: r.id, category, lon, lat },
       }));
       const msg = r.points_awarded > 0
         ? `⚡ ${label} καταχωρήθηκε · +${r.points_awarded} Πόντοι Γειτονιάς`
         : `⚡ ${label} καταχωρήθηκε`;
-      notifyToast(msg);
+      notifyToast(msg, {
+        ...(trackId ? { link: { href: `/web/track.html?id=${encodeURIComponent(trackId)}`, label: "Παρακολούθηση" } } : {}),
+        durationMs: 6000,
+      });
     } catch {
       notifyToast("Η γρήγορη αναφορά δεν έγινε δεκτή.");
     }

@@ -671,7 +671,9 @@ CONFIRM_POINTS_VERIFIED_BY = "system"
 def _grant_confirm_points(request: Request, request_id: str, district: str | None) -> bool:
     """Grant +5 fix_confirmed points only when the caller's ao_token matches the reporter's stored token (A-17)."""
     caller = request.cookies.get(points.COOKIE_NAME)
-    reporter = store.get_report_account(request_id)
+    # Photo-flow reports store the token with the request; Citizen Map («+») reports store it on the map report
+    # that created this City request (Wave 3), so both kinds of reporter get their +5.
+    reporter = store.get_report_account(request_id) or map_reports.account_of_city_request(request_id)
     if not caller or not reporter or caller != reporter:
         return False
     return points.grant(

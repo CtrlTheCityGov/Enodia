@@ -16,6 +16,8 @@ import * as reportsLayer from "./layers/reports.js";
 import { initLayerBar } from "./ui/layerbar.js";
 import { initWorkPopup } from "./ui/workpopup.js";
 import { initRouting } from "./ui/routing.js";
+import { initTransitMenu } from "./ui/transitmenu.js";
+import { initTour } from "./ui/tour.js";
 
 // Dev B optional modules listed in SPEC.md "Αρχιτεκτονική" and TASKS_A.md "### A0" (certainty: verified).
 export const OPTIONAL_DEV_B_MODULES = [
@@ -223,14 +225,18 @@ export async function bootstrap(
   const bus = options?.bus ?? new EventTarget();
   const optionalOverrides =
     options?.optional && typeof options.optional === "object" ? options.optional : null;
+  // Load the optional Dev B modules in parallel (one round-trip instead of five in a row) for a faster start.
   const optional = {};
-  for (const specifier of OPTIONAL_DEV_B_MODULES) {
-    if (optionalOverrides && Object.hasOwn(optionalOverrides, specifier)) {
-      optional[specifier] = optionalOverrides[specifier];
-    } else {
-      optional[specifier] = await tryImport(specifier);
-    }
-  }
+  const loaded = await Promise.all(
+    OPTIONAL_DEV_B_MODULES.map((specifier) =>
+      optionalOverrides && Object.hasOwn(optionalOverrides, specifier)
+        ? optionalOverrides[specifier]
+        : tryImport(specifier),
+    ),
+  );
+  OPTIONAL_DEV_B_MODULES.forEach((specifier, i) => {
+    optional[specifier] = loaded[i];
+  });
 
   const api = optional["./api.js"] ?? null;
   const offlineBadgeEl = root.getElementById("hud-offline");
@@ -250,6 +256,8 @@ export async function bootstrap(
     activeTab: "map",
     offline: false,
     offlineGeo,
+    // Shared event bus: layers dispatch "transit:updated", the layer bar "layer:toggle" (Wave 1).
+    bus,
     onOffline: () => {
       showOfflineBadge();
     },
@@ -524,9 +532,21 @@ export async function bootstrap(
   }
   const layerBarEl = root.getElementById("hud-layerbar");
   if (layerBarEl) {
-    initLayerBar(layerBarEl, state, { map, api });
+    initLayerBar(layerBarEl, state, { map, api, bus });
   }
   /* --- /A2 --- */
+
+  /* --- Wave 1: transit & routes menu --- */
+  const transitMenuEl = root.getElementById("hud-transit");
+  let transitMenu = null;
+  if (transitMenuEl) {
+    try {
+      transitMenu = initTransitMenu(transitMenuEl, state, { map, api, bus });
+    } catch (err) {
+      console.error("Failed to initialise the transit menu:", err);
+    }
+  }
+  /* --- /Wave 1 --- */
 
   if (map) {
     initWorkPopup(map, { reportModule: optional["./ui/report.js"], bus });
@@ -560,6 +580,25 @@ export async function bootstrap(
   }
   /* --- /A5 --- */
 
+  /* --- Wave 2: first-visit tour --- */
+  let tour = null;
+  try {
+    let storage = null;
+    try {
+      storage = globalThis.localStorage ?? null; // may throw when storage is blocked
+    } catch {
+      storage = null;
+    }
+    tour = initTour({ root, bus, storage });
+    const replayBtn = root.getElementById("tour-replay-btn");
+    if (replayBtn && typeof replayBtn.addEventListener === "function") {
+      replayBtn.addEventListener("click", () => tour?.start(0));
+    }
+  } catch (err) {
+    console.error("Failed to initialise the tour:", err);
+  }
+  /* --- /Wave 2 --- */
+
   return {
     map,
     api,
@@ -568,6 +607,8 @@ export async function bootstrap(
     layers: LAYERS,
     optional,
     routing,
+    transitMenu,
+    tour,
     setTheme: applyTheme,
     selectTab,
   };

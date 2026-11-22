@@ -202,10 +202,11 @@ async function read(key, path, init, fallback, { cache = true, trim = (d) => d }
     const data = await liveJson(path, init);
     if (cache) writeCache(path, data);
     report(key, "live");
-    // A-39: a backend that says where its data came from (e.g. "mock" when the City sandbox itself is the mock)
-    // keeps that as upstream_source, so the UI can still show «δοκιμαστικό» on a live answer.
+    // A-39 / transit snapshot provenance: keep both upstream_source and backend_source when backend sets `source`.
     const upstream = data && typeof data.source === "string" ? { upstream_source: data.source } : {};
-    return { ...data, ...upstream, source: "live" };
+    const backendSource =
+      data && typeof data === "object" && "source" in data ? { backend_source: data.source ?? null } : {};
+    return { ...data, ...upstream, ...backendSource, source: "live" };
   } catch {
     // fall through to the cache
   }
@@ -305,6 +306,12 @@ export function serviceFor(category) {
     const all = await mockJson("services.json");
     return (all && all[category]) || { category, service: null };
   });
+}
+
+// «+1 Επιβεβαίωση» on a map report pin (layers/reports.js). Write: never falls back to fake data.
+// Backend: POST /api/map/reports/{id}/confirm -> { id, confirmations, points_awarded } (app/routers/map_reports.py).
+export function confirmReport(reportId) {
+  return liveJson(`/api/map/reports/${encodeURIComponent(reportId)}/confirm`, { method: "POST" });
 }
 
 export function transitArrivals(stopCode) {

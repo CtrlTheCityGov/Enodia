@@ -238,6 +238,13 @@ def links(canonical_request_id: str, include_unlinked: bool = False) -> list[dic
     return out
 
 
+def active_link_targets() -> dict[str, str]:
+    """{child_id: canonical_request_id} for every live (not unlinked) duplicate link, in one query.
+    Lets the citizen map show a linked duplicate pin with its canonical case's status (Wave 3)."""
+    rows = _rows("SELECT child_id, canonical_request_id FROM case_links WHERE unlinked_at IS NULL")
+    return {str(r["child_id"]): str(r["canonical_request_id"]) for r in rows}
+
+
 def link_of(child_id: str) -> dict | None:
     rows = _rows("SELECT * FROM case_links WHERE child_id = ?", (child_id,))
     return rows[0] if rows else None

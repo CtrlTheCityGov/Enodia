@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Enodia — Χάρτης Πολίτη</title>
   <link rel="icon" href="/web/favicon.ico" type="image/x-icon">
+  <!-- Warm up TLS to the MapLibre CDN and the OpenFreeMap tile/style host before they are requested (speed). -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
   <!-- MapLibre GL JS 5.3.0 CSS from jsDelivr CDN (source: SPEC.md "Engine και στυλ", certainty: verified). -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.css">
   <link rel="stylesheet" href="css/hud.css">
@@ -15,6 +18,7 @@
   <!-- Six floating HUD containers matching SPEC.md "HUD (glassmorphism)" (certainty: verified). -->
   <div class="hud" aria-label="Χειριστήρια χάρτη">
     <div id="hud-tabs" class="hud-top-left glass glass-pill hud-tabs" role="region" aria-label="Καρτέλες και θέμα" data-active-tab="map">
+      <img class="hud-brand-icon" src="/web/assets/enodia-logo-square.png" alt="" width="20" height="20">
       <div class="hud-tablist" role="tablist" aria-label="Προβολή">
         <button id="tab-map" type="button" class="hud-btn hud-tab is-active" role="tab" aria-selected="true" data-tab="map">Χάρτης</button>
         <button id="tab-works" type="button" class="hud-btn hud-tab" role="tab" aria-selected="false" data-tab="works">Έργα</button>
@@ -25,8 +29,13 @@
       <button id="theme-toggle" type="button" class="hud-btn hud-theme-btn" aria-pressed="false">Σκοτεινό</button>
       <span class="hud-divider" aria-hidden="true"></span>
       <a id="my-reports" class="hud-btn hud-tab" href="/web/track.html">Οι αναφορές μου</a>
+      <span class="hud-divider" aria-hidden="true"></span>
+      <!-- Wave 2: replays the first-visit tour (js/ui/tour.js). -->
+      <button id="tour-replay-btn" type="button" class="hud-btn hud-tour-btn" aria-label="Οδηγός χρήσης" title="Οδηγός χρήσης">?</button>
     </div>
     <nav id="hud-layerbar" class="hud-top-center" aria-label="Επίπεδα χάρτη"></nav>
+    <!-- Wave 1: transit & routes menu; js/ui/transitmenu.js shows it while a transit layer is on. -->
+    <div id="hud-transit" class="hud-transit" role="region" aria-label="Συγκοινωνίες και δρομολόγια" hidden></div>
     <div id="hud-points" class="hud-top-right" role="region" aria-label="Πόντοι Γειτονιάς"></div>
     <div id="hud-report" class="hud-bottom-left" role="region" aria-label="Αναφορά συμβάντος"></div>
     <div id="hud-routing" class="hud-bottom-center" role="region" aria-label="Διαδρομές"></div>

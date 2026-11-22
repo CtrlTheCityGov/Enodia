@@ -111,7 +111,10 @@ async def create_map_report(
                 _sandbox().upvote(city_request_id)
             except SandboxError:
                 pass
-        elif not saved["duplicate"]:
+        else:
+            # No open case nearby for this City category: always start one. map_reports.create() flags
+            # `duplicate` by raw category only (that keeps the no-double-points rule), so a damage/pothole next to
+            # an open damage/sidewalk used to be stored with no City request and was invisible to operators.
             absolute = f"{str(request.base_url).rstrip('/')}{photo_url}" if photo_url else None
             city_request_id = _city_request(category, saved["lon"], saved["lat"], note, absolute,
                                             cls["city_category"], cls["label_el"])
@@ -159,7 +162,8 @@ def list_map_reports(bbox: str | None = None, since: str | None = None):
                 status_by_request[str(req["id"])] = str(req["status"])
     except SandboxError:
         pass
-    out = map_reports.geojson(box, ts, status_by_request=status_by_request)
+    out = map_reports.geojson(box, ts, status_by_request=status_by_request,
+                              linked_request_by_report=cases.active_link_targets())
     out["source"] = "mock" if _sandbox().mock else "live"
     out["updated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     return out

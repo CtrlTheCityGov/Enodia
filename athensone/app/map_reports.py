@@ -186,6 +186,13 @@ def by_city_request(city_request_id: str) -> dict | None:
     return row
 
 
+def account_of_city_request(city_request_id: str) -> str | None:
+    """The anonymous points token of the map report that created this City request, or None.
+    Used only server-side to grant the reporter's +5 fix confirmation; never returned to a client."""
+    found = _rows("SELECT account FROM map_reports WHERE city_request_id = ? LIMIT 1", (city_request_id,))
+    return str(found[0]["account"]) if found and found[0].get("account") else None
+
+
 def link_city_request(report_id: str, city_request_id: str) -> None:
     """Remember which sandbox City request was created for a map report (for the +20 bonus)."""
     with _lock:
@@ -235,8 +242,13 @@ def geojson(
     bbox: tuple[float, float, float, float] | None = None,
     since: datetime | None = None,
     status_by_request: dict[str, str] | None = None,
+    linked_request_by_report: dict[str, str] | None = None,
 ) -> dict:
-    """Public FeatureCollection of map reports: id, category, created_at, confirmations, status (no note, no account)."""
+    """Public FeatureCollection of map reports: id, category, created_at, confirmations, status (no note, no account).
+
+    A duplicate linked to another report's City request (cases.active_link_targets()) takes that case's status,
+    so its pin turns green too once the canonical case is resolved (Wave 3)."""
+    linked = linked_request_by_report or {}
     rows = _rows(
         "SELECT m.id, m.category, m.lon, m.lat, m.created_at, m.city_request_id, COUNT(c.account) AS confirmations"
         " FROM map_reports m LEFT JOIN map_report_confirmations c ON c.report_id = m.id"
@@ -249,7 +261,7 @@ def geojson(
             continue
         if since and _parse_ts(r["created_at"]) < since:
             continue
-        req_id = r.get("city_request_id")
+        req_id = r.get("city_request_id") or linked.get(r["id"])
         status = statuses.get(req_id, "submitted") if req_id else "submitted"
         features.append({
             "type": "Feature",

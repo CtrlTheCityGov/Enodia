@@ -28,6 +28,10 @@
     REQUIRES_HUMAN_REVIEW: ["Απαιτείται έλεγχος", "warn"],
   };
   const MTYPE_CLS = { EXACT: "good", STREET: "good", NEIGHBOURHOOD: "info", MUNICIPALITY: "", PROXIMITY: "warn" };
+  // Reclassify options: the backend keeps the English keys (app/categories.py); the operator reads Greek (Wave 3).
+  const CITY_CATEGORY_EL = [["sidewalk", "Πεζοδρόμιο"], ["pothole", "Λακκούβα / οδόστρωμα"], ["streetlight", "Φωτισμός"],
+    ["garbage", "Απορρίμματα"], ["tree", "Δέντρο"], ["water_leak", "Διαρροή νερού"], ["other", "Άλλο"]];
+  const REASON_MISSING_EL = "Συμπληρώστε αιτιολόγηση στο πεδίο παραπάνω και πατήστε ξανά.";
 
   function h(tag, attrs, ...kids) {
     const n = document.createElement(tag);
@@ -177,8 +181,8 @@
       c.original_category ? ` Αρχική επιλογή πολίτη: ${c.original_category}${c.original_subtype ? " / " + c.original_subtype : ""}.` : ""));
     if (ctx.allowed.includes("reclassify")) {
       const sel = h("select", { "aria-label": "Νέα κατηγορία" },
-        ["sidewalk", "pothole", "streetlight", "garbage", "tree", "water_leak", "other"].map((k) =>
-          h("option", { value: k, selected: k === c.city_category ? true : null }, k)));
+        CITY_CATEGORY_EL.map(([k, label]) =>
+          h("option", { value: k, selected: k === c.city_category ? true : null }, label)));
       sec.append(h("div", { class: "row" }, sel,
         h("button", { type: "button", class: "ghost", onclick: () => ctx.run("reclassify", { category: sel.value }, true) }, "Αλλαγή κατηγορίας")));
     }
@@ -196,6 +200,8 @@
     sec.append(h("div", { class: "who" }, h("label", { for: "opActor" }, "Ποιος αποφασίζει", actor),
       h("label", { for: "opRole" }, "Ρόλος", role)));
     const reason = h("textarea", { id: "opReason", rows: "2", placeholder: "Αιτιολόγηση (καταγράφεται στο ιστορικό)" });
+    // The "missing reason" highlight goes away as soon as the operator starts typing.
+    reason.addEventListener("input", () => { reason.classList.remove("is-invalid"); reason.removeAttribute("aria-invalid"); });
     sec.append(h("label", { for: "opReason" }, "Αιτιολόγηση / μήνυμα"), reason);
     const btns = h("div", { class: "row wrap decide__btns" });
     for (const a of v.allowed_actions) {
@@ -246,14 +252,25 @@
         const me = { actor: (document.getElementById("opActor")?.value || "").trim(),
           role: document.getElementById("opRole")?.value || "engineer" };
         sessionStorage.setItem("op_actor", me.actor);
-        let reason = (document.getElementById("opReason")?.value || "").trim();
+        const reasonEl = document.getElementById("opReason");
+        const reason = (reasonEl?.value || "").trim();
         if (!me.actor) { hooks.toast("Συμπληρώστε «Ποιος αποφασίζει»: κάθε απόφαση καταγράφεται ονομαστικά."); document.getElementById("opActor")?.focus(); return; }
         if (needReason && !reason) {
-          reason = (prompt("Αιτιολόγηση (υποχρεωτική για αυτή την ενέργεια):") || "").trim();
-          if (!reason) return;
+          // Inline validation instead of a blocking prompt(): point at the field that is already on screen.
+          if (reasonEl) {
+            reasonEl.classList.add("is-invalid");
+            reasonEl.setAttribute("aria-invalid", "true");
+            reasonEl.focus();
+          }
+          hooks.toast(REASON_MISSING_EL);
+          return;
         }
         const out = await hooks.post(`/api/cases/${encodeURIComponent(v.report.id)}/actions`,
           { action, actor: me.actor, role: me.role, reason: reason || null, ...extra });
+        if (out) {
+          const el = document.getElementById("opReason");
+          if (el) { el.value = ""; el.classList.remove("is-invalid"); el.removeAttribute("aria-invalid"); }
+        }
         if (out && out.url) window.open(out.url, "_blank", "noopener");
       },
     };

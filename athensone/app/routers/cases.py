@@ -348,11 +348,16 @@ def track(tid: str):
     if c.get("public_message"):
         dedup.append({"at": c["updated_at"], "text": c["public_message"], "from_city": True})
     lat, lng = r.get("lat"), r.get("lng")
+    # Ask "is it fixed?" only until the citizen has answered for this resolution (Wave 3): a new resolve calls
+    # store.ask_confirmation(), which resets `fixed` to None and lets the question come back.
+    conf = store.get_confirmation(rid)
+    answered = conf is not None and conf.get("fixed") is not None
     return {"id": tid, "city_case": rid, "linked_to_existing": bool(info.get("linked")),
             "stage": c["stage"], "stage_el": pub[c["stage"]], "category_el": c["classification"].get("label_el"),
             "support_count": cases.support_count(rid),
             "location": {"lat": round(lat, 3), "lng": round(lng, 3)} if lat is not None else None,
-            "updates": dedup, "can_confirm_fix": r.get("status") == "resolved"}
+            "updates": dedup, "can_confirm_fix": r.get("status") == "resolved" and not answered,
+            "fix_confirmed": conf.get("fixed") if conf else None}
 
 
 # ------------------------------------------------------------------ demo scenario

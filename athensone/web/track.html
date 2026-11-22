@@ -5,21 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Enodia · Οι αναφορές μου</title>
 <link rel="icon" href="/web/favicon.ico" type="image/x-icon">
+<script>
+  // Apply the saved theme before first paint (no flash). Shared key with operator.html (Wave 3).
+  try { var th = localStorage.getItem("enodia.theme"); if (th === "dark" || th === "light") document.documentElement.dataset.theme = th; } catch (e) {}
+</script>
 <link rel="stylesheet" href="app.css">
 <style>
   main { max-width: 640px; margin: 0 auto; padding: 16px; }
-  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
   .top h1 { font-size: 1.15em; margin: 0; flex: 1; }
-  .rep { margin-bottom: 14px; }
+  .top button { min-height: 36px; padding: 6px 12px; font-size: .85em; }
+  .rep { margin-bottom: 14px; transition: opacity .2s ease; }
+  .rep.is-refreshing { opacity: .65; }
   .rep h2 { font-size: 1em; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .stage { font-size: 1.25em; font-weight: 750; margin: 6px 0; }
-  .bar { display: flex; gap: 4px; margin: 8px 0 4px; }
-  .bar span { flex: 1; height: 6px; border-radius: 99px; background: var(--line); }
-  .bar span.on { background: var(--accent); }
+  .rep h2 .grow { flex: 1; }
+  .rep .tools { display: flex; gap: 6px; }
+  .rep .tools button { min-height: 32px; padding: 4px 10px; font-size: .78em; }
+  .rep .tools button.icon { width: 32px; padding: 0; }
+  .stage { font-size: 1.25em; font-weight: 750; margin: 6px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .city { background: var(--quote-bg); border-radius: 10px; padding: 8px 12px; margin: 8px 0; }
   form.find { display: flex; gap: 8px; margin: 12px 0 18px; }
   form.find input { flex: 1; }
-  .confirm { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .confirm { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+  .confirm-done { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 12px; border-radius: 999px;
+    font-weight: 700; font-size: .85em; background: rgba(26, 127, 55, 0.14); color: var(--good); border: 1px solid rgba(26, 127, 55, 0.3); }
+  /* 4-step milestone bar: Παραλήφθηκε → Αξιολόγηση → Προγραμματίστηκε → Αποκαταστάθηκε */
+  .milestones { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 0; margin: 10px 0 6px; }
+  .milestones li { display: flex; flex-direction: column; gap: 5px; font-size: .74em; font-weight: 600; color: var(--muted); }
+  .milestones li::before { content: ""; height: 6px; border-radius: 99px; background: var(--line); transition: background .3s ease; }
+  .milestones li.done { color: var(--ink); }
+  .milestones li.done::before { background: var(--accent); }
+  .milestones li.now { color: var(--accent); }
+  .milestones li.now::before { background: var(--accent); box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.18); }
+  .milestones.resolved li::before { background: var(--good); }
+  .milestones.resolved li { color: var(--good); }
+  .refresh-note { font-size: .78em; }
+  @media (prefers-reduced-motion: reduce) { .rep, .milestones li::before { transition: none; } }
 </style>
 </head>
 <body>
@@ -27,6 +48,8 @@
   <div class="top">
     <img src="/web/assets/enodia-logo-square.png" alt="" width="28" height="28" style="border-radius:7px">
     <h1>Οι αναφορές μου</h1>
+    <button type="button" id="refreshBtn" class="ghost">↺ Ανανέωση</button>
+    <button type="button" id="themeBtn" class="ghost" aria-pressed="false">Σκοτεινό</button>
     <a class="pill" href="/web/citizen.html" style="text-decoration:none">← Χάρτης</a>
   </div>
   <form class="find" id="find">
@@ -35,13 +58,21 @@
     <button type="submit">Αναζήτηση</button>
   </form>
   <div id="out" aria-live="polite"></div>
+  <p class="muted refresh-note" id="refreshNote" aria-live="off"></p>
   <p class="muted">Βλέπετε μόνο την πορεία της αναφοράς σας. Τα στοιχεία σας δεν εμφανίζονται δημόσια· η θέση δείχνεται
     με ακρίβεια περίπου 100 m. Οι κωδικοί αποθηκεύονται μόνο σε αυτή τη συσκευή.</p>
 </main>
 <script>
 (function () {
   "use strict";
-  const ORDER = ["Η αναφορά καταχωρήθηκε", "Παραλήφθηκε", "Σε αξιολόγηση", "Προγραμματίστηκε αποκατάσταση", "Αποκαταστάθηκε"];
+  // Auto-refresh period while the tab is visible (Wave 3; design default).
+  const REFRESH_MS = 15000;
+  const MILESTONES = ["Παραλήφθηκε", "Αξιολόγηση", "Προγραμματίστηκε", "Αποκαταστάθηκε"];
+  // Workflow stage (app/cases.py STAGES) -> milestone index; REJECTED and map-only RECORDED have no bar.
+  const STAGE_STEP = {
+    NEW: 0, TRIAGED: 1, STOA_INVESTIGATION: 1, EVIDENCE_REVIEW: 1, ENGINEER_DECISION: 1, LEGAL_REVIEW: 1,
+    APPROVED_ACTION: 2, RESOLVED: 3, CITIZEN_NOTIFIED: 3,
+  };
   const $ = (s) => document.querySelector(s);
   function h(tag, attrs, ...kids) {
     const n = document.createElement(tag);
@@ -50,36 +81,99 @@
     return n;
   }
   const mine = () => { try { const l = JSON.parse(localStorage.getItem("ao_my_reports") || "[]"); return Array.isArray(l) ? l : []; } catch { return []; } };
-  const remember = (id) => { try { localStorage.setItem("ao_my_reports", JSON.stringify([id, ...mine().filter((x) => x !== id)].slice(0, 20))); } catch {} };
+  const save = (list) => { try { localStorage.setItem("ao_my_reports", JSON.stringify(list.slice(0, 20))); } catch {} };
+  const remember = (id) => save([id, ...mine().filter((x) => x !== id)]);
+  const forget = (id) => save(mine().filter((x) => x !== id));
 
-  async function card(id) {
-    const box = h("section", { class: "card rep", "aria-label": `Αναφορά ${id}` }, h("p", { class: "muted" }, `Φόρτωση ${id}…`));
-    $("#out").append(box);
-    let t;
-    try {
-      const r = await fetch(`/api/track/${encodeURIComponent(id)}`);
-      if (r.status === 404) { box.replaceChildren(h("p", {}, `Δεν βρέθηκε αναφορά με κωδικό ${id}.`)); return; }
-      if (!r.ok) throw new Error(r.statusText);
-      t = await r.json();
-    } catch (e) { box.replaceChildren(h("p", {}, "Δεν ήταν δυνατή η σύνδεση. Δοκιμάστε ξανά αργότερα.")); return; }
-    const step = Math.max(0, ORDER.indexOf(t.stage_el));
-    box.replaceChildren(...[
+  // ---------------------------------------------------------------- theme
+  const themeBtn = $("#themeBtn");
+  function currentTheme() {
+    const t = document.documentElement.dataset.theme;
+    if (t === "dark" || t === "light") return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function applyTheme(t) {
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem("enodia.theme", t); } catch {}
+    syncThemeBtn();
+  }
+  function syncThemeBtn() {
+    const dark = currentTheme() === "dark";
+    themeBtn.setAttribute("aria-pressed", String(dark));
+    themeBtn.textContent = dark ? "Φωτεινό" : "Σκοτεινό";
+  }
+  themeBtn.addEventListener("click", () => applyTheme(currentTheme() === "dark" ? "light" : "dark"));
+  syncThemeBtn();
+
+  // ---------------------------------------------------------------- cards
+  const cards = new Map(); // id -> { box, sig, busy }
+
+  function stageBadge(t) {
+    if (t.stage === "REJECTED") return h("span", { class: "badge bad" }, t.stage_el);
+    if (t.stage === "RESOLVED" || t.stage === "CITIZEN_NOTIFIED") return h("span", { class: "badge good" }, t.stage_el);
+    if (!t.city_case) return h("span", { class: "badge" }, t.stage_el);
+    return h("span", { class: "badge info" }, t.stage_el);
+  }
+
+  function milestoneBar(t) {
+    const step = STAGE_STEP[t.stage];
+    if (!t.city_case || step === undefined) return null;
+    const ol = h("ol", { class: `milestones${step === 3 ? " resolved" : ""}`, "aria-label": `Πρόοδος: βήμα ${step + 1} από 4, ${MILESTONES[step]}` });
+    MILESTONES.forEach((label, i) => {
+      const li = h("li", { class: i < step ? "done" : i === step ? "done now" : "" }, label);
+      if (i === step) li.setAttribute("aria-current", "step");
+      ol.append(li);
+    });
+    return ol;
+  }
+
+  async function copyId(id, btn) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(id); ok = true; } catch {
+      try {
+        const ta = h("textarea", { "aria-hidden": "true", style: "position:fixed;opacity:0" }); ta.value = id;
+        document.body.append(ta); ta.select(); ok = document.execCommand("copy"); ta.remove();
+      } catch { ok = false; }
+    }
+    btn.textContent = ok ? "✓ Αντιγράφηκε" : "Αποτυχία";
+    setTimeout(() => { btn.textContent = "📋 Αντιγραφή"; }, 1800);
+  }
+
+  function renderCard(id, box, t) {
+    const tools = h("span", { class: "tools" },
+      h("button", { type: "button", class: "ghost", title: "Αντιγραφή κωδικού", onclick: (e) => copyId(id, e.currentTarget) }, "📋 Αντιγραφή"),
+      h("button", { type: "button", class: "ghost icon", "aria-label": "Αφαίρεση από τη λίστα", title: "Αφαίρεση από τη λίστα",
+        onclick: () => { forget(id); cards.delete(id); box.remove(); if (!mine().length) renderAll(); } }, "✕"));
+    const parts = [
       h("h2", {}, h("span", {}, t.category_el || "Αναφορά"), h("span", { class: "badge" }, id),
-        t.support_count > 1 ? h("span", { class: "badge info" }, `👥 ${t.support_count} πολίτες ανέφεραν το ίδιο σημείο`) : null),
-      h("div", { class: "stage" }, t.stage_el),
-      t.city_case ? h("div", { class: "bar", "aria-hidden": "true" }, ORDER.slice(1).map((_, i) => h("span", { class: i < Math.max(step, 1) ? "on" : "" }))) : null,
+        t.support_count > 1 ? h("span", { class: "badge info" }, `👥 ${t.support_count} πολίτες ανέφεραν το ίδιο σημείο`) : null,
+        h("span", { class: "grow" }), tools),
+      h("div", { class: "stage" }, t.stage_el, stageBadge(t)),
+      milestoneBar(t),
+      t.fix_confirmed === true ? h("div", { class: "confirm-done" }, "✓ Επιβεβαιώσατε την αποκατάσταση") : null,
       t.linked_to_existing ? h("p", { class: "muted" }, "Η αναφορά σας συνδέθηκε με υπάρχουσα αναφορά για το ίδιο σημείο και ενισχύει την προτεραιότητά της.") : null,
       t.note ? h("p", { class: "muted" }, t.note) : null,
       h("ul", { class: "timeline" }, (t.updates || []).map((u) => u.from_city
         ? h("li", {}, h("div", { class: "city" }, h("b", {}, "Μήνυμα από τον Δήμο: "), u.text))
         : h("li", {}, `${u.at ? new Date(u.at).toLocaleString("el-GR") : ""} · ${u.text}`))),
-    ].filter(Boolean));
+    ];
+    box.replaceChildren(...parts.filter(Boolean));
     if (t.can_confirm_fix && t.city_case) {
       const ask = h("div", { class: "confirm" }, h("b", {}, "Διορθώθηκε;"));
       const send = async (fixed) => {
-        const fd = new FormData(); fd.append("fixed", String(fixed));
-        const r = await fetch(`/api/reports/${encodeURIComponent(t.city_case)}/confirm`, { method: "POST", body: fd });
-        ask.replaceChildren(h("span", {}, r.ok ? (fixed ? "Ευχαριστούμε για την επιβεβαίωση!" : "Ευχαριστούμε · η αναφορά ξανανοίγει.") : "Δεν καταχωρήθηκε."));
+        const entry = cards.get(id);
+        if (entry) entry.busy = true;
+        for (const b of ask.querySelectorAll("button")) b.disabled = true;
+        let ok = false;
+        try {
+          const fd = new FormData(); fd.append("fixed", String(fixed));
+          const r = await fetch(`/api/reports/${encodeURIComponent(t.city_case)}/confirm`, { method: "POST", body: fd });
+          ok = r.ok;
+        } catch { ok = false; }
+        ask.replaceChildren(h("span", { role: "status" }, ok ? (fixed ? "Ευχαριστούμε για την επιβεβαίωση!" : "Ευχαριστούμε · η αναφορά ξανανοίγει.") : "Δεν καταχωρήθηκε. Δοκιμάστε ξανά."));
+        if (entry) entry.busy = false;
+        // Show the new stage straight away (resolved → confirmed, or reopened → in evaluation).
+        if (ok) setTimeout(() => load(id, { force: true }), 900);
       };
       ask.append(h("button", { type: "button", class: "good", onclick: () => send(true) }, "Ναι"),
         h("button", { type: "button", class: "bad", onclick: () => send(false) }, "Όχι ακόμα"));
@@ -87,20 +181,69 @@
     }
   }
 
+  async function load(id, { force = false } = {}) {
+    const entry = cards.get(id);
+    if (!entry || entry.busy) return;
+    const { box } = entry;
+    if (entry.sig) box.classList.add("is-refreshing");
+    let t;
+    try {
+      const r = await fetch(`/api/track/${encodeURIComponent(id)}`);
+      if (r.status === 404) { box.classList.remove("is-refreshing"); box.replaceChildren(h("p", {}, `Δεν βρέθηκε αναφορά με κωδικό ${id}.`)); entry.sig = "404"; return; }
+      if (!r.ok) throw new Error(r.statusText);
+      t = await r.json();
+    } catch (e) {
+      box.classList.remove("is-refreshing");
+      // Keep the last good view on a failed background refresh; only a first load shows the error.
+      if (!entry.sig) box.replaceChildren(h("p", {}, "Δεν ήταν δυνατή η σύνδεση. Δοκιμάστε ξανά αργότερα."));
+      return;
+    }
+    box.classList.remove("is-refreshing");
+    const sig = JSON.stringify(t);
+    if (!force && sig === entry.sig) return; // unchanged: no re-render, nothing re-announced
+    entry.sig = sig;
+    renderCard(id, box, t);
+  }
+
   function renderAll() {
     $("#out").replaceChildren();
+    cards.clear();
     const ids = mine();
     if (!ids.length) { $("#out").append(h("p", { class: "card" }, "Δεν έχετε κάνει ακόμα αναφορά από αυτή τη συσκευή. Πατήστε «+» στον χάρτη.")); return; }
-    ids.forEach(card);
+    for (const id of ids) {
+      const box = h("section", { class: "card rep", "aria-label": `Αναφορά ${id}` }, h("p", { class: "muted" }, `Φόρτωση ${id}…`));
+      $("#out").append(box);
+      cards.set(id, { box, sig: null, busy: false });
+      load(id);
+    }
+    stamp();
   }
+
+  function refreshAll() {
+    for (const id of cards.keys()) load(id);
+    stamp();
+  }
+
+  function stamp() {
+    $("#refreshNote").textContent = `Τελευταία ενημέρωση ${new Date().toLocaleTimeString("el-GR")} · αυτόματη ανανέωση κάθε 15″`;
+  }
+
   $("#find").addEventListener("submit", (e) => {
     e.preventDefault(); const id = $("#tid").value.trim(); if (!id) return;
     remember(id); renderAll();
   });
+  $("#refreshBtn").addEventListener("click", refreshAll);
   const q = new URLSearchParams(location.search).get("id");
   if (q) remember(q);
   renderAll();
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") renderAll(); });
+  setInterval(() => { if (document.visibilityState === "visible") refreshAll(); }, REFRESH_MS);
+  // Back from the map tab: a new report may have been added there, so rebuild if the list changed.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    const ids = mine();
+    const same = ids.length === cards.size && ids.every((id) => cards.has(id));
+    if (same) refreshAll(); else renderAll();
+  });
 })();
 </script>
 </body>
