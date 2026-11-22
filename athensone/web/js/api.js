@@ -244,6 +244,11 @@ export function reports({ bbox, since } = {}) {
     () => mockJson("reports.geojson"));
 }
 
+// Official City POIs (B14); categories = array or comma string, default friendship_club,library on the backend.
+export function pois({ bbox, categories } = {}) {
+  return read("pois", `/api/map/pois${query({ categories, bbox })}`, undefined, () => mockJson("pois.geojson"));
+}
+
 // The SPEC's ?user_id= is not sent: the backend reads the ao_token cookie (A-34).
 export function points() {
   return read("points", "/api/map/points", undefined, () => mockJson("points.json"));

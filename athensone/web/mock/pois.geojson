@@ -1,0 +1,69 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "poi-mock-3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.744,
+          37.9702
+        ]
+      },
+      "properties": {
+        "id": "poi-mock-3",
+        "name": "Δημοτική Βιβλιοθήκη Παγκρατίου (mock)",
+        "category": "library",
+        "address": "Mock address 3, Παγκράτι",
+        "open_now": true,
+        "distance_km": 0.999,
+        "source": "mock",
+        "official": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "poi-mock-2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.7385,
+          37.9655
+        ]
+      },
+      "properties": {
+        "id": "poi-mock-2",
+        "name": "Λέσχη Φιλίας Μετς (mock)",
+        "category": "friendship_club",
+        "address": "Mock address 2, Μετς",
+        "open_now": true,
+        "distance_km": 1.158,
+        "source": "mock",
+        "official": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "poi-mock-1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.7476,
+          37.9689
+        ]
+      },
+      "properties": {
+        "id": "poi-mock-1",
+        "name": "Λέσχη Φιλίας Παγκρατίου (mock)",
+        "category": "friendship_club",
+        "address": "Mock address 1, Παγκράτι",
+        "open_now": true,
+        "distance_km": 1.341,
+        "source": "mock",
+        "official": true
+      }
+    }
+  ],
+  "errors": []
+}
