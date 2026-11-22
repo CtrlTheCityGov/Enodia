@@ -249,6 +249,15 @@ export function points() {
   return read("points", "/api/map/points", undefined, () => mockJson("points.json"));
 }
 
+// B13: the official registry service for a sandbox report category. Cached like other reads (the registry is
+// stable). Offline: that category's entry of mock/services.json, or { category, service: null }.
+export function serviceFor(category) {
+  return read("service:" + category, `/api/map/services${query({ category })}`, undefined, async () => {
+    const all = await mockJson("services.json");
+    return (all && all[category]) || { category, service: null };
+  });
+}
+
 export function transitArrivals(stopCode) {
   return liveJson(`/api/map/transit/arrivals${query({ stop_code: stopCode })}`);
 }
