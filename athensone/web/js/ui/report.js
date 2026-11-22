@@ -272,7 +272,8 @@ export function mount({ map, api, root, container, bus }) {
     const cost = svc.cost_eur == null ? "άγνωστο" : svc.cost_eur === 0 ? "Δωρεάν" : `${svc.cost_eur} €`;
     serviceBox.replaceChildren(head, el("p", {}, svc.title || ""), el("p", {}, "Δικαιολογητικά:"), docs,
       el("p", {}, `Κόστος: ${cost}`));
-    if (svc.online_url) {
+    // Only http(s) links: a `javascript:` URL from a bad registry entry must never become a clickable link.
+    if (typeof svc.online_url === "string" && /^https?:\/\//i.test(svc.online_url)) {
       serviceBox.append(el("a", { href: svc.online_url, target: "_blank", rel: "noopener noreferrer" },
         "Επίσημη σελίδα"));
     }

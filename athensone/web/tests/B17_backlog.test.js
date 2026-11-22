@@ -229,3 +229,12 @@ test("flushQueue dispatches report:created", async () => {
   assert.equal(seen.length, 1);
   assert.equal(seen[0].id, "R-9");
 });
+
+// A non-http(s) online_url (e.g. javascript:) is never rendered as a link (B17 review: click-XSS guard).
+test("report drops non-http service link", withDom(async () => {
+  const s = SERVICE();
+  s.service.online_url = "javascript:alert(1)";
+  const panel = await submitFlow({ category: "damage", subtype: "ramp", fakeApi: { sendReport: okSend, serviceFor: async () => s } });
+  assert.ok(panel.textContent.includes("Τι μπορείτε να κάνετε ακόμα"));
+  assert.equal(panel.querySelector("a"), null);
+}));
