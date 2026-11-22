@@ -83,7 +83,11 @@ def _row(r):
 # --- T1: "Is it fixed?" loop ---
 # Sandbox only tracks submitted/received/in_progress/resolved/rejected, so citizen
 # confirmation state lives in SQLite (source: docs/TASKS.md T1, sure).
-from datetime import datetime, timezone  # noqa: E402
+from datetime import datetime, timedelta, timezone  # noqa: E402
+from zoneinfo import ZoneInfo  # noqa: E402
+
+# The points daily cap counts by the Athens calendar day (B16 card, T2; IANA zone name, sure).
+ATHENS_TZ = ZoneInfo("Europe/Athens")
 
 _conn.execute(
     """CREATE TABLE IF NOT EXISTS confirmations (
@@ -120,6 +124,16 @@ _conn.commit()
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _athens_day_utc_bounds() -> tuple[str, str]:
+    """UTC start and end of today's Europe/Athens calendar day, as "YYYY-MM-DD HH:MM:SS" (the SQLite
+    CURRENT_TIMESTAMP format of points_ledger.created_at). "Now" comes from _now_iso() so tests can freeze it."""
+    now_athens = datetime.fromisoformat(_now_iso()).astimezone(ATHENS_TZ)
+    start = now_athens.replace(hour=0, minute=0, second=0, microsecond=0)
+    end = start + timedelta(days=1)  # wall-clock +1 day; ZoneInfo applies the right offset on DST days
+    fmt = "%Y-%m-%d %H:%M:%S"
+    return start.astimezone(timezone.utc).strftime(fmt), end.astimezone(timezone.utc).strftime(fmt)
 
 
 def _conf_row(r: sqlite3.Row) -> dict:
@@ -198,10 +212,12 @@ def insert_points(
         if exists:
             return False
         if daily_cap is not None:
+            day_start, day_end = _athens_day_utc_bounds()
+            # datetime() normalises the stored UTC text before comparing it with the Athens-day bounds.
             today_count = _conn.execute(
                 """SELECT COUNT(*) FROM points_ledger
-                   WHERE account = ? AND action = ? AND date(created_at) = date('now')""",
-                (account, action),
+                   WHERE account = ? AND action = ? AND datetime(created_at) >= ? AND datetime(created_at) < ?""",
+                (account, action, day_start, day_end),
             ).fetchone()[0]
             if today_count >= daily_cap:
                 return False

@@ -56,6 +56,10 @@ async def create_map_report(
 ):
     if not (math.isfinite(lon) and math.isfinite(lat)):
         raise HTTPException(422, "lon and lat must be finite numbers")
+    # B16 (B6 bounds): only points inside the Δήμος bbox config.ENV_BBOX (minLon, minLat, maxLon, maxLat).
+    b = config.ENV_BBOX
+    if not (b[0] <= lon <= b[2] and b[1] <= lat <= b[3]):
+        raise HTTPException(422, "Η αναφορά είναι εκτός Δήμου Αθηναίων")
     if category not in map_reports.CATEGORIES:
         raise HTTPException(422, f"unknown category; expected one of {', '.join(map_reports.CATEGORIES)}")
     if subtype is not None and subtype != "" and subtype not in categories.SUBTYPES:
