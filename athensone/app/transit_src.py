@@ -495,6 +495,49 @@ def get_stop_arrivals(stop_code: str) -> dict[str, Any]:
 
 _bus_routes_cache: list[dict[str, Any]] | None = None
 _bus_stops_cache: list[dict[str, Any]] | None = None
+_elevators_cache: dict[str, Any] | None = None
+
+
+def load_elevators() -> dict[str, dict[str, str]]:
+    """Load station elevator status overrides from data/transit/elevators.json."""
+    global _elevators_cache
+    if _elevators_cache is not None:
+        return _elevators_cache
+    path = config.DATA_DIR / "transit" / "elevators.json"
+    if path.exists():
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            stations = raw.get("stations") or {}
+            _elevators_cache = stations if isinstance(stations, dict) else {}
+            return _elevators_cache
+        except (OSError, ValueError):
+            pass
+    _elevators_cache = {}
+    return _elevators_cache
+
+
+def elevator_alerts() -> list[dict[str, Any]]:
+    """Return stations with broken/unavailable elevators for accessibility notifications."""
+    elevs = load_elevators()
+    static = load_static()
+    out = []
+    for st in (static.get("stations") or {}).get("features") or []:
+        p = st.get("properties") or {}
+        name = str(p.get("name") or "").strip()
+        ov = elevs.get(name)
+        is_broken = (ov and ov.get("status") == "broken") or (p.get("elevator") is False)
+        if not is_broken:
+            continue
+        coords = (st.get("geometry") or {}).get("coordinates") or []
+        out.append({
+            "name": name,
+            "lines": p.get("lines") or [],
+            "status": "broken",
+            "note": (ov or {}).get("note") or "Ανελκυστήρας εκτός λειτουργίας (ΑμεΑ)",
+            "lon": coords[0] if len(coords) >= 2 else None,
+            "lat": coords[1] if len(coords) >= 2 else None,
+        })
+    return out
 
 
 def load_bus_routes() -> list[dict[str, Any]]:
@@ -538,6 +581,22 @@ def get_transit(bbox: BBox | None = None) -> dict[str, Any]:
     static = load_static()
     line_feats = static["lines"].get("features") or []
     station_feats = static["stations"].get("features") or []
+    elevs = load_elevators()
+    enriched_stations = []
+    for f in station_feats:
+        p = dict(f.get("properties") or {})
+        name = str(p.get("name") or "").strip()
+        ov = elevs.get(name)
+        if ov:
+            p["elevator_status"] = ov.get("status", "unknown")
+            p["elevator_note"] = ov.get("note", "")
+        elif p.get("elevator") is False:
+            p["elevator_status"] = "broken"
+            p["elevator_note"] = "Χωρίς ανελκυστήρα"
+        elif p.get("elevator") is True:
+            p["elevator_status"] = "working"
+        enriched_stations.append({**f, "properties": p})
+    station_feats = enriched_stations
     bus_route_feats = load_bus_routes()
     bus_stop_feats = load_bus_stops()
 

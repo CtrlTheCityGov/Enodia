@@ -363,8 +363,10 @@ function renderStationPopupHtml(name, linesOrLine, bodyHtml = "", extras = {}) {
   const badges = lines.length
     ? `<div class="transit-popup__badges">${lines.map((ref) => lineBadgeHtml(ref, lineColorForRef(ref))).join("")}</div>`
     : "";
-  const elevator =
-    extras.elevator === true || extras.elevator === "true"
+  const isBroken = extras.elevator_status === "broken" || extras.elevator === false || extras.elevator === "false";
+  const elevator = isBroken
+    ? `<div class="transit-popup__access"><span class="transit-access-badge transit-access-badge--broken">⚠️ Ανελκυστήρας ΕΚΤΟΣ ΛΕΙΤΟΥΡΓΙΑΣ (ΑμεΑ)</span>${extras.elevator_note ? `<div class="transit-access-note">${escapeHtml(extras.elevator_note)}</div>` : ""}</div>`
+    : extras.elevator === true || extras.elevator === "true"
       ? `<div class="transit-popup__access"><span class="transit-access-badge">♿ Ανελκυστήρας</span></div>`
       : "";
   return (
@@ -459,7 +461,11 @@ function bindStationPopup(map) {
     const p = feature.properties || {};
     const name = p.name || p.title || p.label || "Στάση / Σταθμός";
     const lines = stationLines(p);
-    const extras = { elevator: p.elevator };
+    const extras = {
+      elevator: p.elevator,
+      elevator_status: p.elevator_status,
+      elevator_note: p.elevator_note,
+    };
     const rawCode = p.stop_code ?? p.stopCode ?? "";
     const stopCode = rawCode != null ? String(rawCode).trim() : "";
     const currentApi = apiByMap.get(map);
@@ -1127,9 +1133,9 @@ export async function register(map, api, state = {}) {
           visibility: railOn ? "visible" : "none",
         },
         paint: {
-          "circle-radius": STATION_RADIUS,
-          "circle-color": STATION_FILL_COLOR,
-          "circle-stroke-color": lineColorExpression(),
+          "circle-radius": ["case", ["==", ["get", "elevator_status"], "broken"], 9.5, STATION_RADIUS],
+          "circle-color": ["case", ["==", ["get", "elevator_status"], "broken"], "#fef2f2", STATION_FILL_COLOR],
+          "circle-stroke-color": ["case", ["==", ["get", "elevator_status"], "broken"], "#dc2626", lineColorExpression()],
           "circle-stroke-width": STATION_STROKE_WIDTH,
         },
       });

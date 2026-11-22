@@ -33,11 +33,11 @@ const AQI_MAX = 150;
 const PM25_MIN = 0;
 const PM25_MAX = 75;
 
-// Heatmap visual tuning constants for 600 m urban point grids.
-const HEATMAP_INTENSITY = 1.4;
-const HEATMAP_RADIUS_LOW_ZOOM = 36;
-const HEATMAP_RADIUS_HIGH_ZOOM = 90;
-const HEATMAP_OPACITY = 0.78;
+// Heatmap visual tuning constants for 600 m urban point grids (continuous smooth blanket across zooms).
+const HEATMAP_INTENSITY = 0.65;
+const HEATMAP_RADIUS_LOW_ZOOM = 42;
+const HEATMAP_RADIUS_HIGH_ZOOM = 320;
+const HEATMAP_OPACITY = 0.68;
 
 // Heatmap color ramp for temperature mode (cool blue -> amber -> hot red) (certainty: design default).
 const TEMP_COLOR_RAMP = [
@@ -45,10 +45,10 @@ const TEMP_COLOR_RAMP = [
   ["linear"],
   ["heatmap-density"],
   0, "rgba(37, 99, 235, 0)",
-  0.25, "rgba(56, 189, 248, 0.55)",
-  0.5, "rgba(250, 204, 21, 0.75)",
-  0.75, "rgba(249, 115, 22, 0.85)",
-  1, "rgba(220, 38, 38, 0.92)",
+  0.06, "rgba(56, 189, 248, 0.42)",
+  0.28, "rgba(250, 204, 21, 0.62)",
+  0.58, "rgba(249, 115, 22, 0.76)",
+  0.88, "rgba(220, 38, 38, 0.88)",
 ];
 
 // Heatmap color ramp for AQI mode (good green -> moderate yellow -> unhealthy purple/red) (certainty: design default).
@@ -57,10 +57,10 @@ const AQI_COLOR_RAMP = [
   ["linear"],
   ["heatmap-density"],
   0, "rgba(34, 197, 94, 0)",
-  0.25, "rgba(34, 197, 94, 0.55)",
-  0.5, "rgba(234, 179, 8, 0.75)",
-  0.75, "rgba(249, 115, 22, 0.85)",
-  1, "rgba(147, 51, 234, 0.92)",
+  0.06, "rgba(34, 197, 94, 0.42)",
+  0.28, "rgba(234, 179, 8, 0.62)",
+  0.58, "rgba(249, 115, 22, 0.76)",
+  0.88, "rgba(147, 51, 234, 0.88)",
 ];
 
 // Heatmap color ramp for PM2.5 mode (low teal/green -> moderate yellow -> elevated orange -> high crimson) (certainty: design default).
@@ -69,10 +69,10 @@ const PM25_COLOR_RAMP = [
   ["linear"],
   ["heatmap-density"],
   0, "rgba(16, 185, 129, 0)",
-  0.25, "rgba(20, 184, 166, 0.55)",
-  0.5, "rgba(250, 204, 21, 0.75)",
-  0.75, "rgba(249, 115, 22, 0.85)",
-  1, "rgba(190, 24, 93, 0.92)",
+  0.06, "rgba(20, 184, 166, 0.42)",
+  0.28, "rgba(250, 204, 21, 0.62)",
+  0.58, "rgba(249, 115, 22, 0.76)",
+  0.88, "rgba(190, 24, 93, 0.88)",
 ];
 
 const modeByMap = new WeakMap();
@@ -222,12 +222,16 @@ export async function register(map, api, options = {}) {
         "heatmap-intensity": HEATMAP_INTENSITY,
         "heatmap-radius": [
           "interpolate",
-          ["linear"],
+          ["exponential", 2],
           ["zoom"],
           11,
           HEATMAP_RADIUS_LOW_ZOOM,
+          14,
+          135,
           16,
           HEATMAP_RADIUS_HIGH_ZOOM,
+          18,
+          640,
         ],
         "heatmap-color": heatmapColorForMode(mode),
         "heatmap-opacity": HEATMAP_OPACITY,

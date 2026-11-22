@@ -290,6 +290,19 @@ export function initTransitMenu(container, state = {}, { map = null, api = null,
     if (!railOn()) {
       frag.appendChild(hint("Ενεργοποιήστε «Μετρό/Προαστιακός» για να δείτε τις γραμμές στον χάρτη."));
     }
+    const stations = snapshot()?.stations?.features || [];
+    const broken = stations.filter((s) => s?.properties?.elevator_status === "broken");
+    if (broken.length > 0 && ui.tab === "metro") {
+      const alertBox = el("div", "transit-elevator-alert");
+      const title = el("strong", null, `⚠️ Ανελκυστήρες ΑμεΑ εκτός λειτουργίας (${broken.length})`);
+      alertBox.appendChild(title);
+      for (const st of broken) {
+        const sp = st.properties || {};
+        const row = el("div", null, `• ${sp.name || "Σταθμός"}: ${sp.elevator_note || "Εκτός λειτουργίας"}`);
+        alertBox.appendChild(row);
+      }
+      frag.appendChild(alertBox);
+    }
     if (entries.length === 0) {
       frag.appendChild(hint(emptyText));
       return frag;

@@ -12,7 +12,7 @@ import time
 import httpx
 from fastapi import APIRouter
 
-from .. import config
+from .. import config, transit_src
 
 router = APIRouter()
 
@@ -147,14 +147,31 @@ def _fetch_apergia() -> tuple[list[dict], str]:
 
 @router.get("/api/announcements")
 def get_announcements() -> dict:
-    """Return protests/strikes (apergia.gr) and Municipality of Athens civic events."""
+    """Return protests/strikes (apergia.gr), City events, and Metro elevator outages (ΑμεΑ)."""
     protests, source = _fetch_apergia()
-    items = protests + _MUNICIPAL_EVENTS
+    elevator_notices = [
+        {
+            "id": f"elev-{idx + 1}",
+            "kind": "protest",
+            "title": f"🛗 Ανελκυστήρας εκτός λειτουργίας: Σταθμός {a['name']}",
+            "date": "Προσβασιμότητα ΑμεΑ",
+            "time": ", ".join(a.get("lines") or []),
+            "location": f"Σταθμός Μετρό {a['name']}",
+            "lat": a.get("lat"),
+            "lng": a.get("lon"),
+            "summary": a.get("note") or "Προσωρινή βλάβη ανελκυστήρα.",
+            "url": "",
+            "source_label": "Ειδοποίηση ΑμεΑ",
+        }
+        for idx, a in enumerate(transit_src.elevator_alerts())
+    ]
+    items = elevator_notices + protests + _MUNICIPAL_EVENTS
     return {
         "source": source,
         "items": items,
         "counts": {
-            "protests": len(protests),
+            "protests": len(protests) + len(elevator_notices),
             "events": len(_MUNICIPAL_EVENTS),
+            "elevators": len(elevator_notices),
         },
     }

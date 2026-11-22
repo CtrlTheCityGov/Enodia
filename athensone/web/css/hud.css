@@ -664,6 +664,30 @@ body {
   align-items: center;
 }
 
+.transit-access-badge--broken {
+  background: rgba(220, 38, 38, 0.16);
+  color: #b91c1c;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.transit-access-note {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #991b1b;
+}
+
+.transit-elevator-alert {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+}
+
 .forum-panel {
   position: fixed;
   top: 64px;
