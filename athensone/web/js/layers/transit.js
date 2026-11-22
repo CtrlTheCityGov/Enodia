@@ -41,15 +41,17 @@ export const TROLLEY_COLOR = "#c2410c";
 const LINES_SOURCE_ID = "transit-lines-source";
 const STATIONS_SOURCE_ID = "transit-stations-source";
 const BUSES_SOURCE_ID = "transit-buses-source";
+const BUS_ROUTES_SOURCE_ID = "transit-bus-routes-source";
 
 const RAIL_LINES_LAYER_ID = "transit-rail-lines";
 const RAIL_STATIONS_LAYER_ID = "transit-rail-stations";
 const RAIL_LABELS_LAYER_ID = "transit-rail-labels";
+const BUS_ROUTES_LAYER_ID = "transit-bus-routes";
 const BUSES_LAYER_ID = "transit-buses";
 const BUSES_LABELS_LAYER_ID = "transit-buses-labels";
 
 // Separate toggleable layer id lists for the two transit chips (TASKS_A.md A2, certainty: verified).
-export const busLayerIds = [BUSES_LAYER_ID, BUSES_LABELS_LAYER_ID];
+export const busLayerIds = [BUS_ROUTES_LAYER_ID, BUSES_LAYER_ID, BUSES_LABELS_LAYER_ID];
 export const railLayerIds = [RAIL_LINES_LAYER_ID, RAIL_STATIONS_LAYER_ID, RAIL_LABELS_LAYER_ID];
 
 // All MapLibre layer ids added by this module (TASKS_A.md A2, certainty: verified).
@@ -872,6 +874,12 @@ async function loadTransitData(map, api, { updateRail = false, updateBuses = fal
         stationsSrc.setData(bundle.stations);
       }
     }
+    if (updateBuses && typeof map.getSource === "function") {
+      const busRoutesSrc = map.getSource(BUS_ROUTES_SOURCE_ID);
+      if (busRoutesSrc && typeof busRoutesSrc.setData === "function") {
+        busRoutesSrc.setData(res?.bus_routes ?? emptyFeatureCollection());
+      }
+    }
     let busesApplied = false;
     if (updateBuses) {
       if (!busesActiveByMap.get(map) || (busPollGenByMap.get(map) ?? 0) !== busGen) {
@@ -1003,7 +1011,7 @@ function filterForLayer(layerId, filter) {
   if (!filter) return null;
   if (layerId === RAIL_LINES_LAYER_ID) return railLineFilter(filter.railKeys);
   if (layerId === RAIL_STATIONS_LAYER_ID || layerId === RAIL_LABELS_LAYER_ID) return stationFilter(filter.railKeys);
-  if (layerId === BUSES_LAYER_ID || layerId === BUSES_LABELS_LAYER_ID) return busFilter(filter.busKeys);
+  if (layerId === BUSES_LAYER_ID || layerId === BUSES_LABELS_LAYER_ID || layerId === BUS_ROUTES_LAYER_ID) return busFilter(filter.busKeys);
   return null;
 }
 
@@ -1071,6 +1079,12 @@ export async function register(map, api, state = {}) {
         data: emptyFeatureCollection(),
       });
     }
+    if (!map.getSource(BUS_ROUTES_SOURCE_ID)) {
+      map.addSource(BUS_ROUTES_SOURCE_ID, {
+        type: "geojson",
+        data: emptyFeatureCollection(),
+      });
+    }
   }
 
   if (typeof map.getLayer === "function") {
@@ -1131,6 +1145,25 @@ export async function register(map, api, state = {}) {
           "text-halo-color": "#ffffff",
           "text-halo-width": 1.6,
           "text-halo-blur": 0.2,
+        },
+      });
+    }
+
+    if (!map.getLayer(BUS_ROUTES_LAYER_ID)) {
+      addLayerWithFilter(map, {
+        id: BUS_ROUTES_LAYER_ID,
+        type: "line",
+        source: BUS_ROUTES_SOURCE_ID,
+        layout: {
+          visibility: busesOn ? "visible" : "none",
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": busColorExpression(),
+          "line-width": 3.5,
+          "line-opacity": 0.72,
+          "line-dasharray": [2, 1.5],
         },
       });
     }
