@@ -244,6 +244,13 @@ export function reports({ bbox, since } = {}) {
     () => mockJson("reports.geojson"));
 }
 
+// «Διορθώθηκαν κοντά σου» (B15). No mock file: we have no real resolved data to show offline, so the
+// fallback is an empty collection with an unknown (null) median, never a made-up number.
+export function resolved({ bbox, days } = {}) {
+  return read("resolved", `/api/map/resolved${query({ bbox, days })}`, undefined,
+    async () => ({ type: "FeatureCollection", features: [], summary: { count: 0, median_hours_to_resolve: null } }));
+}
+
 // The SPEC's ?user_id= is not sent: the backend reads the ao_token cookie (A-34).
 export function points() {
   return read("points", "/api/map/points", undefined, () => mockJson("points.json"));
