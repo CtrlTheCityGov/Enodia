@@ -186,7 +186,7 @@ test("test_set_theme_light_3d_to_dark_keeps_3d_buildings_with_diff_false", () =>
 });
 
 test("test_layerbar_adds_2d_3d_toggle_without_altering_six_chips", () => {
-  assert.equal(layerbar.CHIPS.length, 6);
+  assert.equal(layerbar.CHIPS.length, 7);
 
   const created = [];
   const doc = {
@@ -226,7 +226,7 @@ test("test_layerbar_adds_2d_3d_toggle_without_altering_six_chips", () => {
   const state = { visible: {}, is3D: true };
   const bar = layerbar.initLayerBar(container, state, { map: fakeMap });
 
-  assert.equal(bar.buttons.length, 6);
+  assert.equal(bar.buttons.length, 7);
   assert.equal(bar.view3DBtn.id, "toggle-3d");
   assert.equal(bar.view3DBtn.textContent, "3D");
 

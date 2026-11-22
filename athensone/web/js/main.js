@@ -11,6 +11,7 @@ import * as accessLayer from "./layers/access.js";
 import * as worksLayer from "./layers/works.js";
 import * as transitLayer from "./layers/transit.js";
 import * as healthLayer from "./layers/health.js";
+import * as poisLayer from "./layers/pois.js";
 import * as reportsLayer from "./layers/reports.js";
 import { initLayerBar } from "./ui/layerbar.js";
 import { initWorkPopup } from "./ui/workpopup.js";
@@ -120,6 +121,11 @@ function registerA2Overlays(api) {
   registerOverlay((m, st) => {
     healthLayer.register(m, a2BoundApi, st);
     return { id: healthLayer.id, layerIds: healthLayer.layerIds };
+  });
+  // Official City POIs «Δήμος» (TASKS_A.md A10).
+  registerOverlay((m, st) => {
+    poisLayer.register(m, a2BoundApi, st);
+    return { id: poisLayer.id, layerIds: poisLayer.layerIds };
   });
   registerOverlay((m, st) => {
     reportsLayer.register(m, a2BoundApi, st);

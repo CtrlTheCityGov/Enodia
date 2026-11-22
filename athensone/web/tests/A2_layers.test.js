@@ -22,6 +22,7 @@ const EXPECTED_CHIP_LABELS = [
   "Τηλεματική ΟΑΣΑ",
   "Μετρό/Προαστιακός",
   "Εφημερεύοντα",
+  "Δήμος", // A10 / A-40: seventh chip, official City POIs (not in SPEC's six)
 ];
 
 function createFeatureCollection(features = []) {
@@ -438,7 +439,7 @@ function collectJsFiles(dir) {
 test("test_six_chips_in_spec_order", () => {
   const chips = layerbar.CHIPS;
   assert.ok(Array.isArray(chips), "layerbar.CHIPS must be an array");
-  assert.equal(chips.length, 6, "layerbar.CHIPS must contain exactly 6 chips");
+  assert.equal(chips.length, 7, "layerbar.CHIPS must contain exactly 7 chips");
 
   assert.deepEqual(
     chips.map((c) => c?.label),
@@ -450,7 +451,7 @@ test("test_six_chips_in_spec_order", () => {
   for (const id of ids) {
     assert.ok(typeof id === "string" && id.length > 0, "every chip must have a non-empty string id");
   }
-  assert.equal(new Set(ids).size, 6, "all six chip ids must be unique");
+  assert.equal(new Set(ids).size, 7, "all seven chip ids must be unique");
   assert.equal(ids[0], "env");
   assert.equal(ids[1], "access");
   assert.equal(ids[2], "works");
