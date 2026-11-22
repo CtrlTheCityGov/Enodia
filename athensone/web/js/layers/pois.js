@@ -18,6 +18,11 @@ export const layerIds = [POINTS_LAYER_ID];
 // (source: TASKS_A.md A10, values are a design default, certainty: unverified for contrast on every basemap).
 const FRIENDSHIP_CLUB_COLOR = "#7c3aed";
 const LIBRARY_COLOR = "#2563eb";
+const LANDMARK_COLOR = "#d97706";
+const MUSEUM_COLOR = "#b45309";
+const PARK_COLOR = "#15803d";
+const CULTURE_COLOR = "#0e7490";
+const MUNICIPAL_COLOR = "#1d4ed8";
 const POIS_DEFAULT_COLOR = "#475569";
 const POIS_POINT_RADIUS = 7;
 const POIS_STROKE_COLOR = "#ffffff";
@@ -28,6 +33,11 @@ const POIS_STROKE_WIDTH = 2;
 const CATEGORY_LABELS = Object.freeze({
   friendship_club: "Λέσχη Φιλίας",
   library: "Βιβλιοθήκη",
+  landmark: "Αξιοθέατο",
+  museum: "Μουσείο",
+  park: "Πάρκο / Πλατεία",
+  culture: "Πολιτιστικός Χώρος",
+  municipal: "Δημοτική Υπηρεσία",
 });
 
 // Greek UI strings (source: TASKS_A.md A10 and CLAUDE.md "Unknown values show as «άγνωστο»", certainty: verified).
@@ -74,13 +84,13 @@ export function popupHtml(props = {}) {
   const name = hasText(p.name) ? p.name : UNKNOWN_TEXT;
   const category = CATEGORY_LABELS[p.category] ?? (hasText(p.category) ? p.category : UNKNOWN_TEXT);
   const address = hasText(p.address) ? p.address : UNKNOWN_TEXT;
+  const officialBadge = p.official === false ? "" : ` <span class="pois-popup__badge">${OFFICIAL_BADGE}</span>`;
   const mockBadge = p.source === "mock" ? ` <span class="pois-popup__badge pois-popup__badge--mock">${MOCK_BADGE}</span>` : "";
 
   return [
     `<article class="pois-popup__body">`,
     `<h3 class="pois-popup__title">${escapeHtml(name)}</h3>`,
-    `<p class="pois-popup__meta">${escapeHtml(category)}`,
-    ` <span class="pois-popup__badge">${OFFICIAL_BADGE}</span>${mockBadge}</p>`,
+    `<p class="pois-popup__meta">${escapeHtml(category)}${officialBadge}${mockBadge}</p>`,
     `<p class="pois-popup__address">${escapeHtml(address)}</p>`,
     `<p class="pois-popup__open">${escapeHtml(openNowText(p.open_now))}</p>`,
     `</article>`,
@@ -101,19 +111,44 @@ function toFeatureCollection(res) {
   return emptyFeatureCollection();
 }
 
-async function loadPoisData(api, state) {
-  if (!api || typeof api.pois !== "function") {
-    return emptyFeatureCollection();
+async function loadLandmarksFeatures(api) {
+  if (!api || typeof api.landmarks !== "function") {
+    return [];
   }
   try {
-    const res = await api.pois();
-    if (res?.source && res.source !== "live" && typeof state?.onOffline === "function") {
-      state.onOffline();
-    }
-    return toFeatureCollection(res);
+    const fc = await api.landmarks();
+    return Array.isArray(fc?.features) ? fc.features : [];
   } catch {
-    return emptyFeatureCollection();
+    return [];
   }
+}
+
+async function loadPoisData(api, state) {
+  let baseFc = emptyFeatureCollection();
+  if (api && typeof api.pois === "function") {
+    try {
+      const res = await api.pois();
+      if (res?.source && res.source !== "live" && typeof state?.onOffline === "function") {
+        state.onOffline();
+      }
+      baseFc = toFeatureCollection(res);
+    } catch {
+      baseFc = emptyFeatureCollection();
+    }
+  }
+  const landmarks = await loadLandmarksFeatures(api);
+  if (landmarks.length === 0) {
+    return baseFc;
+  }
+  const seenIds = new Set(baseFc.features.map((f) => f?.id ?? f?.properties?.id).filter(Boolean));
+  const merged = [...baseFc.features];
+  for (const lm of landmarks) {
+    const lmId = lm?.id ?? lm?.properties?.id;
+    if (!lmId || !seenIds.has(lmId)) {
+      merged.push(lm);
+    }
+  }
+  return { type: "FeatureCollection", features: merged };
 }
 
 function bindClickPopup(map) {
@@ -168,6 +203,16 @@ export async function register(map, api, state = {}) {
           FRIENDSHIP_CLUB_COLOR,
           "library",
           LIBRARY_COLOR,
+          "landmark",
+          LANDMARK_COLOR,
+          "museum",
+          MUSEUM_COLOR,
+          "park",
+          PARK_COLOR,
+          "culture",
+          CULTURE_COLOR,
+          "municipal",
+          MUNICIPAL_COLOR,
           POIS_DEFAULT_COLOR,
         ],
         "circle-stroke-color": POIS_STROKE_COLOR,

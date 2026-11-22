@@ -69,7 +69,7 @@ const RAIL_LABELS_MINZOOM = 13;
 // a missing glyph only hides the label, the map keeps working (certainty: unverified).
 // Verified by Antigravity against the live styles (22 Nov 2026): liberty serves Noto Sans Bold + Regular,
 // fiord (dark) only Noto Sans Regular, so Regular is the fallback in the stack (certainty: verified).
-const LABEL_FONT = ["Noto Sans Bold", "Noto Sans Regular"];
+const LABEL_FONT = ["Noto Sans Bold"];
 
 const busPollTimers = new WeakMap();
 const busAnimByMap = new WeakMap();

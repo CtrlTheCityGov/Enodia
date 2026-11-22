@@ -60,7 +60,7 @@ const lastSource = new Map();
 
 // Files that are mock-only by design (access is pre-downloaded, SPEC «Εξωτερικές πηγές»;
 // base is the offline basemap). They report "mock" but don't switch the badge on.
-const STATIC_KEYS = new Set(["access", "base"]);
+const STATIC_KEYS = new Set(["access", "base", "landmarks"]);
 
 function report(key, source) {
   if (!STATIC_KEYS.has(key)) lastSource.set(key, source);
@@ -394,6 +394,12 @@ export async function access() {
   const data = await mockJson("access.geojson");
   report("access", "mock");
   return { ...data, source: "mock" };
+}
+
+export async function landmarks() {
+  const data = await mockJson("landmarks.geojson");
+  report("landmarks", "mock");
+  return { ...data, source: "curated" };
 }
 
 export async function base() {

@@ -122,5 +122,52 @@ export async function register(map, api, state = {}) {
     src.setData(data);
   }
 
+  bindAccessPopup(map);
+
   return { id, layerIds };
+}
+
+const KIND_LABELS = Object.freeze({
+  kerb_lowered: "Χαμηλωμένο κράσπεδο",
+  ramp: "Ράμπα πρόσβασης",
+  tactile_paving: "Απτικός οδηγός όδευσης",
+  wheelchair: "Προσβάσιμος χώρος (ΑμεΑ)",
+  toilets_wheelchair: "Προσβάσιμη τουαλέτα (ΑμεΑ)",
+});
+
+const accessPopupBound = new WeakSet();
+
+function escapeHtmlAccess(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function bindAccessPopup(map) {
+  if (typeof map.on !== "function" || accessPopupBound.has(map)) {
+    return;
+  }
+  accessPopupBound.add(map);
+  let activePopup = null;
+  map.on("click", POINTS_LAYER_ID, (event) => {
+    const props = event?.features?.[0]?.properties ?? {};
+    const PopupCtor = globalThis.maplibregl?.Popup;
+    if (!event?.lngLat || typeof PopupCtor !== "function") {
+      return;
+    }
+    if (activePopup && typeof activePopup.remove === "function") {
+      activePopup.remove();
+    }
+    const kindLabel = props.amenity === "toilets"
+      ? KIND_LABELS.toilets_wheelchair
+      : (KIND_LABELS[props.kind] || "Σημείο προσβασιμότητας");
+    const name = props.name && String(props.name).trim() ? String(props.name).trim() : kindLabel;
+    const wc = props.wheelchair === "yes" ? "Πλήρης πρόσβαση ΑμεΑ" : props.wheelchair === "limited" ? "Περιορισμένη πρόσβαση" : "";
+    const html = `<article class="pois-popup__body"><h3 class="pois-popup__title">${escapeHtmlAccess(name)}</h3><p class="pois-popup__meta">${escapeHtmlAccess(kindLabel)}</p>${wc ? `<p class="pois-popup__open">${escapeHtmlAccess(wc)}</p>` : ""}</article>`;
+    activePopup = new PopupCtor({ className: "glass pois-popup" });
+    activePopup.setLngLat(event.lngLat).setHTML(html).addTo(map);
+  });
 }
