@@ -531,8 +531,7 @@ export async function bootstrap(
   const layerBarEl = root.getElementById("hud-layerbar");
   if (layerBarEl) {
     initLayerBar(layerBarEl, state, { map, api, bus });
-    const barRow = layerBarEl.querySelector?.(".layerbar");
-    if (barRow && typeof root.createElement === "function") {
+    if (typeof root.createElement === "function") {
       const allRepBtn = root.createElement("button");
       allRepBtn.type = "button";
       allRepBtn.className = "layer-chip";
@@ -542,7 +541,7 @@ export async function bootstrap(
         reportsLayer.showAllOnMap(map);
         selectTab("map");
       });
-      barRow.appendChild(allRepBtn);
+      layerBarEl.appendChild(allRepBtn);
     }
   }
   if (bus && typeof bus.addEventListener === "function") {
